@@ -15,6 +15,12 @@
 #define MOUSE_STATUS_HIDE 2
 #define MOUSE_STATUS_SHOW 1
 
+#define KEY_ESC 0x1b
+#define KEY_UP 72
+#define KEY_LEFT 75
+#define KEY_RIGHT 77
+#define KEY_DOWN 80
+
 #define INT8_MAX 0x7F
 #define INT8_MIN -128
 #define UINT8_MAX 0xFFU
@@ -214,24 +220,33 @@ void plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color) {
  * ====================================================================
  */
 
-void playSound(uint32_t x) {
+void _Cdecl soundPlay(uint32_t x) {
 	uint32_t cot;
 	uint8_t tmp;
-	cot = (uint32_t)1193180/500;
+	cot = (uint32_t)(1193180/x);
 	outportb(0x43,0xb6);
 	outportb(0x42,(uint8_t)cot);
 	outportb(0x42,(uint8_t)cot>>8);
 	tmp = inportb(0x61);
 	if(tmp != (tmp|3)) {
 		outportb(0x61,tmp|3);
-	}	
+	}
 	return;
 }
 
-void stopSound(void) {
+void _Cdecl soundStop(void) {
 	uint8_t tmp = inportb(0x61)&0xfc;
 	outportb(0x61,tmp);
 	return;
+}
+
+int8_t _Cdecl soundPlayRawFile(FILE *stream) {
+	int16_t i = fgetc(stream);
+	if(i == EOF) {
+		fseek(stream,SEEK_SET,0); /*rewind file*/
+	}
+	soundPlay(i*30);
+	return 0;
 }
 
 /* ====================================================================
@@ -240,35 +255,19 @@ void stopSound(void) {
  *
  * ====================================================================
  */
-int8_t _Cdecl readBitmapHeader(FILE *stream, struct bitmapHeader *e) {
-	static uint32_t headerSize;
-	static uint32_t wide;
-	static uint32_t tall;
-	static uint16_t planes;
-	static uint16_t bitsPerPixel;
-	static uint32_t compression;
-	static uint32_t sizeOfImage;
-	static uint32_t xPixelsPerMeter;
-	static uint32_t yPixelsPerMeter;
-	static uint32_t numberOfColors;
-	static uint32_t importantColors;
-	static uint32_t sizeOfFile;
-	static uint32_t reserved;
-	static uint32_t offset;
-	static uint32_t mask[4];
+int8_t _Cdecl readImageBitmapHeader(FILE *stream,struct bitmapHeader *e) {
+	static uint32_t headerSize,wide,tall,planes,bitsPerPixel,compression;
+	static uint32_t sizeOfImage,xPixelsPerMeter,yPixelsPerMeter,numberOfColors;
+	static uint32_t importantColors,sizeOfFile,reserved,offset,mask[4];
+	if(!stream) {
+		return -1;
+	}
 	/*Read file header*/
 	fread(e->type,sizeof(uint16_t),1,stream);
 	/*Confirmate that it is a actual bitmap*/
-	if(strncmp((const char *)e->type,"BM",2) == 0 /*Normal windows bitmap*/
-	|| strncmp((const char *)e->type,"BA",2) == 0
-	|| strncmp((const char *)e->type,"IC",2) == 0 /*Icons (OS/2)*/
-	|| strncmp((const char *)e->type,"PT",2) == 0 /*Pointers (OS/2)*/
-	|| strncmp((const char *)e->type,"CI",2) == 0 /*Color icons (OS/2)*/
-	|| strncmp((const char *)e->type,"CP",2) == 0) /*Color pointers (OS/2)*/ {
-		/*Its valid, proceed*/
-	}
-	else {
-		/*Damn, return error*/
+	if(strncmp((const char *)e->type,"BM",2) != 0 && strncmp((const char *)e->type,"BA",2) != 0
+	&& strncmp((const char *)e->type,"IC",2) != 0 && strncmp((const char *)e->type,"PT",2) != 0
+	&& strncmp((const char *)e->type,"CI",2) != 0 && strncmp((const char *)e->type,"CP",2) != 0) {
 		return -1;
 	}
 	fread(&sizeOfFile,sizeof(uint32_t),1,stream);
@@ -296,14 +295,12 @@ int8_t _Cdecl readBitmapHeader(FILE *stream, struct bitmapHeader *e) {
 		e->mask[1] = 0;
 		e->mask[2] = 0;
 		e->mask[3] = 0;
-	}
-	else if(headerSize == 12) { /*OS/2 1.x*/
+	} else if(headerSize == 12) { /*OS/2 1.x*/
 		fread(&wide,sizeof(uint16_t),1,stream);
 		fread(&tall,sizeof(uint16_t),1,stream);
 		fread(&planes,sizeof(uint16_t),1,stream);
 		fread(&bitsPerPixel,sizeof(uint16_t),1,stream);
-	}
-	else if(headerSize >= 56 && headerSize <= 64) { /*Windows (95,98,2000,XP,Vista,7,8,8.1,10) bitmap*/
+	} else if(headerSize >= 56 && headerSize <= 64) { /*Windows (95,98,2000,XP,Vista,7,8,8.1,10) bitmap*/
 		fread(&wide,sizeof(int32_t),1,stream);
 		fread(&tall,sizeof(int32_t),1,stream);
 		fread(&planes,sizeof(uint16_t),1,stream);
@@ -323,8 +320,7 @@ int8_t _Cdecl readBitmapHeader(FILE *stream, struct bitmapHeader *e) {
 		e->mask[1] = mask[1];
 		e->mask[2] = mask[2];
 		e->mask[3] = mask[3];
-	}
-	else {
+	} else {
 		return -1;
 	}
 	e->planes = planes;
@@ -353,19 +349,17 @@ int8_t _Cdecl readBitmapHeader(FILE *stream, struct bitmapHeader *e) {
 	}
 	e->wide = wide;
 	e->tall = tall;
-	if((uint64_t)wide > INT32_MAX/bitsPerPixel
-	|| (uint64_t)wide > (INT32_MAX/abs(tall))/4) { /*Avoid overflows*/
+	if((uint64_t)wide > ((uint64_t)(INT32_MAX/bitsPerPixel))
+	|| (uint64_t)wide > ((uint64_t)(INT32_MAX/abs(tall))/4)) { /*Avoid overflows*/
 		return -1;
 	}
 	return 0;
 }
 
-uint8_t * _Cdecl readBitmapData(FILE *stream, struct bitmapHeader *b) {
-	static uint32_t i;
-	static uint32_t i2;
+uint8_t * _Cdecl readImageBitmapData(FILE *stream, struct bitmapHeader *b) {
+	static uint32_t i,i2;
 	static uint16_t hold;
 	uint8_t *data;
-	fpos_t pos;
 	if(b->tall == 0 || b->wide == 0) {
 		return 0;
 	}
@@ -373,7 +367,6 @@ uint8_t * _Cdecl readBitmapData(FILE *stream, struct bitmapHeader *b) {
 	if(data == NULL) {
 		return 0; /*Up to caller's, how to handle errors*/
 	}
-	fgetpos(stream,&pos);
 	for(i = 1; i < b->tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
 		for(i2 = 0; i2 < b->wide; i2++) {
 			fread(&hold,sizeof(uint8_t),1,stream);
@@ -386,10 +379,10 @@ uint8_t * _Cdecl readBitmapData(FILE *stream, struct bitmapHeader *b) {
 	return (uint8_t *)data;
 }
 
-void _Cdecl writeBitmap(FILE *stream, struct bitmapHeader *bih, uint8_t *data) {
-	static uint32_t sizeOfFile,reserved,offset; /*We do the same as in our read routines*/
-	static uint32_t headerSize;					/*we just switch the order of stuff and*/
-	static uint32_t wide;						/*change read with write.*/
+void _Cdecl writeImageBitmap(FILE *stream, struct bitmapHeader *bih, uint8_t *data) {
+	static uint32_t sizeOfFile,reserved,offset;
+	static uint32_t headerSize;
+	static uint32_t wide;
 	static uint32_t tall;
 	static uint16_t planes;
 	static uint16_t bitsPerPixel;
@@ -432,7 +425,7 @@ void _Cdecl writeBitmap(FILE *stream, struct bitmapHeader *bih, uint8_t *data) {
 	fwrite(&numberOfColors,sizeof(uint32_t),1,stream);
 	fwrite(&importantColors,sizeof(uint32_t),1,stream);
 	/*Palette*/
-	for(i = 0; i < 1022; i++) {
+	for(i = 0; i < 1024; i++) {
 		fwrite(&i,sizeof(uint8_t),1,stream);
 	}
 	/*Bitmap data*/
