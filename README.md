@@ -1,11 +1,5 @@
 # Leaf Engine
-A small game engine, with in-built rendered, bitmap and paintbrush parser.
+A game engine for making DOS games
 
-# Compatibility
-The game engine is compatible with the following platforms:
-* MS-DOS
-* FreeDOS
-
-# Todo
-Compatibility with Apple II and II+
-Sound effects
+# Features
+PC-Speaker based sound, and RAW 8-bit sound file parser, bitmap read and write (useful for screenshots!), mouse support, .pal files read and write.
