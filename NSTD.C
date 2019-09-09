@@ -9,37 +9,6 @@
 #include <stdio.h>
 #include <dos.h>
 
-typedef unsigned char byte;
-typedef unsigned short word;
-typedef unsigned long dword;
-typedef unsigned long long qword;
-
-/*The structures and stuff*/
-struct mouse {
-	word x;
-	word y;
-	byte bLeft;
-	byte bRight;
-	byte bMiddle;
-};
-
-struct computerBIOSEquipementList {
-	diskDrive : 1;
-	mathCoProcessor : 1;
-	word systemMemory;
-	drives : 2;
-	noDMA : 1;
-	serialPorts : 3;
-	gameAdapter : 1;
-	serialInstalled : 1;
-	serialPrinter : 1;
-	numberOfPrinters : 2;
-};
-
-/*Global REGS. DO NOT CHANGE!*/
-union REGS in,out;
-byte far *vgaMemory = (byte far *)0xA0000000L;
-
 void _Cdecl getBIOSEquipementList(struct computerBIOSEquipementList *comp) {
 	register word a;
 	register word c;
@@ -147,6 +116,47 @@ void _Cdecl endGraph(void)
 	return;
 }
 
+/*Other stuff for video*/
+/*Custom charset*/
+void printCustomCharset(byte *ptr, char * text, word x, word y) {
+	register byte a,b,c;
+	for(c = 0; c < strlen(text); c++) {
+		for(a = 0; a < 8; a++) {
+			for(b = 0; b < 8; b++) {
+				if(ptr[(((text[c])-65)*64)+(b*8)+a] != 0) {
+					plotPixel(x+(a+(c*8)),y+b,ptr[(((text[c])-65)*64)+(b*8)+a]);
+				}
+			}
+		}
+	}
+	return;
+}
+
+/*Plot 16x16 tile/object, etc*/
+void plotTile16(byte *ptr, register byte index, register word x, register word y) {
+	register word c = 0;
+	while(c != 256) {
+		/*Do it manually, we need to save the pain of calling
+		 a stupid function*/
+		vgaMemory[((y+(c>>4))<<8)+((y+(c>>4))<<6)+(x+(c&15))] = ptr[(index<<8)+c];
+		c++;
+	}
+	return;
+}
+
+/*Plot a tile of any other size*/
+void plotTile(byte *ptr, register byte index, register word x, register word y, size_t w, size_t t) {
+	register word c = 0;
+	register word d = 0;
+	for(c = 0; c < w; c++) {
+		for(d = 0; d < t; d++) {
+			vgaMemory[(((y+d)<<8)+((y+d)<<6)+(x+c))] = ptr[(index<<8)+(d*w)+c];
+		}
+	}
+	return;
+}
+
+
 /*Initialize mouse*/
 char _Cdecl initMouse(void) {
 	in.x.ax = 0;
@@ -207,4 +217,49 @@ byte _Cdecl mouseBoxGet(struct mouse *b, word fx, word fy, word tx, word ty) {
 	else {
 		return 0;
 	}
+}
+
+/*Physics engine*/
+
+/*Movable JUMP. Mid-jump interaction*/
+void objectPhysicsBasicJump(struct objectBasicProperties *obj, /*Object we are jumping*/
+							word force, /*How many we jumped, set to 32 for normal jump*/
+							int leftKey, /*Left and Right key, up to the coder!*/
+							int rightKey,
+							signed char or) /*Needed for inverted axis games, set either -1 for normal or 1 for non normal*/ {
+	register word a;
+	register int b;
+	/*Go UP*/
+	for(a = 0; a < force; a++) {
+		obj->y++;
+		/*Render*/
+		if(kbhit()) {
+			b = getch();
+			switch(b) {
+				case leftKey:
+					obj->x += or;
+					break;
+				case rightKey:
+					obj->x -= or;
+					break;
+			}
+		}
+	}
+	/*Down, weee*/
+	for(a = force; a > 0; a++) {
+		obj->y--;
+		/*Render*/
+		if(kbhit()) {
+			b = getch();
+			switch(b) {
+				case leftKey:
+					obj->x -= or;
+					break;
+				case rightKey:
+					obj->x += or;
+					break;
+			}
+		}
+	}
+	return;
 }
