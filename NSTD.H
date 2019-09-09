@@ -39,23 +39,36 @@ struct computerBIOSEquipementList {
 	numberOfPrinters : 2;
 };
 
+struct objectBasicProperties {
+	word x;
+	word y;
+	word z;
+	word id;
+};
+
 /*Global REGS. DO NOT CHANGE!*/
-extern union REGS in,out;
-extern byte far *vgaMemory = (byte far *)0xA0000000L;
+union REGS in,out;
+byte far *vgaMemory = (byte far *)0xA0000000L;
+byte far *textMemory = (byte far *)0xB8000000L;
 
 /*Mouse*/
-extern char _Cdecl initmouse(void);
-extern void _Cdecl setMousePosition(word x, word y);
-extern void _Cdecl showMouse(void);
-extern void _Cdecl hideMouse(void);
-extern void _Cdecl getMouse(struct mouse *m);
-extern byte _Cdecl mouseBoxGet(struct mouse *b, word fx, word fy, word tx, word ty);
+char _Cdecl initMouse(void);
+void _Cdecl setMousePosition(word x, word y);
+void _Cdecl showMouse(void);
+void _Cdecl hideMouse(void);
+void _Cdecl getMouse(struct mouse *m);
+byte _Cdecl mouseBoxGet(struct mouse *b, word fx, word fy, word tx, word ty);
 /*Video*/
-extern void _Cdecl initGraph(void);
-extern void _Cdecl plotPixel(register word x, register word y, byte color);
-extern void _Cdecl plotLinearPixel(register word coord, unsigned byte color);
-extern word _Cdecl getVideo_mode(void);
-extern void _Cdecl endGraph(void);
+void _Cdecl initGraph(void);
+void _Cdecl plotPixel(register word x, register word y, byte color);
+void _Cdecl plotLinearPixel(register word coord, unsigned byte color);
+word _Cdecl getVideo_mode(void);
+void _Cdecl endGraph(void);
+_Cdecl printCustomCharset(byte *ptr, char * text, word x, word y);
+void _Cdecl plotTile16(byte *ptr, register byte index, register word x, register word y);
+void _Cdecl plotTile(byte *ptr, register byte index, register word x, register word y, size_t w, size_t t);
 /*GET*/
-extern void _Cdecl getBIOSEquipementList(struct computerBIOSEquipementList *comp);
+void _Cdecl getBIOSEquipementList(struct computerBIOSEquipementList *comp);
+/*Physics*/
+void _Cdecl objectPhysicsBasicJump(struct objectBasicProperties *obj,word force,int leftKey,int rightKey,signed char or)
 #endif

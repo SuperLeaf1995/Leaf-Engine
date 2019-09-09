@@ -1,14 +1,3 @@
-/*Cdecl intensifies*/
-#if __STDC__
-#define _Cdecl
-#else
-#define _Cdecl	cdecl
-#endif
-
-/*Include important files*/
-#include <stdio.h>
-#include <dos.h>
-
 void _Cdecl getBIOSEquipementList(struct computerBIOSEquipementList *comp) {
 	register word a;
 	register word c;
@@ -110,7 +99,7 @@ void _Cdecl endGraph(void)
 
 /*Other stuff for video*/
 /*Custom charset*/
-void printCustomCharset(byte *ptr, char * text, word x, word y) {
+void _Cdecl printCustomCharset(byte *ptr, char * text, word x, word y) {
 	register byte a,b,c;
 	for(c = 0; c < strlen(text); c++) {
 		for(a = 0; a < 8; a++) {
@@ -125,7 +114,7 @@ void printCustomCharset(byte *ptr, char * text, word x, word y) {
 }
 
 /*Plot 16x16 tile/object, etc*/
-void plotTile16(byte *ptr, register byte index, register word x, register word y) {
+void _Cdecl plotTile16(byte *ptr, register byte index, register word x, register word y) {
 	register word c = 0;
 	while(c != 256) {
 		/*Do it manually, we need to save the pain of calling
@@ -137,7 +126,7 @@ void plotTile16(byte *ptr, register byte index, register word x, register word y
 }
 
 /*Plot a tile of any other size*/
-void plotTile(byte *ptr, register byte index, register word x, register word y, size_t w, size_t t) {
+void _Cdecl plotTile(byte *ptr, register byte index, register word x, register word y, size_t w, size_t t) {
 	register word c = 0;
 	register word d = 0;
 	for(c = 0; c < w; c++) {
@@ -214,7 +203,7 @@ byte _Cdecl mouseBoxGet(struct mouse *b, word fx, word fy, word tx, word ty) {
 /*Physics engine*/
 
 /*Movable JUMP. Mid-jump interaction*/
-void objectPhysicsBasicJump(struct objectBasicProperties *obj, /*Object we are jumping*/
+void _Cdecl objectPhysicsBasicJump(struct objectBasicProperties *obj, /*Object we are jumping*/
 							word force, /*How many we jumped, set to 32 for normal jump*/
 							int leftKey, /*Left and Right key, up to the coder!*/
 							int rightKey,
