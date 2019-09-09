@@ -216,13 +216,11 @@ void _Cdecl objectPhysicsBasicJump(struct objectBasicProperties *obj, /*Object w
 		/*Render*/
 		if(kbhit()) {
 			b = getch();
-			switch(b) {
-				case leftKey:
-					obj->x += or;
-					break;
-				case rightKey:
-					obj->x -= or;
-					break;
+			if(b == leftKey) {
+				obj->x += or;
+			}
+			else if(b == rightKey) {
+				obj->x -= or;
 			}
 		}
 	}
@@ -232,13 +230,11 @@ void _Cdecl objectPhysicsBasicJump(struct objectBasicProperties *obj, /*Object w
 		/*Render*/
 		if(kbhit()) {
 			b = getch();
-			switch(b) {
-				case leftKey:
-					obj->x -= or;
-					break;
-				case rightKey:
-					obj->x += or;
-					break;
+			if(b == leftKey) {
+				obj->x -= or;
+			}
+			else if(b == rightKey) {
+				obj->x += or;
 			}
 		}
 	}

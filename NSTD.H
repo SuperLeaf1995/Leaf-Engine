@@ -8,10 +8,6 @@
 #define _Cdecl	cdecl
 #endif
 
-/*Include important files*/
-#include <stdio.h>
-#include <dos.h>
-
 typedef unsigned char byte;
 typedef unsigned short word;
 typedef unsigned long dword;
@@ -51,6 +47,8 @@ union REGS in,out;
 byte far *vgaMemory = (byte far *)0xA0000000L;
 byte far *textMemory = (byte far *)0xB8000000L;
 
+#include "NSTD.C"
+
 /*Mouse*/
 char _Cdecl initMouse(void);
 void _Cdecl setMousePosition(word x, word y);
@@ -64,7 +62,7 @@ void _Cdecl plotPixel(register word x, register word y, byte color);
 void _Cdecl plotLinearPixel(register word coord, unsigned byte color);
 word _Cdecl getVideo_mode(void);
 void _Cdecl endGraph(void);
-_Cdecl printCustomCharset(byte *ptr, char * text, word x, word y);
+void _Cdecl printCustomCharset(byte *ptr, char * text, word x, word y);
 void _Cdecl plotTile16(byte *ptr, register byte index, register word x, register word y);
 void _Cdecl plotTile(byte *ptr, register byte index, register word x, register word y, size_t w, size_t t);
 /*GET*/
