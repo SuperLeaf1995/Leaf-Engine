@@ -91,15 +91,7 @@ void _Cdecl plotLine(word fx, word fy, word tx, word ty, byte color) {
 	return;
 }
 
-/*DO NOT EVER IN YOUR LIFE USE THIS*/
-void _Cdecl plotBasicPoly(byte p, word *x, byte color) {
-	word i;
-	for(i = 0; i < p*3; i += 3) {
-		plotLine(x[i],x[i+1],x[i+2],x[i+3],color);
-	}
-	return;
-}
-
+/*TODO: VGA registers instead of BIOS ones*/
 /*Gets current video mode*/
 word _Cdecl getVideoMode(void) {
 	in.x.ax = 0x0F;
@@ -156,7 +148,7 @@ void plotTile(byte *ptr, register byte index, register word x, register word y, 
 	return;
 }
 
-
+/*TODO: Own mouse driver*/
 /*Initialize mouse*/
 char _Cdecl initMouse(void) {
 	in.x.ax = 0;
