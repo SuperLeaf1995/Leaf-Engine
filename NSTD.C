@@ -1,26 +1,87 @@
-void _Cdecl getBIOSEquipementList(struct computerBIOSEquipementList *comp) {
-	register word a;
-	register word c;
-	a = biosequip();
-	comp->diskDrive = ((a & 0x1) >= 0x1) ? 1 : 0;
-	comp->mathCoProcessor = ((a & 0x2) >= 0x2) ? 1 : 0;
-	/*How many memory we have*/
-	comp->systemMemory = ((a & 3) >= 3) ? (((a & 7) >= 7) ? 64000 : 32000) : (((a & 7) >= 7) ? 48000 : 16000);
-	comp->drives = ((a & 0x40-1) >= 0x40-1) ? 1 : 0;
-	comp->drives += ((a & 0x80-1) >= 0x80-1) ? 1 : 0;
-	comp->noDMA = ((a & 0x100-1) >= 0x100-1) ? 1 : 0;
-	comp->serialPorts = ((a & 0x200-1) >= 0x200-1) ? 0x1 : 0x0;
-	comp->serialPorts += ((a & 0x400-1) >= 0x400-1) ? 0x2 : 0;
-	comp->serialPorts += ((a & 0x800-1) >= 0x800-1) ? 0x4 : 0;
-	comp->gameAdapter = ((a & 0x1000-1) >= 0x1000-1) ? 1 : 0;
-	/*Sorry PS/2 users*/
-	comp->serialInstalled = ((a & 0x2000-1) >= 0x2000-1) ? 1 : 0;
-	comp->serialPrinter = ((a & 0x4000-1) >= 0x4000-1) ? 1 : 0;
-	comp->serialPrinter += ((a & 0x8000-1) >= 0x8000-1) ? 2 : 0;
-	return;
-}
+#ifndef NSTD_C
+#define NSTD_C
 
-/*Display routines*/
+/*Cdecl intensifies*/
+#if __STDC__
+#define _Cdecl
+#else
+#define _Cdecl	cdecl
+#endif
+
+/*Include important files*/
+#include <stdio.h>
+#include <dos.h>
+
+typedef unsigned char byte;
+typedef unsigned short word;
+typedef unsigned long dword;
+typedef unsigned long long qword;
+
+/*The structures and stuff*/
+struct mouse {
+	word x;
+	word y;
+	byte bLeft;
+	byte bRight;
+	byte bMiddle;
+};
+
+struct computerBIOSEquipementList {
+	diskDrive : 1;
+	mathCoProcessor : 1;
+	word systemMemory;
+	drives : 2;
+	noDMA : 1;
+	serialPorts : 3;
+	gameAdapter : 1;
+	serialInstalled : 1;
+	serialPrinter : 1;
+	numberOfPrinters : 2;
+};
+
+struct bitmapHeader {
+	word identifier;
+	dword sizeOfFile;
+	dword reserved;
+	dword offsetFromFileData;
+	dword headerSize;
+	dword wide;
+	dword tall;
+	word planes;
+	word bitsPerPixel;
+	dword compression;
+	dword sizeOfImage;
+	dword xPixelsPerMeter;
+	dword yPixelsPerMeter;
+	dword numberOfColours;
+	dword numberOfRelevantColours;
+};
+
+/*Global REGS. DO NOT CHANGE!*/
+union REGS in,out;
+byte far *vgaMemory = (byte far *)0xA0000000L;
+byte oldVideoMode;
+float pi = 3.1415;
+
+/*Mouse*/
+/*extern char _Cdecl initmouse(void);
+extern void _Cdecl setMousePosition(word x, word y);
+extern void _Cdecl showMouse(void);
+extern void _Cdecl hideMouse(void);
+extern void _Cdecl getMouse(struct mouse *m);
+extern byte _Cdecl mouseBoxGet(struct mouse *b, word fx, word fy, word tx, word ty);*/
+/*Video*/
+/*extern void _Cdecl initGraph(void);
+extern void _Cdecl plotPixel(register word x, register word y, byte color);
+extern void _Cdecl plotLinearPixel(register word coord, unsigned byte color);
+extern word _Cdecl getVideo_mode(void);
+extern void _Cdecl endGraph(void);*/
+/*GET*/
+/*extern void _Cdecl getBIOSEquipementList(struct computerBIOSEquipementList *comp);*/
+
+/*==========================================*/
+/*Display routines							*/
+/*==========================================*/
 
 /*Initialize mode*/
 void _Cdecl initGraph(void)
@@ -28,6 +89,23 @@ void _Cdecl initGraph(void)
 	/*Lets use our mind to change to VGA 256 mode*/
 	in.h.ah = 0x00;
 	in.h.al = 0x13;
+	int86(0x10 ,&in, &out);
+	oldVideoMode = out.h.al;
+	return;
+}
+
+/*Gets current video mode*/
+word _Cdecl getVideoMode(void) {
+	in.x.ax = 0x0F;
+	int86(0x10 ,&in, &out);
+	return out.h.al;
+}
+
+/*End graphics*/
+void _Cdecl endGraph(void)
+{
+	in.h.ah = 0x00;
+	in.h.al = oldVideoMode;
 	int86(0x10 ,&in, &out);
 	return;
 }
@@ -49,18 +127,8 @@ void _Cdecl plotLinearPixel(register word coord, register byte color) {
 void _Cdecl plotLine(word fx, word fy, word tx, word ty, byte color) {
 	int dx,dy,px,py,x,y,i;
 	float sl;
-	if(tx >= fx) {
-		dx = tx-fx;
-	}
-	else {
-		dx = fx-tx;
-	}
-	if(ty >= fy) {
-		dy = ty-fy;
-	}
-	else {
-		dy = fy-ty;
-	}
+	dx = (tx >= fx) ? tx-fx : fx-tx;
+	dy = (ty >= fy) ? ty-fy : fy-ty;
 	if(abs(dy) >= abs(dx)) {
 		sl=(float)dy/(float)dx;
 		for(i = 0; i != dx; i+= 1) {
@@ -69,7 +137,7 @@ void _Cdecl plotLine(word fx, word fy, word tx, word ty, byte color) {
 			vgaMemory[((py<<8)+(py<<6)+px)] = color;
 		}
 	}
-	else {
+	else if(abs(dy) <= abs(dx)) {
 		sl=(float)dx/(float)dy;
 		for(i = 0; i != dy; i+= 1) {
 			py = sl*i+fx;
@@ -79,78 +147,16 @@ void _Cdecl plotLine(word fx, word fy, word tx, word ty, byte color) {
 	}
 	return;
 }
+/*==========================================*/
+/*Mouse routines							*/
+/*==========================================*/
 
-/*TODO: VGA registers instead of BIOS ones*/
-/*Gets current video mode*/
-word _Cdecl getVideoMode(void) {
-	in.x.ax = 0x0F;
-	int86(0x10 ,&in, &out);
-	return out.h.al;
-}
-
-/*End graphics*/
-void _Cdecl endGraph(void)
-{
-	in.h.ah = 0x00;
-	in.h.al = 0x03;
-	int86(0x10 ,&in, &out);
-	return;
-}
-
-/*Other stuff for video*/
-/*Custom charset*/
-void _Cdecl printCustomCharset(byte *ptr, char * text, word x, word y) {
-	register byte a,b,c;
-	for(c = 0; c < strlen(text); c++) {
-		for(a = 0; a < 8; a++) {
-			for(b = 0; b < 8; b++) {
-				if(ptr[(((text[c])-65)*64)+(b*8)+a] != 0) {
-					plotPixel(x+(a+(c*8)),y+b,ptr[(((text[c])-65)*64)+(b*8)+a]);
-				}
-			}
-		}
-	}
-	return;
-}
-
-/*Plot 16x16 tile/object, etc*/
-void _Cdecl plotTile16(byte *ptr, register byte index, register word x, register word y) {
-	register word c = 0;
-	while(c != 256) {
-		/*Do it manually, we need to save the pain of calling
-		 a stupid function*/
-		vgaMemory[((y+(c>>4))<<8)+((y+(c>>4))<<6)+(x+(c&15))] = ptr[(index<<8)+c];
-		c++;
-	}
-	return;
-}
-
-/*Plot a tile of any other size*/
-void _Cdecl plotTile(byte *ptr, register byte index, register word x, register word y, size_t w, size_t t) {
-	register word c = 0;
-	register word d = 0;
-	for(c = 0; c < w; c++) {
-		for(d = 0; d < t; d++) {
-			vgaMemory[(((y+d)<<8)+((y+d)<<6)+(x+c))] = ptr[(index<<8)+(d*w)+c];
-		}
-	}
-	return;
-}
-
-/*TODO: Own mouse driver*/
 /*Initialize mouse*/
 char _Cdecl initMouse(void) {
 	in.x.ax = 0;
 	in.x.bx = 0;
 	int86(0x33, &in, &out);
-	if(out.x.ax != 0) {
-		return 0;
-	}
-	else {
-		/*Write to STDERR*/
-		fprintf(stderr,"Mouse could not initialize");
-		return -1;
-	}
+	return (out.x.ax != 0) ? 0 : -1;
 }
 
 /*Set mouse position*/
@@ -200,43 +206,92 @@ byte _Cdecl mouseBoxGet(struct mouse *b, word fx, word fy, word tx, word ty) {
 	}
 }
 
-/*Physics engine*/
+/*==========================================*/
+/*Miscellaneous stuff						*/
+/*==========================================*/
 
-/*Movable JUMP. Mid-jump interaction*/
-void _Cdecl objectPhysicsBasicJump(struct objectBasicProperties *obj, /*Object we are jumping*/
-							word force, /*How many we jumped, set to 32 for normal jump*/
-							int leftKey, /*Left and Right key, up to the coder!*/
-							int rightKey,
-							signed char or) /*Needed for inverted axis games, set either -1 for normal or 1 for non normal*/ {
+void _Cdecl getBIOSEquipementList(struct computerBIOSEquipementList *comp) {
 	register word a;
-	register int b;
-	/*Go UP*/
-	for(a = 0; a < force; a++) {
-		obj->y++;
-		/*Render*/
-		if(kbhit()) {
-			b = getch();
-			if(b == leftKey) {
-				obj->x += or;
-			}
-			else if(b == rightKey) {
-				obj->x -= or;
-			}
-		}
-	}
-	/*Down, weee*/
-	for(a = force; a > 0; a++) {
-		obj->y--;
-		/*Render*/
-		if(kbhit()) {
-			b = getch();
-			if(b == leftKey) {
-				obj->x -= or;
-			}
-			else if(b == rightKey) {
-				obj->x += or;
-			}
-		}
-	}
+	register word c;
+	a = biosequip();
+	comp->diskDrive = ((a & 0x1) >= 0x1) ? 1 : 0;
+	comp->mathCoProcessor = ((a & 0x2) >= 0x2) ? 1 : 0;
+	/*How many memory we have*/
+	comp->systemMemory = ((a & 3) >= 3) ? (((a & 7) >= 7) ? 64000 : 32000) : (((a & 7) >= 7) ? 48000 : 16000);
+	comp->drives = ((a & 0x40-1) >= 0x40-1) ? 1 : 0;
+	comp->drives += ((a & 0x80-1) >= 0x80-1) ? 1 : 0;
+	comp->noDMA = ((a & 0x100-1) >= 0x100-1) ? 1 : 0;
+	comp->serialPorts = ((a & 0x200-1) >= 0x200-1) ? 0x1 : 0x0;
+	comp->serialPorts += ((a & 0x400-1) >= 0x400-1) ? 0x2 : 0;
+	comp->serialPorts += ((a & 0x800-1) >= 0x800-1) ? 0x4 : 0;
+	comp->gameAdapter = ((a & 0x1000-1) >= 0x1000-1) ? 1 : 0;
+	/*Sorry PS/2 users*/
+	comp->serialInstalled = ((a & 0x2000-1) >= 0x2000-1) ? 1 : 0;
+	comp->serialPrinter = ((a & 0x4000-1) >= 0x4000-1) ? 1 : 0;
+	comp->serialPrinter += ((a & 0x8000-1) >= 0x8000-1) ? 2 : 0;
 	return;
 }
+
+/*==========================================*/
+/*Experimental								*/
+/*==========================================*/
+
+qword _Cdecl readBitmapFile(FILE *stream, struct bitmapHeader *bh, byte *ptr, byte *palette) {
+	word d;
+	if(!stream) { return -1; } /*Error file isnt open*/
+	if(bh == NULL) { return -2; } /*Error null pointer*/
+	/*Time to read header*/
+	fread((struct bitmapHeader *)bh->identifier,sizeof(word),1,stream);
+	fread((struct bitmapHeader *)bh->sizeOfFile,sizeof(dword),1,stream);
+	fread((struct bitmapHeader *)bh->reserved,sizeof(dword),1,stream);
+	fread((struct bitmapHeader *)bh->offsetFromFileData,sizeof(dword),1,stream);
+	fread((struct bitmapHeader *)bh->headerSize,sizeof(dword),1,stream);
+	fread((struct bitmapHeader *)bh->wide,sizeof(dword),1,stream);
+	fread((struct bitmapHeader *)bh->tall,sizeof(dword),1,stream);
+	fread((struct bitmapHeader *)bh->planes,sizeof(word),1,stream);
+	fread((struct bitmapHeader *)bh->bitsPerPixel,sizeof(word),1,stream);
+	fread((struct bitmapHeader *)bh->compression,sizeof(dword),1,stream);
+	fread((struct bitmapHeader *)bh->sizeOfImage,sizeof(dword),1,stream);
+	fread((struct bitmapHeader *)bh->xPixelsPerMeter,sizeof(dword),1,stream);
+	fread((struct bitmapHeader *)bh->yPixelsPerMeter,sizeof(dword),1,stream);
+	fread((struct bitmapHeader *)bh->numberOfColours,sizeof(dword),1,stream);
+	fread((struct bitmapHeader *)bh->numberOfRelevantColours,sizeof(dword),1,stream);
+	/*1024-bytes wide palette information*/
+	fread((byte *)palette,sizeof(byte),1024,stream);
+	/*Now read the image data*/
+	for(d = bh->wide*bh->tall; d > 0; d--) {
+		fread((byte *)ptr[d],sizeof(byte),1,stream);
+	}
+	return (qword)((bh->wide<<32)+bh->tall); /*useful for many operations*/
+}
+
+byte _Cdecl writeBitmapFile(FILE *stream, struct bitmapHeader *bh, byte *ptr, byte *palette) {
+	word d;
+	if(!stream) { return -1; } /*Error file isnt open*/
+	if(bh == NULL) { return -2; } /*Error null pointer*/
+	/*Time to read header*/
+	fwrite((struct bitmapHeader *)bh->identifier,sizeof(word),1,stream);
+	fwrite((struct bitmapHeader *)bh->sizeOfFile,sizeof(dword),1,stream);
+	fwrite((struct bitmapHeader *)bh->reserved,sizeof(dword),1,stream);
+	fwrite((struct bitmapHeader *)bh->offsetFromFileData,sizeof(dword),1,stream);
+	fwrite((struct bitmapHeader *)bh->headerSize,sizeof(dword),1,stream);
+	fwrite((struct bitmapHeader *)bh->wide,sizeof(dword),1,stream);
+	fwrite((struct bitmapHeader *)bh->tall,sizeof(dword),1,stream);
+	fwrite((struct bitmapHeader *)bh->planes,sizeof(word),1,stream);
+	fwrite((struct bitmapHeader *)bh->bitsPerPixel,sizeof(word),1,stream);
+	fwrite((struct bitmapHeader *)bh->compression,sizeof(dword),1,stream);
+	fwrite((struct bitmapHeader *)bh->sizeOfImage,sizeof(dword),1,stream);
+	fwrite((struct bitmapHeader *)bh->xPixelsPerMeter,sizeof(dword),1,stream);
+	fwrite((struct bitmapHeader *)bh->yPixelsPerMeter,sizeof(dword),1,stream);
+	fwrite((struct bitmapHeader *)bh->numberOfColours,sizeof(dword),1,stream);
+	fwrite((struct bitmapHeader *)bh->numberOfRelevantColours,sizeof(dword),1,stream);
+	/*1024-bytes wide palette information*/
+	fwrite((byte *)palette,sizeof(byte),1024,stream);
+	/*Now plot the image data again, rEvERsAl orDeR!!*/
+	for(d = bh->wide*bh->tall; d > 0; d--) {
+		fwrite((byte *)ptr[d],sizeof(byte),1,stream);
+	}
+	return 0;
+}
+
+#endif
