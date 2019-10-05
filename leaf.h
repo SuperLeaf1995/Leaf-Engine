@@ -45,5 +45,6 @@ void _Cdecl hideMouse(void);
 void _Cdecl getMouse(struct mouse *m);
 
 #include "leaf.c"
+#include "key.h" /*Keyboard keys*/
 
 #endif /*LEAF_H_INCLUDED*/
