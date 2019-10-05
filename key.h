@@ -37,7 +37,7 @@
 #define KEY_ENTER 0xd
 #define KEY_ESC 0x1b
 
-#ifdef __APPLE2__
+#ifdef __APPLE2__ /*Apple II has their own arrow keys, fuck off*/
 #define KEY_UP 0xb
 #define KEY_DOWN 0xa
 #define KEY_RIGHT 0x15

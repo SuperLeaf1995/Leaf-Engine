@@ -10,11 +10,14 @@
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned long uint32_t;
-typedef unsigned long long uint64_t;
 typedef signed char int8_t;
 typedef signed short int16_t;
 typedef signed long int32_t;
+
+#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined(FREEDOS) /*Compatibility with Apple II*/
+typedef unsigned long long uint64_t;
 typedef signed long long int64_t;
+#endif
 
 #ifdef __APPLE2__
 uint8_t *enterGraphicalMode = (uint8_t *)0xC050;
@@ -62,18 +65,25 @@ void _Cdecl showMouse(void);
 void _Cdecl hideMouse(void);
 void _Cdecl getMouse(struct mouse *m);
 
+void _Cdecl fskip(FILE *stream, size_t n);
+int32_t _Cdecl switchEndianness32(int32_t end); /*Compatible with almost anything, even an Apple II*/
+
 #include "leaf_dos.c"
 #endif
 
-/*Some bitmap strucutres, yes, alrgith, lets keep this small and compact*/
+/*Some bitmap strucutres, yes, alrigth, lets keep this small and compact*/
 struct image {
     uint16_t wide;
     uint16_t tall;
     uint8_t *data;
 };
 
+#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined(FREEDOS) /*Compatibility with Apple II*/
+#include "leaf_g~1.c" /*MS-DOS messes with names*/
+#else
+#include "leaf_glob.c" /*We have our non-platmorf dependant stuff back now!*/
+#endif
 #include "image.c" /*Bitmap and (PCX?) decoder?*/
-
 #include "key.h" /*Keyboard keys*/
 
 #endif /*LEAF_H_INCLUDED*/

@@ -1,8 +1,3 @@
-/*===Basic but needed routines (change endianess, etc)====*/
-int32_t switchEndianness32(int32_t end) {
-    return (end<<24)|((end<<8)&0x00ff0000)|((end>>8)&0x0000ff00)|((end>>24)&0x000000ff);
-}
-
 /*=====================Video Routines=====================*/
 
 int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
