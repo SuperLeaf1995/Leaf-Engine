@@ -28,6 +28,7 @@ struct mouse {
     buttonLeft:1;
     buttonRight:1;
     buttonMiddle:1;
+    buttons:4;
     int16_t x;
     int16_t y;
 };

@@ -48,10 +48,20 @@ void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, int8_t colo
 
 /*=====================Mouse Routines=====================*/
 
-char _Cdecl initMouse(void) {
+char _Cdecl initMouse(struct mouse *m) {
+    uint8_t overrideDriver = 0; /*Whomst thinked that the fucking hercules can just mess with the mouse driver?*/
 	in.x.ax = 0x00;
 	in.x.bx = 0x00;
 	int86(0x33,&in,&out);
+	if((in.x.bx&2) != 0) { /*Two button mouse*/
+        m->buttons = 2;
+	}
+	else if((in.x.bx&3) != 0) { /*Three button mouse*/
+        m->buttons = 3;
+	}
+	else { /*Unknown buttons*/
+        m->buttons = 0;
+	}
 	return (out.x.ax != 0) ? 0 : -1; /*If the mouse was initialized return 0, else return -1*/
 }
 
@@ -75,12 +85,12 @@ void _Cdecl hideMouse(void) {
 	return;
 }
 
-void _Cdecl getMouse(struct mouse *m) {
+void _Cdecl getMouseStatus(struct mouse *m) {
 	in.x.ax = 0x03;
 	int86(0x33,&in,&out);
 	m->x = out.x.cx;
 	m->y = out.x.dx;
-	m->buttonLeft = (out.x.bx & 1);
+	m->buttonLeft = (out.x.bx & 1); /*While it is not equal 0, its HOLD/PRESSED, else its RELEASED*/
 	m->buttonRight = (out.x.bx & 2);
 	m->buttonMiddle = (out.x.bx & 4);
 	return;
@@ -106,4 +116,3 @@ and has three bytes per pixel, representing Red, Green and Blue respectively
 *46-50	Number of colors	Number of used colors, max. Depends on bits per pixel
 *50-54	Important colors	Number of relevant colors, i.e the ones that are used most
 */
-
