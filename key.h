@@ -2,6 +2,7 @@
 #define KEY_H
 
 /*Keys*/
+#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined(FREEDOS)
 /*Function keys*/
 #define KEY_F1 0x03b
 #define KEY_F2 0x03c
@@ -16,12 +17,6 @@
 #define KEY_F11 0x0ff85
 #define KEY_F12 0x0ff86
 
-/*Arrow keys*/
-#define KEY_UP 0x048
-#define KEY_DOWN 0x050
-#define KEY_RIGHT 0x04d
-#define KEY_LEFT 0x04b
-
 /*Right pad keys, not the numpad!*/
 #define KEY_INS 0x052
 #define KEY_DEL 0x053
@@ -30,9 +25,23 @@
 #define KEY_PGUP 0x049
 #define KEY_PGDWN 0x051
 
+/*Arrow keys*/
+#define KEY_UP 0x048
+#define KEY_DOWN 0x050
+#define KEY_RIGHT 0x04d
+#define KEY_LEFT 0x04b
+#endif
+
 /*Shift, tab, etc*/
 #define KEY_TAB 0x9
 #define KEY_ENTER 0xd
 #define KEY_ESC 0x1b
+
+#ifdef __APPLE2__
+#define KEY_UP 0xb
+#define KEY_DOWN 0xa
+#define KEY_RIGHT 0x15
+#define KEY_LEFT 0x8
+#endif
 
 #endif
