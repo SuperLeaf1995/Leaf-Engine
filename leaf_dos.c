@@ -49,7 +49,6 @@ void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, int8_t colo
 /*=====================Mouse Routines=====================*/
 
 char _Cdecl initMouse(struct mouse *m) {
-    uint8_t overrideDriver = 0; /*Whomst thinked that the fucking hercules can just mess with the mouse driver?*/
 	in.x.ax = 0x00;
 	in.x.bx = 0x00;
 	int86(0x33,&in,&out);

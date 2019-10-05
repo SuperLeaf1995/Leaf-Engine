@@ -29,7 +29,7 @@ uint8_t *speakerAddress = (uint8_t *)0xC030;
 /*Some functions in some Apple compilers have diferent names, fuck off*/
 #define getch() cgetc()
 
-/*#include "leaf_apple2.c"*/
+#include "leaf_apple2.c"
 #endif
 
 #if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined(FREEDOS) /*Compatibility with Apple II*/
@@ -56,7 +56,7 @@ struct mouse {
 int16_t _Cdecl setVideo(int16_t video);
 void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, int8_t color);
 
-char _Cdecl initMouse(void);
+char _Cdecl initMouse(struct mouse *m);
 void _Cdecl setMousePosition(int16_t x,int16_t y);
 void _Cdecl showMouse(void);
 void _Cdecl hideMouse(void);
@@ -64,6 +64,15 @@ void _Cdecl getMouse(struct mouse *m);
 
 #include "leaf_dos.c"
 #endif
+
+/*Some bitmap strucutres, yes, alrgith, lets keep this small and compact*/
+struct image {
+    uint16_t wide;
+    uint16_t tall;
+    uint8_t *data;
+};
+
+#include "image.c" /*Bitmap and (PCX?) decoder?*/
 
 #include "key.h" /*Keyboard keys*/
 
