@@ -3,8 +3,10 @@
 
 #include <dos.h>
 
-#ifndef _Cdecl
-#define _Cdecl _cdecl
+#if __STDC__
+#define _Cdecl
+#else
+#define _Cdecl	cdecl
 #endif
 
 typedef unsigned char uint8_t;
