@@ -6,6 +6,17 @@ void _Cdecl fskip(FILE *stream, size_t n) {
     return;
 }
 
-int32_t _Cdecl switchEndianness32(int32_t end) {
-    return (end<<24)|((end<<8)&0x00ff0000)|((end>>8)&0x0000ff00)|((end>>24)&0x000000ff);
+uint16_t _Cdecl switchEndiannessUnsigned16(uint16_t num) {
+    return (num<<8)|(num>>8);
+}
+int16_t _Cdecl switchEndiannessSigned16(int16_t num) {
+    return (num<<8)|((num>>8)&0xFF);
+}
+uint32_t _Cdecl switchEndiannessUnsigned32(uint32_t num) {
+    num = ((num<< 8)&0xFF00FF00)|((num>>8)&0xFF00FF);
+    return (num<<16)|(num>>16);
+}
+int32_t _Cdecl switchEndiannessSigned32(int32_t num) {
+    num = ((num<<8)&0xFF00FF00)|((num>>8)&0xFF00FF);
+    return (num<<16)|((num>>16)&0xFFFF);
 }

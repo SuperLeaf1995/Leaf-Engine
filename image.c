@@ -2,6 +2,8 @@
 void decodeBMP(FILE *stream, struct image *im) {
     uint8_t *skip;
     static uint16_t i;
+    uint16_t wide;
+    uint16_t tall;
     skip = (uint8_t *)malloc(64);
     if(skip == NULL) {
         return;
@@ -10,13 +12,15 @@ void decodeBMP(FILE *stream, struct image *im) {
     if(skip[0] != 'B' || skip[1] != 'M') {
         return;
     }
-    fskip(stream,13);
-    /*fread((struct image *)im->wide,sizeof(long),1,stream);
-    fread((struct image *)im->tall,sizeof(long),1,stream);*/
-    for(i = 0; i < 8; i++) {
+    fskip(stream,12);
+    fread(&wide,sizeof(uint32_t),1,stream);
+    fread(&tall,sizeof(uint32_t),1,stream);
+    im->wide = wide;
+    im->tall = tall;
+    /*for(i = 0; i < 8; i++) {
         fread(skip,sizeof(uint8_t),1,stream);
-        printf("HEXDUMP %i: 0x%X\n",i,skip[i]);
-    }
+        printf("HEXDUMP %i: 0x%X\n",i,fgetc(stream));
+    }*/
     /*fread(skip,sizeof(uint8_t),31,stream);*/
     fskip(stream,31+1024);
     im->data = (uint8_t *)malloc(((im->wide)*(im->tall))+1); /*Allocate only needed memory*/

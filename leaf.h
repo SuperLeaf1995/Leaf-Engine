@@ -72,9 +72,27 @@ int32_t _Cdecl switchEndianness32(int32_t end); /*Compatible with almost anythin
 #endif
 
 /*Some bitmap strucutres, yes, alrigth, lets keep this small and compact*/
+struct bitmapHeader {
+    uint16_t type;
+    uint32_t sizeOfFile;
+    uint32_t reserved;
+    uint32_t offset;
+    uint32_t headerSize;
+    uint32_t wide;
+    uint32_t tall;
+    uint16_t planes;
+    uint16_t bitsPerPixel;
+    uint32_t compression;
+    uint32_t sizeOfImage;
+    uint32_t xPixelsPerMeter;
+    uint32_t yPixelsPerMeter;
+    uint32_t numberOfColors;
+    uint32_t importantColors;
+};
+
 struct image {
-    uint16_t wide;
-    uint16_t tall;
+    uint32_t wide;
+    uint32_t tall;
     uint8_t *data;
 };
 
@@ -83,7 +101,9 @@ struct image {
 #else
 #include "leaf_glob.c" /*We have our non-platmorf dependant stuff back now!*/
 #endif
+#ifdef _DEBUG_LEAF
 #include "image.c" /*Bitmap and (PCX?) decoder?*/
+#endif
 #include "key.h" /*Keyboard keys*/
 
 #endif /*LEAF_H_INCLUDED*/
