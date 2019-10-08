@@ -72,14 +72,17 @@ int32_t _Cdecl switchEndianness32(int32_t end); /*Compatible with almost anythin
 #endif
 
 /*Some bitmap strucutres, yes, alrigth, lets keep this small and compact*/
-struct bitmapHeader {
-    uint16_t type;
+struct bitmapFileHeader {
+    uint8_t type[3];
     uint32_t sizeOfFile;
     uint32_t reserved;
     uint32_t offset;
+};
+
+struct bitmapInfoHeader {
     uint32_t headerSize;
-    uint32_t wide;
-    uint32_t tall;
+    int32_t wide;
+    int32_t tall;
     uint16_t planes;
     uint16_t bitsPerPixel;
     uint32_t compression;
