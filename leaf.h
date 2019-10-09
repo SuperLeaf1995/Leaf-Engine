@@ -31,8 +31,6 @@ uint8_t *speakerAddress = (uint8_t *)0xC030;
 
 /*Some functions in some Apple compilers have diferent names, fuck off*/
 #define getch() cgetc()
-
-#include "leaf_apple2.c"
 #endif
 
 #if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined(FREEDOS) /*Compatibility with Apple II*/
@@ -67,8 +65,6 @@ void _Cdecl getMouse(struct mouse *m);
 
 void _Cdecl fskip(FILE *stream, size_t n);
 int32_t _Cdecl switchEndianness32(int32_t end); /*Compatible with almost anything, even an Apple II*/
-
-#include "leaf_dos.c"
 #endif
 
 /*Some bitmap strucutres, yes, alrigth, lets keep this small and compact*/
@@ -99,14 +95,8 @@ struct image {
     uint8_t *data;
 };
 
-#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined(FREEDOS) /*Compatibility with Apple II*/
-#include "leaf_g~1.c" /*MS-DOS messes with names*/
-#else
-#include "leaf_glob.c" /*We have our non-platmorf dependant stuff back now!*/
-#endif
-#ifdef _DEBUG_LEAF
+#include "leaf.h" /*Primary functions. cross-platform (using macros obviously), do not change order!*/
 #include "image.c" /*Bitmap and (PCX?) decoder?*/
-#endif
 #include "key.h" /*Keyboard keys*/
 
 #endif /*LEAF_H_INCLUDED*/

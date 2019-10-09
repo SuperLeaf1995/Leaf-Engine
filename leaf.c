@@ -5,6 +5,31 @@
 @Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*NDFI)
 @Compatible video modes: VGA (*T), SVGA (*T), Hercules (*T), EGA (*T), CGA (*T)
 */
+#ifdef __APPLE2__
+int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
+    switch(video) {
+    case 0x3:
+        *enterGraphicalMode = 0; /*Text mode equivalent?*/
+        *enterFullScreen = 0;
+        *enterHighResolutionMode = 0;
+        break;
+    case 0x13:
+        *enterGraphicalMode = 1; /*VGA equivalent?*/
+        *enterFullScreen = 1;
+        *enterHighResolutionMode = 1;
+        break;
+    default:
+        *enterGraphicalMode = 1; /*Normal video modes*/
+        *enterFullScreen = 1;
+        *enterHighResolutionMode = 0;
+        break;
+    }
+    *graphicsPage1 = 1; /*Select page 1*/
+    *graphicsPage2 = 0;
+    break;
+}
+#endif /*Apple II+ dosent supports "elseif". what the fuck man?*/
+#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined(FREEDOS)
 int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
     in.h.ah = 0x00;
     in.h.al = video;
@@ -13,6 +38,7 @@ int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
     int86(0x10,&in,&out);
     return out.h.al;
 }
+#endif
 
 /*
 @Action: Plots a line
@@ -138,3 +164,35 @@ void _Cdecl getMouseStatus(struct mouse *m) {
 	m->buttonMiddle = (out.x.bx & 4);
 	return;
 }
+
+/*
+@Action: Skips *n* number of chars
+@Param: stream=file stream. n=number of chars to skip
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
+*/
+void _Cdecl fskip(FILE *stream, size_t n) {
+    static size_t i;
+    for(i = 0; i < (n+1); i++) {
+        fgetc(stream); /*Skip palette*/
+    }
+    return;
+}
+
+#ifdef _DEBUG_LEAF /*Do not use.*/
+uint16_t _Cdecl switchEndiannessUnsigned16(uint16_t num) {
+    return (num<<8)|(num>>8);
+}
+int16_t _Cdecl switchEndiannessSigned16(int16_t num) {
+    return (num<<8)|((num>>8)&0xFF);
+}
+uint32_t _Cdecl switchEndiannessUnsigned32(uint32_t num) {
+    num = ((num<< 8)&0xFF00FF00)|((num>>8)&0xFF00FF);
+    return (num<<16)|(num>>16);
+}
+int32_t _Cdecl switchEndiannessSigned32(int32_t num) {
+    num = ((num<<8)&0xFF00FF00)|((num>>8)&0xFF00FF);
+    return (num<<16)|((num>>16)&0xFFFF);
+}
+#endif
+
