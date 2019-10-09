@@ -1,11 +1,11 @@
 /*
 @Action: Reads bitmap file header (before information)
-@Param: stream=file stream. struct bitmapFileHeader=struct pointer, we will write data there!
-@Output: void, but overwrites struct bitmapFileHeader
+@Parameters: stream=file stream. structure bitmapFileHeader=structure pointer, we will write data there!
+@Output: void, but overwrites structure bitmapFileHeader
 @Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
 */
 void _Cdecl readBitmapFileHeader(FILE *stream, struct bitmapFileHeader *b) {
-    uint32_t sizeOfFile,reserved,offset;
+    static uint32_t sizeOfFile,reserved,offset;
     fread(b->type,sizeof(uint16_t),1,stream);
     fread(&sizeOfFile,sizeof(uint32_t),1,stream);
     fread(&reserved,sizeof(uint32_t),1,stream);
@@ -18,22 +18,22 @@ void _Cdecl readBitmapFileHeader(FILE *stream, struct bitmapFileHeader *b) {
 
 /*
 @Action: Reads bitmap information
-@Param: stream=file stream. struct bitmapInfoHeader=struct pointer, we will write data there!
+@Parameters: stream=file stream. structure bitmapInfoHeader=structure pointer, we will write data there!
 @Output: void, but overwrites bitmapInfoHeader
 @Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
 */
 void _Cdecl readBitmapInformationHeader(FILE *stream, struct bitmapInfoHeader *b) {
-    uint32_t headerSize;
-    int32_t wide;
-    int32_t tall;
-    uint16_t planes;
-    uint16_t bitsPerPixel;
-    uint32_t compression;
-    uint32_t sizeOfImage;
-    uint32_t xPixelsPerMeter;
-    uint32_t yPixelsPerMeter;
-    uint32_t numberOfColors;
-    uint32_t importantColors;
+    static uint32_t headerSize;
+    static int32_t wide;
+    static int32_t tall;
+    static uint16_t planes;
+    static uint16_t bitsPerPixel;
+    static uint32_t compression;
+    static uint32_t sizeOfImage;
+    static uint32_t xPixelsPerMeter;
+    static uint32_t yPixelsPerMeter;
+    static uint32_t numberOfColors;
+    static uint32_t importantColors;
     fread(&headerSize,sizeof(uint32_t),1,stream);
     fread(&wide,sizeof(int32_t),1,stream);
     fread(&tall,sizeof(int32_t),1,stream);
@@ -61,13 +61,15 @@ void _Cdecl readBitmapInformationHeader(FILE *stream, struct bitmapInfoHeader *b
 
 /*
 @Action: Reads the image of a bitmap and then outputs it
-@Param: stream=file stream. wide=wide of image. tall=tall of image. data=data pointer (must not be allocated!)
-@Output: Total size of image in an int32_t, higher half is tall, lower half is wide
+@Parameters: stream=file stream. data=data pointer (must not be allocated!). wide=wide of image. tall=tall of image.
+x=x position of the image. y=y position of the image
+@Output: last file position (fpos_t) so we can rewind back to the image
 @Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
 */
-uint32_t _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall, uint8_t *data) {
-    uint16_t i;
-    uint16_t i2;
+fpos_t _Cdecl readBitmapData(FILE *stream, uint8_t *data, int32_t wide, int32_t tall, uint16_t x, uint16_t y) {
+    static uint16_t i;
+    static uint16_t i2;
+    fpos_t pos;
     if(tall == 0 || wide == 0) {
         return 0;
     }
@@ -75,11 +77,30 @@ uint32_t _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall, uint8
     if(data == NULL) {
         return 0; /*Up to caller's, how to handle errors*/
     }
+    fgetpos(stream,&pos);
     fread(data,sizeof(uint8_t),wide*tall,stream);
-    for(i = 0; i < tall; i++) { /*Reverse scan, reverse tall, but not wide*/
-		for(i2 = 0; i2 < wide; i2++) {
-			plotPixel(i2,i,data[i2+(((tall-i)-1)*wide)]);
+    for(i = 0; i < tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
+		for(i2 = 0; i2 < wide+1; i2++) {
+			plotPixel(i2+x,i+y,data[i2+(((tall-i)-1)*wide-1)]);
 		}
     }
-    return (tall<<16)+wide; /*Store TALL in higher half of value, and wide in the lower one, easy!*/
+    return pos; /*Return file position of the last RW, so we can rewind to it a later time!*/
+}
+
+/*
+@Action: Writes bitmap file header (before information)
+@Parameters: stream=file stream. structure bitmapFileHeader=structure pointer, we will read data
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
+*/
+void _Cdecl writeBitmapFileHeader(FILE *stream, struct bitmapFileHeader *b) {
+    static uint32_t sizeOfFile,reserved,offset;
+    sizeOfFile = b->sizeOfFile;
+    reserved = b->reserved;
+    offset = b->offset;
+    fwrite(b->type,sizeof(uint16_t),1,stream);
+    fwrite(&sizeOfFile,sizeof(uint32_t),1,stream);
+    fwrite(&reserved,sizeof(uint32_t),1,stream);
+    fwrite(&offset,sizeof(uint32_t),1,stream);
+    return;
 }
