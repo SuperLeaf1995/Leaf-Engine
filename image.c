@@ -104,3 +104,78 @@ void _Cdecl writeBitmapFileHeader(FILE *stream, struct bitmapFileHeader *b) {
     fwrite(&offset,sizeof(uint32_t),1,stream);
     return;
 }
+
+/*
+@Action: Writes bitmap information
+@Parameters: stream=file stream. structure bitmapInfoHeader=structure pointer, we will read data
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
+*/
+void _Cdecl writeBitmapInformationHeader(FILE *stream, struct bitmapInfoHeader *b) {
+    static uint32_t headerSize;
+    static int32_t wide;
+    static int32_t tall;
+    static uint16_t planes;
+    static uint16_t bitsPerPixel;
+    static uint32_t compression;
+    static uint32_t sizeOfImage;
+    static uint32_t xPixelsPerMeter;
+    static uint32_t yPixelsPerMeter;
+    static uint32_t numberOfColors;
+    static uint32_t importantColors;
+    headerSize = b->headerSize;
+    wide = b->wide;
+    tall = b->tall;
+    planes = b->planes;
+    bitsPerPixel = b->bitsPerPixel;
+    compression = b->compression;
+    sizeOfImage = b->sizeOfImage;
+    xPixelsPerMeter = b->xPixelsPerMeter;
+    yPixelsPerMeter = b->yPixelsPerMeter;
+    numberOfColors = b->numberOfColors;
+    importantColors = b->importantColors;
+    fwrite(&headerSize,sizeof(uint32_t),1,stream);
+    fwrite(&wide,sizeof(int32_t),1,stream);
+    fwrite(&tall,sizeof(int32_t),1,stream);
+    fwrite(&planes,sizeof(uint16_t),1,stream);
+    fwrite(&bitsPerPixel,sizeof(uint32_t),1,stream);
+    fwrite(&compression,sizeof(uint32_t),1,stream);
+    fwrite(&sizeOfImage,sizeof(uint32_t),1,stream);
+    fwrite(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
+    fwrite(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
+    fwrite(&numberOfColors,sizeof(uint32_t),1,stream);
+    fwrite(&importantColors,sizeof(uint32_t),1,stream);
+    return;
+}
+
+/*
+@Action: Displays intro of leaf engine, optional. Use it if you want :)
+@Parameters: time=time in seconds to show the intro, fileOfLeafEngine=file address
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
+*/
+void _Cdecl displayIntro(uint64_t time, char *fileOfLeafEngine) {
+    /*Create a big memory*/
+    static FILE *fp;
+    static struct bitmapFileHeader bfh;
+    static struct bitmapInfoHeader bih;
+    static char *data;
+    static fpos_t pos;
+    static uint64_t i;
+    fp = fopen(fileOfLeafEngine,"rb");
+    if(!fp) {
+        return;
+    }
+    readBitmapFileHeader(fp,&bfh);
+    readBitmapInformationHeader(fp,&bih);
+    for(i = 0; i < 1024; i++) { /*We cant read palettes yet, just, drop it out!*/
+		fgetc(fp);
+	}
+    for(i = 0; i < time; i++) {
+        pos = readBitmapData(fp,data,bih.wide,bih.tall,0,0);
+        fsetpos(fp,&pos);
+    }
+    free(data);
+    fclose(fp);
+    return;
+}
