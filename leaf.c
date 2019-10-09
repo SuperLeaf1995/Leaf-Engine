@@ -2,7 +2,7 @@
 @Action: Sets video to *video*
 @Param: video=16-bit long value of the desired video mode
 @Output: Old video mode
-@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*NDFI)
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT+WIP)
 @Compatible video modes: VGA (*T), SVGA (*T), Hercules (*T), EGA (*T), CGA (*T)
 */
 #ifdef __APPLE2__
@@ -26,10 +26,10 @@ int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
     }
     *graphicsPage1 = 1; /*Select page 1*/
     *graphicsPage2 = 0;
-    break;
+    return 0x3;
 }
 #endif /*Apple II+ dosent supports "elseif". what the fuck man?*/
-#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined(FREEDOS)
+#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined (FREEDOS)
 int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
     in.h.ah = 0x00;
     in.h.al = video;
@@ -44,9 +44,10 @@ int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
 @Action: Plots a line
 @Param: fx=from x. fy=from y. tx=to x. ty=to y. color=color (byte)
 @Output: void
-@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*NDFI)
-@Compatible video modes: VGA (*T), SVGA (*T), Hercules (*UT+NDFI), EGA (*UT+NDFI), CGA (*UT+NDFI)
+@Compatible platforms: All that plotPixel() can handle
+@Compatible video modes: All that plotPixel() can handle
 */
+#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined (FREEDOS)
 void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color) {
 	int16_t dx,dy,px,py,x,y,i;
 	float sl;
@@ -67,7 +68,7 @@ void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t col
 		for(i = 0; i != dx; i+= 1) {
 			px = i+fx;
 			py = sl*i+fy;
-			vgaMemory[((py<<8)+(py<<6)+px)] = color;
+			plotPixel(px,py,color);
 		}
 	}
 	else {
@@ -75,7 +76,7 @@ void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t col
 		for(i = 0; i != dy; i+= 1) {
 			py = sl*i+fx;
 			px = i+fy;
-			vgaMemory[((py<<8)+(py<<6)+px)] = color;
+			plotPixel(px,py,color);
 		}
 	}
 	return;
@@ -194,5 +195,6 @@ int32_t _Cdecl switchEndiannessSigned32(int32_t num) {
     num = ((num<<8)&0xFF00FF00)|((num>>8)&0xFF00FF);
     return (num<<16)|((num>>16)&0xFFFF);
 }
+#endif
 #endif
 

@@ -2,7 +2,7 @@
 #define KEY_H
 
 /*Keys*/
-#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined(FREEDOS)
+#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined (__DOS__) || defined (FREEDOS)
 /*Function keys*/
 #define KEY_F1 0x03b
 #define KEY_F2 0x03c
@@ -32,16 +32,16 @@
 #define KEY_LEFT 0x04b
 #endif
 
-/*Shift, tab, etc*/
-#define KEY_TAB 0x9
-#define KEY_ENTER 0xd
-#define KEY_ESC 0x1b
-
 #ifdef __APPLE2__ /*Apple II has their own arrow keys, fuck off*/
 #define KEY_UP 0xb
 #define KEY_DOWN 0xa
 #define KEY_RIGHT 0x15
 #define KEY_LEFT 0x8
 #endif
+
+/*Shift, tab, etc*/
+#define KEY_TAB 0x9
+#define KEY_ENTER 0xd
+#define KEY_ESC 0x1b
 
 #endif
