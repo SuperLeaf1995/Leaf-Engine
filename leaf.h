@@ -7,6 +7,8 @@
 #define _Cdecl	cdecl
 #endif
 
+#include "key.h" /*Keyboard keys*/
+
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned long uint32_t;
@@ -14,14 +16,13 @@ typedef signed char int8_t;
 typedef signed short int16_t;
 typedef signed long int32_t;
 
-#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined(FREEDOS) /*Compatibility with Apple II*/
-typedef unsigned long long uint64_t;
-typedef signed long long int64_t;
-#endif
-
 #ifdef __APPLE2__
 typedef unsigned long uint64_t; /*No 64-bit values :(*/
 typedef signed long int64_t;
+#endif
+#if defined (__MSDOS__) || defined (_MSDOS) || defined (MSDOS) || defined(__DOS__) || defined(FREEDOS) /*Compatibility with Apple II*/
+typedef unsigned long long uint64_t;
+typedef signed long long int64_t;
 #endif
 
 /*Some bitmap strucutres, yes, alrigth, lets keep this small and compact*/
@@ -102,6 +103,5 @@ int32_t _Cdecl switchEndianness32(int32_t end); /*Compatible with almost anythin
 
 #include "leaf.h" /*Primary functions. cross-platform (using macros obviously), do not change order!*/
 #include "image.c" /*Bitmap and (PCX?) decoder?*/
-#include "key.h" /*Keyboard keys*/
 
 #endif /*LEAF_H_INCLUDED*/
