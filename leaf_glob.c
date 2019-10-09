@@ -1,3 +1,9 @@
+/*
+@Action: Skips *n* number of chars
+@Param: stream=file stream. n=number of chars to skip
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
+*/
 void _Cdecl fskip(FILE *stream, size_t n) {
     static size_t i;
     for(i = 0; i < (n+1); i++) {

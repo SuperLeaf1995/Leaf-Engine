@@ -1,13 +1,27 @@
-/*=====================Video Routines=====================*/
-
+/*
+@Action: Sets video to *video*
+@Param: video=16-bit long value of the desired video mode
+@Output: Old video mode
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*NDFI)
+@Compatible video modes: VGA (*T), SVGA (*T), Hercules (*T), EGA (*T), CGA (*T)
+*/
 int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
     in.h.ah = 0x00;
     in.h.al = video;
     int86(0x10,&in,&out);
+    in.h.ah = 0x0F;
+    int86(0x10,&in,&out);
     return out.h.al;
 }
 
-void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, int8_t color) {
+/*
+@Action: Plots a line
+@Param: fx=from x. fy=from y. tx=to x. ty=to y. color=color (byte)
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*NDFI)
+@Compatible video modes: VGA (*T), SVGA (*T), Hercules (*UT+NDFI), EGA (*UT+NDFI), CGA (*UT+NDFI)
+*/
+void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color) {
 	int16_t dx,dy,px,py,x,y,i;
 	float sl;
 	if(tx >= fx) {
@@ -41,8 +55,15 @@ void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, int8_t colo
 	return;
 }
 
-/*=====================Mouse Routines=====================*/
-
+/*
+@Action: Initializes mouse
+@Param: struct mouse=structure of the mouse, there should be one epr program (recomended)
+because this structure will hold all mouses. And i dont think anyone uses more than 2
+bloody mouses.
+@Output: void, but returns overwritten structure *m
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*NDFI)
+@Compatible video modes: VGA (*T), SVGA (*T), Hercules (*UT), EGA (*UT), CGA (*UT)
+*/
 char _Cdecl initMouse(struct mouse *m) {
 	in.x.ax = 0x00;
 	in.x.bx = 0x00;
@@ -59,7 +80,14 @@ char _Cdecl initMouse(struct mouse *m) {
 	return (out.x.ax != 0) ? 0 : -1; /*If the mouse was initialized return 0, else return -1*/
 }
 
-void _Cdecl setMousePosition(int16_t x,int16_t y) {
+/*
+@Action: Sets position of mouse
+@Param: x=x position. y=y position
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*NDFI)
+@Compatible video modes: VGA (*T), SVGA (*T), Hercules (*UT), EGA (*UT), CGA (*UT)
+*/
+void _Cdecl setMousePosition(uint16_t x,uint16_t y) {
 	in.x.ax = 0x04;
 	in.x.cx = x;
 	in.x.dx = y;
@@ -67,18 +95,39 @@ void _Cdecl setMousePosition(int16_t x,int16_t y) {
 	return;
 }
 
+/*
+@Action: Shows mouse
+@Param: void
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*NDFI)
+@Compatible video modes: VGA (*T), SVGA (*T), Hercules (*UT), EGA (*UT), CGA (*UT)
+*/
 void _Cdecl showMouse(void) {
 	in.x.ax = 0x01;
 	int86(0x33,&in,&out);
 	return;
 }
 
+/*
+@Action: Hide mouse
+@Param: void
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*NDFI)
+@Compatible video modes: VGA (*T), SVGA (*T), Hercules (*UT), EGA (*UT), CGA (*UT)
+*/
 void _Cdecl hideMouse(void) {
 	in.x.ax = 0x02;
 	int86(0x33,&in,&out);
 	return;
 }
 
+/*
+@Action: Get mouse status
+@Param: struct mouse=strucutre of the mouse to write to
+@Output: void, but returns overwritten structure *m
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*NDFI)
+@Compatible video modes: VGA (*T), SVGA (*T), Hercules (*UT), EGA (*UT), CGA (*UT)
+*/
 void _Cdecl getMouseStatus(struct mouse *m) {
 	in.x.ax = 0x03;
 	int86(0x33,&in,&out);
@@ -89,24 +138,3 @@ void _Cdecl getMouseStatus(struct mouse *m) {
 	m->buttonMiddle = (out.x.bx & 4);
 	return;
 }
-
-/*=================Decode/Encode Routines==================*/
-/*
-*0-2	Identifier	Defaults to BM
-*2-6	Size of file	Size of file, can range from 0 to 65,550
-*6-10	Reserved	?
-*10-14	Offset	Offset from the file data
-*14-18	Header size	The size of the Header, set to 40 [1]
-*18-22	Wide	Wide of the image
-*22-26	Tall	Tall of the image
-*26-28	Planes	By default set to 1
-*28-30	Bits per pixel	If set 1 becomes monochrome and each bit is a pixel, if set 4 can have up to 16 colours and each byte are two pixels, 8 to 256 colours and each byte is a pixel, and 28 has up to 2^28
-and has three bytes per pixel, representing Red, Green and Blue respectively
-
-*30-34	Compression	If set to 0 RLE is enabled. Else it's raw data
-*34-38	Size of image	Size in bytes of the image
-*38-42	X px/m	X pixels per meter
-*42-46	Y px/m	Y pixels per meter
-*46-50	Number of colors	Number of used colors, max. Depends on bits per pixel
-*50-54	Important colors	Number of relevant colors, i.e the ones that are used most
-*/

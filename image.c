@@ -1,3 +1,9 @@
+/*
+@Action: Reads bitmap file header (before information)
+@Param: stream=file stream. struct bitmapFileHeader=struct pointer, we will write data there!
+@Output: void, but overwrites struct bitmapFileHeader
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
+*/
 void _Cdecl readBitmapFileHeader(FILE *stream, struct bitmapFileHeader *b) {
     uint32_t sizeOfFile,reserved,offset;
     fread(b->type,sizeof(uint16_t),1,stream);
@@ -10,6 +16,12 @@ void _Cdecl readBitmapFileHeader(FILE *stream, struct bitmapFileHeader *b) {
     return;
 }
 
+/*
+@Action: Reads bitmap information
+@Param: stream=file stream. struct bitmapInfoHeader=struct pointer, we will write data there!
+@Output: void, but overwrites bitmapInfoHeader
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
+*/
 void _Cdecl readBitmapInformationHeader(FILE *stream, struct bitmapInfoHeader *b) {
     uint32_t headerSize;
     int32_t wide;
@@ -47,14 +59,27 @@ void _Cdecl readBitmapInformationHeader(FILE *stream, struct bitmapInfoHeader *b
     return;
 }
 
-int8_t _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall, uint8_t *data) {
+/*
+@Action: Reads the image of a bitmap and then outputs it
+@Param: stream=file stream. wide=wide of image. tall=tall of image. data=data pointer (must not be allocated!)
+@Output: Total size of image in an int32_t, higher half is tall, lower half is wide
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
+*/
+uint32_t _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall, uint8_t *data) {
     uint16_t i;
+    uint16_t i2;
+    if(tall == 0 || wide == 0) {
+        return 0;
+    }
     data = (uint8_t *)malloc(wide*tall);
     if(data == NULL) {
-        return -1;
+        return 0; /*Up to caller's, how to handle errors*/
     }
-    for(i = 0; i < wide*tall; i++) {
-        fread(data,sizeof(uint8_t),1,stream);
+    fread(data,sizeof(uint8_t),wide*tall,stream);
+    for(i = 0; i < tall; i++) { /*Reverse scan, reverse tall, but not wide*/
+		for(i2 = 0; i2 < wide; i2++) {
+			plotPixel(i2,i,data[i2+(((tall-i)-1)*wide)]);
+		}
     }
-    return 0;
+    return (tall<<16)+wide; /*Store TALL in higher half of value, and wide in the lower one, easy!*/
 }
