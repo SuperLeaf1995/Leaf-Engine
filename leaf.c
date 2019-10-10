@@ -20,10 +20,27 @@ int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
 @Action: Gets video adapter
 @Parameters: void
 @Output: Video adapter [see below]
+-0 Unknown (probably SVGA)
+-1 AHEAD adapters
+-2 PARADISE adapters
+-3 OAK TECH adapters
+-5 ATI 18800
+-6 ATI 18800-1
+-7 ATI 18800-2
+-8 ATI 18800-4
+-9 ATI 18800-5
+-10 ATI 68800AX
+-11 EGA Wonder
+-12 VGA Wonder
+-13 EGA Wonder8000+
+-14 Genoa 6200/6300
+-15 Genoa 6400/6600
+-16 Genoa 6100
+-17 Genoa 5100/5200
+-18 Genoa 5300/5400
 @Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT+WIP)
 @Compatible video modes: VGA (*T), SVGA (*T), Hercules (*T), EGA (*T), CGA (*T)
 */
-#ifdef _DEBUG_LEAF
 int32_t _Cdecl getVideoAdapter(void) {
 	static uint8_t *ptr;
 	static uint8_t *txt;
@@ -110,7 +127,46 @@ int32_t _Cdecl getVideoAdapter(void) {
 	}
 	return 0;
 }
-#endif
+
+/*
+@Action: Automaticaly sets the best video mode available
+@Parameters: void
+@Output: oldVideo mode, so we can set it back once we finish
+@Compatible platforms: All
+@Compatible video modes: All
+*/
+/*
+-0 Unknown (probably SVGA)
+-1 AHEAD adapters
+-2 PARADISE adapters
+-3 OAK TECH adapters
+-5 ATI 18800
+-6 ATI 18800-1
+-7 ATI 18800-2
+-8 ATI 18800-4
+-9 ATI 18800-5
+-10 ATI 68800AX
+-11 EGA Wonder
+-12 VGA Wonder
+-13 EGA Wonder8000+
+-14 Genoa 6200/6300
+-15 Genoa 6400/6600
+-16 Genoa 6100
+-17 Genoa 5100/5200
+-18 Genoa 5300/5400
+*/
+int32_t _Cdecl getVideoAdapter(void) {
+int16_t _Cdecl autoSetVideo(void) {
+	static int32_t adapter;
+	static int16_t oldVideo;
+	adapter = getVideoAdapter();
+	switch(adapter) {
+		case 2:
+			oldVideo = setVideo(0x5F);
+			break;
+	}
+	return oldVideo;
+}
 
 /*
 @Action: Plots a line
