@@ -6,13 +6,111 @@
 @Compatible video modes: VGA (*T), SVGA (*T), Hercules (*T), EGA (*T), CGA (*T)
 */
 int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
+	static int16_t oldVideo;
+	in.h.ah = 0x0F;
+    int86(0x10,&in,&out);
+    oldVideo = out.h.al;
     in.h.ah = 0x00;
     in.h.al = video;
     int86(0x10,&in,&out);
-    in.h.ah = 0x0F;
-    int86(0x10,&in,&out);
-    return out.h.al;
+    return oldVideo;
 }
+
+/*
+@Action: Gets video adapter
+@Parameters: void
+@Output: Video adapter [see below]
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT+WIP)
+@Compatible video modes: VGA (*T), SVGA (*T), Hercules (*T), EGA (*T), CGA (*T)
+*/
+#ifdef _DEBUG_LEAF
+int32_t _Cdecl getVideoAdapter(void) {
+	static uint8_t *ptr;
+	static uint8_t *txt;
+	txt = (uint8_t *)malloc(sizeof(uint8_t)*6);
+	if(txt == NULL) {
+		return -1;
+	}
+	ptr = (uint8_t *)0xC0000025; /*Check for AHEAD adapters*/
+	strcpy(txt,"AHEAD\0"); /*Comparing memory, with string!*/
+	if(memcmp(ptr,txt,5) == 0) {
+		return 1;
+	}
+	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*5);
+	ptr = (uint8_t *)0xC000007D; /*Check for PARADISE adapters*/
+	strcpy(txt,"VGA=\0"); /*Comparing memory, with string!*/
+	if(memcmp(ptr,txt,5) == 0) {
+		return 2;
+	}
+	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*8);
+	ptr = (uint8_t *)0xC0000008; /*Check for OAK TECH adapters*/
+	strcpy(txt,"OAK VGA\0"); /*Comparing memory, with string!*/
+	if(memcmp(ptr,txt,5) == 0) {
+		return 3;
+	}
+	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*10);
+	ptr = (uint8_t *)0xC0000031; /*Check for ATI adapters*/
+	strcpy(txt,"761295520\0"); /*Comparing memory, with string!*/
+	if(memcmp(ptr,txt,5) == 0) {
+		ptr = (uint8_t *)0xC0000043; /*We also have to put the stupid revision*/
+		switch(*ptr) {
+			case 0x31:
+				free(txt);
+				return 5; /*18800*/
+			case 0x32:
+				free(txt);
+				return 6; /*18800-1*/
+			case 0x33:
+				free(txt);
+				return 7; /*18800-2*/
+			case 0x34:
+				free(txt);
+				return 8; /*18800-4*/
+			case 0x35:
+				free(txt);
+				return 9; /*18800-5*/
+			case 0x62:
+				free(txt);
+				return 10; /*68800AX*/
+		}
+		ptr = (uint8_t *)0xC0000040;
+		switch(ptr[0]) {
+			case '2':
+				switch(ptr[1]) {
+					case '2':
+						return 11; /*EGA Wonder*/
+				}
+				break;
+			case '3':
+				switch(ptr[1]) {
+					case '1':
+						return 12; /*VGA Wonder*/
+					case '2':
+						return 13; /*EGA Wonder8000+*/
+				}
+				break;
+		}
+	}
+	free(txt);
+	ptr = (uint8_t *)0xC0000037; /*Genoa Graphics Adapter*/
+	ptr = (uint8_t *)0xC0000000+(*ptr); /*Fuck, what a mess!*/
+	if(ptr[0] == 0x77 && ptr[2] == 0x99 && ptr[3] == 0x66) {
+		switch(ptr[1]) {
+			case 0x00:
+				return 14; /*Genoa 6200/6300*/
+			case 0x11:
+				return 15; /*Genoa 6400/6600*/
+			case 0x22:
+				return 16; /*Genoa 6100*/
+			case 0x33:
+				return 17; /*Genoa 5100/5200*/
+			case 0x55:
+				return 18; /*Genoa 5300/5400*/
+		}
+	}
+	return 0;
+}
+#endif
 
 /*
 @Action: Plots a line
@@ -137,6 +235,23 @@ void _Cdecl getMouseStatus(struct mouse *m) {
 	m->buttonRight = (out.x.bx & 2);
 	m->buttonMiddle = (out.x.bx & 4);
 	return;
+}
+
+/*
+@Action: "redraws" black area left by initialized mouse once a thing has been draw
+@Parameters: structure mouse=structure of the mouse
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*NDFI)
+@Compatible video modes: VGA (*T), SVGA (*T), Hercules (*UT), EGA (*UT), CGA (*UT)
+*/
+void _Cdecl redrawOnMouse(struct mouse *m) {
+    static uint16_t i,i2;
+    for(i = 0; i < 16; i++) {
+        for(i2 = 0; i2 < 16; i2++) {
+            plotPixel(i+(m->x/2),i2+(m->y/2),fetchPixel(i+(m->x/2),i2+(m->y/2)));
+        }
+    }
+    return;
 }
 
 /*
