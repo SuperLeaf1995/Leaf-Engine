@@ -45,6 +45,7 @@ struct bitmapInfoHeader {
 struct image {
     uint32_t wide;
     uint32_t tall;
+    uint32_t tileTall; /*Tall of each tile (useful for tiled images)*/
     uint8_t *data;
 };
 

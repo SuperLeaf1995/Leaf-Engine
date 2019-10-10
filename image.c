@@ -24,8 +24,8 @@ void _Cdecl readBitmapFileHeader(FILE *stream, struct bitmapFileHeader *b) {
 */
 void _Cdecl readBitmapInformationHeader(FILE *stream, struct bitmapInfoHeader *b) {
     static uint32_t headerSize;
-    static int32_t wide;
-    static int32_t tall;
+    static uint32_t wide;
+    static uint32_t tall;
     static uint16_t planes;
     static uint16_t bitsPerPixel;
     static uint32_t compression;
@@ -61,14 +61,15 @@ void _Cdecl readBitmapInformationHeader(FILE *stream, struct bitmapInfoHeader *b
 
 /*
 @Action: Reads the image of a bitmap and then outputs it
-@Parameters: stream=file stream. data=data pointer (must not be allocated!). wide=wide of image. tall=tall of image.
-x=x position of the image. y=y position of the image
-@Output: last file position (fpos_t) so we can rewind back to the image
+@Parameters: stream=file stream. wide=wide of image. tall=tall of image.
+@Output: data pointer
 @Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
 */
-fpos_t _Cdecl readBitmapData(FILE *stream, uint8_t *data, int32_t wide, int32_t tall, uint16_t x, uint16_t y) {
-    static uint16_t i;
-    static uint16_t i2;
+uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall) {
+    static uint32_t i;
+    static uint32_t i2;
+    static uint16_t hold;
+    uint8_t *data;
     fpos_t pos;
     if(tall == 0 || wide == 0) {
         return 0;
@@ -78,104 +79,28 @@ fpos_t _Cdecl readBitmapData(FILE *stream, uint8_t *data, int32_t wide, int32_t 
         return 0; /*Up to caller's, how to handle errors*/
     }
     fgetpos(stream,&pos);
-    fread(data,sizeof(uint8_t),wide*tall,stream);
     for(i = 0; i < tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
-		for(i2 = 0; i2 < wide+1; i2++) {
-			plotPixel(i2+x,i+y,data[i2+(((tall-i)-1)*wide-1)]);
+		for(i2 = 0; i2 < wide; i2++) {
+			fread(&hold,sizeof(uint8_t),1,stream);
+			data[(i2+((tall-i)*wide))] = hold;
 		}
     }
-    return pos; /*Return file position of the last RW, so we can rewind to it a later time!*/
+    return (uint8_t *)data;
 }
 
 /*
-@Action: Writes bitmap file header (before information)
-@Parameters: stream=file stream. structure bitmapFileHeader=structure pointer, we will read data
+@Action: Displays image
+@Parameters: data=data pointer. x=x pos. y=y pos. wide=wide of image. tall=tall of image
 @Output: void
 @Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
 */
-void _Cdecl writeBitmapFileHeader(FILE *stream, struct bitmapFileHeader *b) {
-    static uint32_t sizeOfFile,reserved,offset;
-    sizeOfFile = b->sizeOfFile;
-    reserved = b->reserved;
-    offset = b->offset;
-    fwrite(b->type,sizeof(uint16_t),1,stream);
-    fwrite(&sizeOfFile,sizeof(uint32_t),1,stream);
-    fwrite(&reserved,sizeof(uint32_t),1,stream);
-    fwrite(&offset,sizeof(uint32_t),1,stream);
-    return;
-}
-
-/*
-@Action: Writes bitmap information
-@Parameters: stream=file stream. structure bitmapInfoHeader=structure pointer, we will read data
-@Output: void
-@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
-*/
-void _Cdecl writeBitmapInformationHeader(FILE *stream, struct bitmapInfoHeader *b) {
-    static uint32_t headerSize;
-    static int32_t wide;
-    static int32_t tall;
-    static uint16_t planes;
-    static uint16_t bitsPerPixel;
-    static uint32_t compression;
-    static uint32_t sizeOfImage;
-    static uint32_t xPixelsPerMeter;
-    static uint32_t yPixelsPerMeter;
-    static uint32_t numberOfColors;
-    static uint32_t importantColors;
-    headerSize = b->headerSize;
-    wide = b->wide;
-    tall = b->tall;
-    planes = b->planes;
-    bitsPerPixel = b->bitsPerPixel;
-    compression = b->compression;
-    sizeOfImage = b->sizeOfImage;
-    xPixelsPerMeter = b->xPixelsPerMeter;
-    yPixelsPerMeter = b->yPixelsPerMeter;
-    numberOfColors = b->numberOfColors;
-    importantColors = b->importantColors;
-    fwrite(&headerSize,sizeof(uint32_t),1,stream);
-    fwrite(&wide,sizeof(int32_t),1,stream);
-    fwrite(&tall,sizeof(int32_t),1,stream);
-    fwrite(&planes,sizeof(uint16_t),1,stream);
-    fwrite(&bitsPerPixel,sizeof(uint32_t),1,stream);
-    fwrite(&compression,sizeof(uint32_t),1,stream);
-    fwrite(&sizeOfImage,sizeof(uint32_t),1,stream);
-    fwrite(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
-    fwrite(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
-    fwrite(&numberOfColors,sizeof(uint32_t),1,stream);
-    fwrite(&importantColors,sizeof(uint32_t),1,stream);
-    return;
-}
-
-/*
-@Action: Displays intro of leaf engine, optional. Use it if you want :)
-@Parameters: time=time in seconds to show the intro, fileOfLeafEngine=file address
-@Output: void
-@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
-*/
-void _Cdecl displayIntro(uint64_t time, char *fileOfLeafEngine) {
-    /*Create a big memory*/
-    static FILE *fp;
-    static struct bitmapFileHeader bfh;
-    static struct bitmapInfoHeader bih;
-    static char *data;
-    static fpos_t pos;
-    static uint64_t i;
-    fp = fopen(fileOfLeafEngine,"rb");
-    if(!fp) {
-        return;
+void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall) {
+    static uint32_t i;
+    static uint32_t i2;
+    for(i2 = 0; i2 < tall; i2++) {
+        for(i = 0; i < wide; i++) {
+            plotPixel(x+i,y+i2,data[i+(i2*wide)]);
+        }
     }
-    readBitmapFileHeader(fp,&bfh);
-    readBitmapInformationHeader(fp,&bih);
-    for(i = 0; i < 1024; i++) { /*We cant read palettes yet, just, drop it out!*/
-		fgetc(fp);
-	}
-    for(i = 0; i < time; i++) {
-        pos = readBitmapData(fp,data,bih.wide,bih.tall,0,0);
-        fsetpos(fp,&pos);
-    }
-    free(data);
-    fclose(fp);
     return;
 }
