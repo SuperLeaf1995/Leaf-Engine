@@ -10,6 +10,13 @@ int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
 	in.h.ah = 0x0F;
     int86(0x10,&in,&out);
     oldVideo = out.h.al;
+    if(oldVideo == 0x29) { /*Realtek RTVGA BIOS v3.C10 crashes when switching to mode 0x21 or 0x27*/
+		if(video == 0x21 || video == 0x27) {
+			in.h.ah = 0x00;
+			in.h.al = 0x13;
+			int86(0x10,&in,&out);
+		}
+	}
     in.h.ah = 0x00;
     in.h.al = video;
     int86(0x10,&in,&out);
@@ -155,7 +162,6 @@ int32_t _Cdecl getVideoAdapter(void) {
 -17 Genoa 5100/5200
 -18 Genoa 5300/5400
 */
-int32_t _Cdecl getVideoAdapter(void) {
 int16_t _Cdecl autoSetVideo(void) {
 	static int32_t adapter;
 	static int16_t oldVideo;
