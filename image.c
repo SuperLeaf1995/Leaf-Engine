@@ -104,3 +104,20 @@ void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, u
     }
     return;
 }
+
+/*
+@Action: Displays image in tiled mode
+@Parameters: data=data pointer. x=x pos. y=y pos. wide=wide of tile. tall=tall of tile. index=tile number
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
+*/
+void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index) {
+    static uint32_t i;
+    static uint32_t i2;
+    for(i2 = 0; i2 < tall; i2++) {
+        for(i = 0; i < wide; i++) {
+            plotPixel(x+i,y+i2,data[(index*(wide*tall))+i+(i2*wide)]);
+        }
+    }
+    return;
+}

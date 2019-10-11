@@ -65,6 +65,7 @@ struct mouse {
 };
 
 #define plotPixel(x,y,color) vgaMemory[x+(y<<8)+(y<<6)] = color
+#define plotLinearPixel(pos,color) vgaMemory[pos] = color
 #define fetchPixel(x,y) vgaMemory[x+(y<<8)+(y<<6)]
 
 int16_t _Cdecl setVideo(int16_t video);
