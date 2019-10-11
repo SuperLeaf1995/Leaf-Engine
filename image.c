@@ -79,7 +79,7 @@ uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall) {
         return 0; /*Up to caller's, how to handle errors*/
     }
     fgetpos(stream,&pos);
-    for(i = 0; i < tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
+    for(i = 1; i < tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
 		for(i2 = 0; i2 < wide; i2++) {
 			fread(&hold,sizeof(uint8_t),1,stream);
 			data[(i2+((tall-i)*wide))] = hold;
@@ -120,4 +120,70 @@ void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wid
         }
     }
     return;
+}
+
+/*
+@Action: Saves bitmap
+@Parameters: stream=file stream. bfh=bitmap file header pointer. bih=bitmap info header pointer.
+data=data pointer
+@Output: void
+@Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT)
+*/
+void _Cdecl writeBitmap(FILE *stream, struct bitmapFileHeader *bfh, struct bitmapInfoHeader *bih, uint8_t *data) {
+	static uint32_t sizeOfFile,reserved,offset; /*We do the same as in our read routines*/
+    static uint32_t headerSize;					/*we just switch the order of stuff and*/
+    static uint32_t wide;						/*change read with write.*/
+    static uint32_t tall;
+    static uint16_t planes;
+    static uint16_t bitsPerPixel;
+    static uint32_t compression;
+    static uint32_t sizeOfImage;
+    static uint32_t xPixelsPerMeter;
+    static uint32_t yPixelsPerMeter;
+    static uint32_t numberOfColors;
+    static uint32_t importantColors;
+    static uint32_t i;
+    static uint32_t i2;
+    static uint16_t hold;
+	sizeOfFile = bfh->sizeOfFile;
+    reserved = bfh->reserved;
+    offset = bfh->offset;
+    headerSize = bih->headerSize;
+    wide = bih->wide;
+    tall = bih->tall;
+    planes = bih->planes;
+    bitsPerPixel = bih->bitsPerPixel;
+    compression = bih->compression;
+    sizeOfImage = bih->sizeOfImage;
+    xPixelsPerMeter = bih->xPixelsPerMeter;
+    yPixelsPerMeter = bih->yPixelsPerMeter;
+    numberOfColors = bih->numberOfColors;
+    importantColors = bih->importantColors;
+    fwrite(bfh->type,sizeof(uint16_t),1,stream);
+    fwrite(&sizeOfFile,sizeof(uint32_t),1,stream);
+    fwrite(&reserved,sizeof(uint32_t),1,stream);
+    fwrite(&offset,sizeof(uint32_t),1,stream);
+	fwrite(&headerSize,sizeof(uint32_t),1,stream);
+    fwrite(&wide,sizeof(int32_t),1,stream);
+    fwrite(&tall,sizeof(int32_t),1,stream);
+    fwrite(&planes,sizeof(uint16_t),1,stream);
+    fwrite(&bitsPerPixel,sizeof(uint32_t),1,stream);
+    fwrite(&compression,sizeof(uint32_t),1,stream);
+    fwrite(&sizeOfImage,sizeof(uint32_t),1,stream);
+    fwrite(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
+    fwrite(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
+    fwrite(&numberOfColors,sizeof(uint32_t),1,stream);
+    fwrite(&importantColors,sizeof(uint32_t),1,stream);
+    /*Palette*/
+    for(i = 0; i < 1022; i++) {
+		fwrite(&i,sizeof(uint8_t),1,stream);
+	}
+	/*Bitmap data*/
+	for(i = 1; i < tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
+		for(i2 = 0; i2 < wide; i2++) { /*We just replotting our shit back again!*/
+			hold = data[(i2+((tall-i)*wide))];
+			fwrite(&hold,sizeof(uint8_t),1,stream);
+		}
+    }
+	return;
 }
