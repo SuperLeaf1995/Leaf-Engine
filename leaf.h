@@ -49,9 +49,9 @@ struct image {
     uint8_t *data;
 };
 
-uint8_t far *vgaMemory = (uint8_t far *)0xA0000000L;
-uint8_t far *textMemory = (uint8_t far *)0xB8000000L;
-uint16_t *clock = (uint16_t far *)0x0000046C;
+static uint8_t far *vgaMemory = (uint8_t far *)0xA0000000L;
+static uint8_t far *textMemory = (uint8_t far *)0xB8000000L;
+static uint16_t *clock = (uint16_t far *)0x0000046C;
 
 union REGS in,out;
 
@@ -67,18 +67,24 @@ struct mouse {
 #define plotPixel(x,y,color) vgaMemory[x+(y<<8)+(y<<6)] = color
 #define plotLinearPixel(pos,color) vgaMemory[pos] = color
 #define fetchPixel(x,y) vgaMemory[x+(y<<8)+(y<<6)]
-
+/*LEAF.C*/
 int16_t _Cdecl setVideo(int16_t video);
+int32_t _Cdecl getVideoAdapter(void);
 void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color);
-
 char _Cdecl initMouse(struct mouse *m);
-void _Cdecl setMousePosition(uint16_t x,uint16_t y);
+char _Cdecl initMouse(struct mouse *m);
 void _Cdecl showMouse(void);
 void _Cdecl hideMouse(void);
-void _Cdecl getMouse(struct mouse *m);
-
+void _Cdecl getMouseStatus(struct mouse *m);
+void _Cdecl redrawOnMouse(struct mouse *m);
 void _Cdecl fskip(FILE *stream, uint64_t n);
-int32_t _Cdecl switchEndianness32(int32_t end); /*Compatible with almost anything, even an Apple II+*/
+/*IMAGE.C*/
+void _Cdecl readBitmapFileHeader(FILE *stream, struct bitmapFileHeader *b);
+void _Cdecl readBitmapInformationHeader(FILE *stream, struct bitmapInfoHeader *b);
+uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall);
+void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
+void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index);
+void _Cdecl writeBitmap(FILE *stream, struct bitmapFileHeader *bfh, struct bitmapInfoHeader *bih, uint8_t *data);
 
 #include "leaf.c" /*Primary functions. cross-platform (using macros obviously), do not change order!*/
 #include "image.c" /*Bitmap and (PCX?) decoder?*/
