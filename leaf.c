@@ -5,7 +5,7 @@
 @Compatible platforms: MSDOS (*T), FreeDOS (*UT), AppleII+ (*UT+WIP)
 @Compatible video modes: VGA (*T), SVGA (*T), Hercules (*T), EGA (*T), CGA (*T)
 */
-int16_t _Cdecl setVideo(int16_t video) { /*Sets the video using int 10h*/
+int16_t _Cdecl setVideo(register int16_t video) { /*Sets the video using int 10h*/
 	static int16_t oldVideo;
 	in.h.ah = 0x0F;
     int86(0x10,&in,&out);

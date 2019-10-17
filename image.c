@@ -116,7 +116,9 @@ void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wid
     static uint32_t i2;
     for(i2 = 0; i2 < tall; i2++) {
         for(i = 0; i < wide; i++) {
-            plotPixel(x+i,y+i2,data[(index*(wide*tall))+i+(i2*wide)]);
+			if(data[(index*(wide*tall))+i+(i2*wide)] != 0x24) {
+				plotPixel(x+i,y+i2,data[(index*(wide*tall))+i+(i2*wide)]);
+			}
         }
     }
     return;
