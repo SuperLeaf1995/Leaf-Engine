@@ -123,6 +123,7 @@ void _Cdecl readBitmapFileHeader(FILE *stream, struct bitmapFileHeader *b);
 void _Cdecl readBitmapInformationHeader(FILE *stream, struct bitmapInfoHeader *b);
 uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall);
 void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
+void _Cdecl displayBitmapImageWhileReading(FILE *stream, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
 void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index);
 void _Cdecl writeBitmap(FILE *stream, struct bitmapFileHeader *bfh, struct bitmapInfoHeader *bih, uint8_t *data);
 

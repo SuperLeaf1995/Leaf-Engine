@@ -121,7 +121,7 @@ void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, u
 @Parameters: x=x pos. y=y pos. wide=wide of image. tall=tall of image
 @Output: void
 */
-void _Cdecl displayImageWhileReading(FILE *stream, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall) {
+void _Cdecl displayBitmapImageWhileReading(FILE *stream, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall) {
     static uint32_t i;
     static uint32_t i2;
     static uint16_t hold;
