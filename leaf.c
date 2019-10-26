@@ -333,35 +333,95 @@ int32_t _Cdecl getVideoAdapter(void) {
 @Parameters: fx=from x. fy=from y. tx=to x. ty=to y. color=color (byte)
 @Output: void
 */
-void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color) {
-	static int16_t dx,dy,px,py,i;
-	static float sl;
-	if(tx >= fx) {
-		dx = tx-fx;
-	}
-	else {
-		dx = fx-tx;
-	}
-	if(ty >= fy) {
-		dy = ty-fy;
-	}
-	else {
-		dy = fy-ty;
-	}
-	if(abs(dy) >= abs(dx)) {
-		sl=(float)dy/(float)dx;
-		for(i = 0; i != dx; i+= 1) {
-			px = i+fx;
-			py = sl*i+fy;
-			plotPixel(px,py,color);
+/*Adapted from wikipedia's pseudo code*/
+void plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color) {
+	static int16_t dx;
+	static int16_t dy;
+	static int16_t xi;
+	static int16_t yi;
+	static int16_t d;
+	static int16_t x;
+	static int16_t y;
+	static int16_t i;
+	if(abs(ty-fy) < abs(tx-fx)) { /*If ty-fy < tx-fx the line is more horizontal*/
+		if(fx > tx) { /*STarting X is higher than ending X*/
+			dx=fx-tx;
+			dy=fy-ty;
+			yi=1;
+			if(dy < 0) {
+				yi = -1;
+				dy = -dy;
+			}
+			d = 2*dy - dx;
+			y = fy;
+			for(i = fx; !(i > tx); i++) {
+				plotPixel(i,y,color);
+				if(d > 0) {
+					y = y+yi;
+					d = d -2*dx;
+				}
+				d = d +2*dy;
+			}
+		}
+		else {
+			dx=tx-fx;
+			dy=ty-fy;
+			yi=1;
+			if(dy < 0) {
+				yi = -1;
+				dy = -dy;
+			}
+			d = 2*dy - dx;
+			y = fy;
+			for(i = fx; !(i > tx); i++) {
+				plotPixel(i,y,color);
+				if(d > 0) {
+					y = y+yi;
+					d = d -2*dx;
+				}
+				d = d +2*dy;
+			}
 		}
 	}
 	else {
-		sl=(float)dx/(float)dy;
-		for(i = 0; i != dy; i+= 1) {
-			py = sl*i+fx;
-			px = i+fy;
-			plotPixel(px,py,color);
+		if(fy > ty) { /*Starting Y is higher than ending Y*/
+			dx = fx-tx;
+			dy = fy-ty;
+			xi = 1;
+			if(dx < 0) {
+				xi = -1;
+				dx = -dx;
+			}
+			d = 2*dx-dy;
+			x=fx;
+			for(i = fy; !(i > ty); i++) {
+				plotPixel(x,i,color);
+				if(d > 0) {
+					x = x+xi;
+					d = d-2*dy;
+				}
+				d=d+2*dx;
+			}
+		}
+		else {
+			/*plotLineHigh(x0, y0, x1, y1)*/
+			dx = tx-fx;
+			dy = ty-fy;
+			xi = 1;
+			if(dx < 0) {
+				xi = -1;
+				dx = -dx;
+			}
+			d = 2*dx-dy;
+			x=fx;
+			for(i = fy; !(i > ty); i++) {
+				plotPixel(x,i,color);
+				if(d > 0) {
+					x = x+xi;
+					d = d-2*dy;
+				}
+				d=d+2*dx;
+			}
 		}
 	}
 	return;
