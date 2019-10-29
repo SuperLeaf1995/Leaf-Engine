@@ -50,7 +50,14 @@
 *.mod*
 *.cmd
 .tmp_versions/
+testdum/
+doc/
+
+#Some test programs, nothing relevant :P
 modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#autosha used shit
+copy_file.bat
