@@ -118,6 +118,9 @@ uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall) {
     }
     data = (uint8_t *)malloc(wide*tall);
     if(data == NULL) {
+		#ifdef _LEAF_ERROR
+		setLeafError(0);
+		#endif
         return 0; /*Up to caller's, how to handle errors*/
     }
     fgetpos(stream,&pos);
@@ -563,5 +566,3 @@ void _Cdecl fskip(FILE *stream, uint64_t n) {
     }
     return;
 }
-
-void _Cdecl 

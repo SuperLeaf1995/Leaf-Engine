@@ -134,6 +134,6 @@ void _Cdecl displayBitmapImageWhileReading(FILE *stream, uint32_t x, uint32_t y,
 void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index);
 void _Cdecl writeBitmap(FILE *stream, struct bitmapFileHeader *bfh, struct bitmapInfoHeader *bih, uint8_t *data);
 
-#include "leaf.c" /*Primary functions. cross-platform (using macros obviously), do not change order!*/
+#include "leaf.c" /*Primary functions!*/
 
 #endif /*LEAF_H_INCLUDED*/
