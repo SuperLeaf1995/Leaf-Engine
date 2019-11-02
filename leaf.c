@@ -1,3 +1,32 @@
+#ifdef _LEAF_ERROR
+
+void _Cdecl setLeafError(uint8_t id) {
+	globalLeafErrorHandler = id;
+	return;
+}
+
+char * _Cdecl leafError(void) {
+	char *str;
+	str = (char *)malloc(16);
+	if(str == NULL) {
+		return NULL;
+	}
+	switch(globalLeafErrorHandler) {
+		case 0:
+			strcpy(str,"ERR_ALLOC\0");
+			break;
+		case 1:
+			strcpy(str,"ERR_MOUSE_INIT\0");
+			break;
+		default:
+			strcpy(str,"ERR_UNDEF\0");
+			break;
+	}
+	return str;
+}
+
+#endif
+
 /*
 @Action: Sets video to *video*
 @Parameters: video=16-bit long value of the desired video mode
@@ -20,6 +49,7 @@ int16_t _Cdecl setVideo(register int16_t video) { /*Sets the video using int 10h
     int86(0x10,&in,&out);
     return oldVideo;
 }
+
 /*
 @Action: Reads bitmap file header (before information)
 @Parameters: stream=file stream. structure bitmapFileHeader=structure pointer, we will write data there!
@@ -447,6 +477,11 @@ char _Cdecl initMouse(struct mouse *m) {
 	else { /*Unknown buttons*/
         m->buttons = 0;
 	}
+	#ifdef _LEAF_ERROR
+	if(out.x.ax == 0) {
+		setLeafError(1);
+	}
+	#endif
 	return (out.x.ax != 0) ? 0 : -1; /*If the mouse was initialized return 0, else return -1*/
 }
 
@@ -528,3 +563,5 @@ void _Cdecl fskip(FILE *stream, uint64_t n) {
     }
     return;
 }
+
+void _Cdecl 
