@@ -1,5 +1,4 @@
 #ifdef _LEAF_ERROR
-
 void _Cdecl setLeafError(uint8_t id) {
 	globalLeafErrorHandler = id;
 	return;
@@ -24,7 +23,6 @@ char * _Cdecl leafError(void) {
 	}
 	return str;
 }
-
 #endif
 
 /*
@@ -49,6 +47,31 @@ int16_t _Cdecl setVideo(register int16_t video) { /*Sets the video using int 10h
     int86(0x10,&in,&out);
     return oldVideo;
 }
+
+void _Cdecl setPalette(void) {
+	static uint16_t i;
+	outp(0x03C8,0x00);
+	for(i = 0; i < )
+	return;
+}
+
+#ifdef _LEAF_PALETTE_FILES
+void _Cdecl readLeafPaletteFile(FILE *stream) {
+	static uint16_t i;
+	/*Wait for vertical retrace*/
+    while((inp(0x03DA) & 0x08)) {
+		i = 0; /*Some compilers ignore empty while's, if they dont, let's just prevent it*/
+	}
+	while(!(inp(0x03DA) & 0x08)) {
+		i = 0;
+	}
+	outp(0x03C8,0x00);
+	for(i = 0; i < 1024; i++) {
+		outp(0x03C9,fgetc(fp));
+	}
+	return;
+}
+#endif
 
 /*
 @Action: Reads bitmap file header (before information)

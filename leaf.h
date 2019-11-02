@@ -114,6 +114,9 @@ uint8_t globalLeafErrorHandler;
 void _Cdecl setLeafError(uint8_t id);
 char * _Cdecl leafError(void);
 #endif
+#ifdef _LEAF_PALETTE_FILES
+void _Cdecl readLeafPaletteFile(FILE *stream, struct leafPaletteFile);
+#endif
 
 /*LEAF.C*/
 int16_t _Cdecl setVideo(int16_t video);
