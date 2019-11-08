@@ -54,20 +54,6 @@ static uint16_t far *clock = (uint16_t far *)0x0000046C;
 
 union REGS in,out;
 
-/*Render structs*/
-struct object {
-	uint32_t x;
-	uint32_t y;
-	uint32_t z;
-	uint16_t type;
-	struct image img;
-};
-
-struct layer {
-	uint8_t id;
-	struct object * objArray;
-};
-
 struct image {
     uint32_t wide;
     uint32_t tall;
@@ -109,13 +95,10 @@ struct bitmapInfoHeader {
 #define plotLinearPixel(pos,color) vgaMemory[pos] = color
 #define fetchPixel(x,y) vgaMemory[x+(y<<8)+(y<<6)]
 
-#ifdef _LEAF_ERROR
+#ifdef LEAF_ERROR
 uint8_t globalLeafErrorHandler;
 void _Cdecl setLeafError(uint8_t id);
 char * _Cdecl leafError(void);
-#endif
-#ifdef _LEAF_PALETTE_FILES
-void _Cdecl readLeafPaletteFile(FILE *stream, struct leafPaletteFile);
 #endif
 
 /*LEAF.C*/
@@ -129,8 +112,7 @@ void _Cdecl hideMouse(void);
 void _Cdecl getMouseStatus(struct mouse *m);
 void _Cdecl redrawOnMouse(struct mouse *m);
 void _Cdecl fskip(FILE *stream, uint64_t n);
-void _Cdecl readBitmapFileHeader(FILE *stream, struct bitmapFileHeader *b);
-void _Cdecl readBitmapInformationHeader(FILE *stream, struct bitmapInfoHeader *b);
+void _Cdecl readBitmapHeader(FILE *stream, struct bitmapFileHeader *b, struct bitmapInfoHeader *e);
 uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall);
 void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
 void _Cdecl displayBitmapImageWhileReading(FILE *stream, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);

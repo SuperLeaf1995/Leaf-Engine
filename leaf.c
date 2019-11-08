@@ -1,4 +1,4 @@
-#ifdef _LEAF_ERROR
+#ifdef LEAF_ERROR
 void _Cdecl setLeafError(uint8_t id) {
 	globalLeafErrorHandler = id;
 	return;
@@ -47,31 +47,6 @@ int16_t _Cdecl setVideo(register int16_t video) { /*Sets the video using int 10h
     int86(0x10,&in,&out);
     return oldVideo;
 }
-
-void _Cdecl setPalette(void) {
-	static uint16_t i;
-	outp(0x03C8,0x00);
-	for(i = 0; i < )
-	return;
-}
-
-#ifdef _LEAF_PALETTE_FILES
-void _Cdecl readLeafPaletteFile(FILE *stream) {
-	static uint16_t i;
-	/*Wait for vertical retrace*/
-    while((inp(0x03DA) & 0x08)) {
-		i = 0; /*Some compilers ignore empty while's, if they dont, let's just prevent it*/
-	}
-	while(!(inp(0x03DA) & 0x08)) {
-		i = 0;
-	}
-	outp(0x03C8,0x00);
-	for(i = 0; i < 1024; i++) {
-		outp(0x03C9,fgetc(fp));
-	}
-	return;
-}
-#endif
 
 /*
 @Action: Reads bitmap file header (before information)
@@ -141,7 +116,7 @@ uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall) {
     }
     data = (uint8_t *)malloc(wide*tall);
     if(data == NULL) {
-		#ifdef _LEAF_ERROR
+		#ifdef LEAF_ERROR
 		setLeafError(0);
 		#endif
         return 0; /*Up to caller's, how to handle errors*/
@@ -201,8 +176,8 @@ void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wid
     static uint32_t i2;
     for(i2 = 0; i2 < tall; i2++) {
         for(i = 0; i < wide; i++) {
-			if(data[(index*(wide*tall))+i+(i2*wide)] != 0x24) {
-				plotPixel(x+i,y+i2,data[(index*(wide*tall))+i+(i2*wide)]);
+			if(data[((i2*wide)+i)+index] != 0x24) {
+				plotPixel(x+i,y+i2,data[((i2*wide)+i)+index]);
 			}
         }
     }
@@ -503,7 +478,7 @@ char _Cdecl initMouse(struct mouse *m) {
 	else { /*Unknown buttons*/
         m->buttons = 0;
 	}
-	#ifdef _LEAF_ERROR
+	#ifdef LEAF_ERROR
 	if(out.x.ax == 0) {
 		setLeafError(1);
 	}
