@@ -172,11 +172,27 @@ void _Cdecl displayBitmapImageWhileReading(FILE *stream, uint32_t x, uint32_t y,
 @Output: void
 */
 void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index) {
-    static uint32_t i;
-    static uint32_t i2;
+    register uint32_t i;
+    register uint32_t i2;
     for(i2 = 0; i2 < tall; i2++) {
         for(i = 0; i < wide; i++) {
-			if(data[((i2*wide)+i)+index] != 0x24) {
+			plotPixel(x+i,y+i2,data[((i2*wide)+i)+index]);
+        }
+    }
+    return;
+}
+
+/*
+@Action: Displays image in tiled mode (Transparent)
+@Parameters: data=data pointer. x=x pos. y=y pos. wide=wide of tile. tall=tall of tile. index=tile number. trans=transparent color
+@Output: void
+*/
+void _Cdecl displayImageTileTransparent(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index, uint8_t trans) {
+    register uint32_t i;
+    register uint32_t i2;
+    for(i2 = 0; i2 < tall; i2++) {
+        for(i = 0; i < wide; i++) {
+			if(data[((i2*wide)+i)+index] != trans) {
 				plotPixel(x+i,y+i2,data[((i2*wide)+i)+index]);
 			}
         }

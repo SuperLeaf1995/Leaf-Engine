@@ -91,9 +91,9 @@ struct bitmapInfoHeader {
     uint32_t importantColors;
 };
 
-#define plotPixel(x,y,color) vgaMemory[x+(y<<8)+(y<<6)] = color
+#define plotPixel(x,y,color) vgaMemory[(y<<8)+(y<<6)+x] = color
 #define plotLinearPixel(pos,color) vgaMemory[pos] = color
-#define fetchPixel(x,y) vgaMemory[x+(y<<8)+(y<<6)]
+#define fetchPixel(x,y) vgaMemory[(y<<8)+(y<<6)+x]
 
 #ifdef LEAF_ERROR
 uint8_t globalLeafErrorHandler;
@@ -117,6 +117,7 @@ uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall);
 void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
 void _Cdecl displayBitmapImageWhileReading(FILE *stream, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
 void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index);
+void _Cdecl displayImageTileTransparent(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index, uint8_t trans);
 void _Cdecl writeBitmap(FILE *stream, struct bitmapFileHeader *bfh, struct bitmapInfoHeader *bih, uint8_t *data);
 
 #include "leaf.c" /*Primary functions!*/
