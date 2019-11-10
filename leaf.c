@@ -6,24 +6,74 @@ void _Cdecl setLeafError(uint8_t id) {
 
 char * _Cdecl leafError(void) {
 	char *str;
-	str = (char *)malloc(16);
-	if(str == NULL) {
-		return NULL;
-	}
 	switch(globalLeafErrorHandler) {
-		case 0:
-			strcpy(str,"ERR_ALLOC\0");
-			break;
 		case 1:
+			str = (char *)malloc(strlen("ERR_MOUSE_INIT\0")+1);
+			if(str == NULL) {
+				return NULL;
+			}
 			strcpy(str,"ERR_MOUSE_INIT\0");
 			break;
-		default:
+		case 2:
+			str = (char *)malloc(strlen("REQ_FILE_INVALID\0")+1);
+			if(str == NULL) {
+				return NULL;
+			}
+			strcpy(str,"REQ_FILE_INVALID\0");
+			break;
+		case 3:
+			str = (char *)malloc(strlen("ERR_UNDEF\0")+1);
+			if(str == NULL) {
+				return NULL;
+			}
 			strcpy(str,"ERR_UNDEF\0");
+			break;
+		case 4:
+			str = (char *)malloc(strlen("ERR_ALLOC\0")+1);
+			if(str == NULL) {
+				return NULL;
+			}
+			strcpy(str,"ERR_ALLOC\0");
+			break;
+		case 5:
+			str = (char *)malloc(strlen("ERR_UNSUPPORTED_FEATURE\0")+1);
+			if(str == NULL) {
+				return NULL;
+			}
+			strcpy(str,"ERR_UNSUPPORTED_FEATURE\0");
+			break;
+		case 6:
+			str = (char *)malloc(strlen("ERR_OVERFLOW_AVOIDAGE\0")+1);
+			if(str == NULL) {
+				return NULL;
+			}
+			strcpy(str,"ERR_OVERFLOW_AVOIDAGE\0");
+			break;
+		default:
+			str = (char *)malloc(strlen("NO_ERR\0")+1);
+			if(str == NULL) {
+				return NULL;
+			}
+			strcpy(str,"NO_ERR\0");
 			break;
 	}
 	return str;
 }
 #endif
+
+/*
+@Action: Skips *n* number of chars
+@Parameters: stream=file stream. n=number of chars to skip
+@Output: void
+*/
+void _Cdecl fskip(FILE *stream, uint64_t n) {
+    static uint64_t i;
+    for(i = 0; i < (n+1); i++) {
+        fgetc(stream); /*Skip characters*/
+    }
+    return;
+}
+
 
 /*
 @Action: Sets video to *video*
@@ -65,31 +115,88 @@ void _Cdecl readBitmapHeader(FILE *stream, struct bitmapFileHeader *b, struct bi
     static uint32_t yPixelsPerMeter;
     static uint32_t numberOfColors;
     static uint32_t importantColors;
-    static uint32_t sizeOfFile,reserved,offset;
+    static uint32_t sizeOfFile;
+    static uint32_t reserved;
+    static uint32_t offset;
+    static uint32_t mask[4];
     /*Read file header*/
     fread(b->type,sizeof(uint16_t),1,stream);
+    /*Confirmate that it is a actual bitmap*/
+    if(strncmp(b->type,"BM",2) == 0 /*Normal windows bitmap*/
+    || strncmp(b->type,"BA",2) == 0
+    || strncmp(b->type,"IC",2) == 0 /*Icons (OS/2)*/
+    || strncmp(b->type,"PT",2) == 0 /*Pointers (OS/2)*/
+    || strncmp(b->type,"CI",2) == 0 /*Color icons (OS/2)*/
+    || strncmp(b->type,"CP",2) == 0) /*Color pointers (OS/2)*/ {
+		/*Its valid, proceed*/
+	}
+	else {
+		/*Damn, return error*/
+		#ifdef LEAF_ERROR
+		setLeafError(2);
+		#endif
+		return;
+	}
     fread(&sizeOfFile,sizeof(uint32_t),1,stream);
-    fread(&reserved,sizeof(uint32_t),1,stream);
-    fread(&offset,sizeof(uint32_t),1,stream);
+	fread(&reserved,sizeof(uint32_t),1,stream); /*reserved has an actual mean in OS/2*/
+	fread(&offset,sizeof(uint32_t),1,stream);
     b->sizeOfFile = sizeOfFile;
     b->reserved = reserved;
     b->offset = offset;
     /*Now information*/
     fread(&headerSize,sizeof(uint32_t),1,stream);
-    fread(&wide,sizeof(int32_t),1,stream);
-    fread(&tall,sizeof(int32_t),1,stream);
-    fread(&planes,sizeof(uint16_t),1,stream);
-    fread(&bitsPerPixel,sizeof(uint32_t),1,stream);
-    fread(&compression,sizeof(uint32_t),1,stream);
-    fread(&sizeOfImage,sizeof(uint32_t),1,stream);
-    fread(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
-    fread(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
-    fread(&numberOfColors,sizeof(uint32_t),1,stream);
-    fread(&importantColors,sizeof(uint32_t),1,stream);
     e->headerSize = headerSize;
-    e->wide = wide;
-    e->tall = tall;
-    e->planes = planes;
+    /*Check the header size*/
+    if(headerSize == 40) { /*Windows 3.x*/
+		fread(&wide,sizeof(int32_t),1,stream);
+		fread(&tall,sizeof(int32_t),1,stream);
+		fread(&planes,sizeof(uint16_t),1,stream);
+		fread(&bitsPerPixel,sizeof(uint16_t),1,stream);
+		fread(&compression,sizeof(uint32_t),1,stream);
+		fread(&sizeOfImage,sizeof(uint32_t),1,stream);
+		fread(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
+		fread(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
+		fread(&numberOfColors,sizeof(uint32_t),1,stream);
+		fread(&importantColors,sizeof(uint32_t),1,stream);
+		e->mask[0] = 0;
+		e->mask[1] = 0;
+		e->mask[2] = 0;
+		e->mask[3] = 0;
+	}
+	else if(headerSize == 12) { /*OS/2 1.x*/
+		fread(&wide,sizeof(uint16_t),1,stream);
+		fread(&tall,sizeof(uint16_t),1,stream);
+		fread(&planes,sizeof(uint16_t),1,stream);
+		fread(&bitsPerPixel,sizeof(uint16_t),1,stream);
+	}
+	else if(headerSize >= 56 && headerSize <= 64) { /*Windows (95,98,2000,XP,Vista,7,8,8.1,10) bitmap*/
+		fread(&wide,sizeof(int32_t),1,stream);
+		fread(&tall,sizeof(int32_t),1,stream);
+		fread(&planes,sizeof(uint16_t),1,stream);
+		fread(&bitsPerPixel,sizeof(uint16_t),1,stream);
+		fread(&compression,sizeof(uint32_t),1,stream);
+		fread(&sizeOfImage,sizeof(uint32_t),1,stream);
+		fread(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
+		fread(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
+		fread(&numberOfColors,sizeof(uint32_t),1,stream);
+		fread(&importantColors,sizeof(uint32_t),1,stream);
+		fread(&mask[0],sizeof(uint32_t),1,stream);
+		fread(&mask[1],sizeof(uint32_t),1,stream);
+		fread(&mask[2],sizeof(uint32_t),1,stream);
+		fread(&mask[3],sizeof(uint32_t),1,stream);
+		/*Inmediately place masks, on the struct*/
+		e->mask[0] = mask[0];
+		e->mask[1] = mask[1];
+		e->mask[2] = mask[2];
+		e->mask[3] = mask[3];
+	}
+	else {
+		#ifdef LEAF_ERROR
+		setLeafError(4);
+		#endif
+		return;
+	}
+	e->planes = planes;
     e->bitsPerPixel = bitsPerPixel;
     e->compression = compression;
     e->sizeOfImage = sizeOfImage;
@@ -97,6 +204,37 @@ void _Cdecl readBitmapHeader(FILE *stream, struct bitmapFileHeader *b, struct bi
     e->yPixelsPerMeter = yPixelsPerMeter;
     e->numberOfColors = numberOfColors;
     e->importantColors = importantColors;
+    /*Check if bit's are valid*/
+    switch(bitsPerPixel) {
+		case 1:
+		case 2:
+		case 4:
+		case 8:
+		case 16:
+		case 24:
+		case 32:
+			break;
+		default:
+			#ifdef LEAF_ERROR
+			setLeafError(2);
+			#endif
+			return;
+	}
+	if(wide < 0 || tall < 0 || planes != 1 || numberOfColors > 256) { /*We did something wrong!*/
+		#ifdef LEAF_ERROR
+		setLeafError(2);
+		#endif
+		return;
+	}
+	e->wide = wide;
+    e->tall = tall;
+	if((uint64_t)wide > INT32_MAX/bitsPerPixel
+	|| (uint64_t)wide > (INT32_MAX/abs(tall))/4) { /*Avoid overflows*/
+		#ifdef LEAF_ERROR
+		setLeafError(6);
+		#endif
+		return;
+	}
     return;
 }
 
@@ -117,7 +255,7 @@ uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall) {
     data = (uint8_t *)malloc(wide*tall);
     if(data == NULL) {
 		#ifdef LEAF_ERROR
-		setLeafError(0);
+		setLeafError(4);
 		#endif
         return 0; /*Up to caller's, how to handle errors*/
     }
@@ -126,6 +264,9 @@ uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall) {
 		for(i2 = 0; i2 < wide; i2++) {
 			fread(&hold,sizeof(uint8_t),1,stream);
 			data[(i2+((tall-i)*wide))] = hold;
+		}
+		if(wide%4 != 0) { /*Padding exists*/
+			fskip(stream,wide%4);
 		}
     }
     return (uint8_t *)data;
@@ -564,19 +705,6 @@ void _Cdecl redrawOnMouse(struct mouse *m) {
         for(i2 = 0; i2 < 16; i2++) {
             plotPixel(i+(m->x/2),i2+(m->y/2),fetchPixel(i+(m->x/2),i2+(m->y/2)));
         }
-    }
-    return;
-}
-
-/*
-@Action: Skips *n* number of chars
-@Parameters: stream=file stream. n=number of chars to skip
-@Output: void
-*/
-void _Cdecl fskip(FILE *stream, uint64_t n) {
-    static uint64_t i;
-    for(i = 0; i < (n+1); i++) {
-        fgetc(stream); /*Skip characters*/
     }
     return;
 }

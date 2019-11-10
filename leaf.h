@@ -7,7 +7,27 @@
 #define _Cdecl	cdecl
 #endif
 
+/*Include important headers*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
 #include <dos.h>
+
+#define INT8_MAX 0x7F
+#define INT8_MIN -128
+#define UINT8_MAX 0xFFU
+
+#define INT16_MAX 0x7FFF
+#define INT16_MIN ((int)0x8000)
+#define UINT16_MAX 0xFFFFU
+
+#define INT32_MAX 0x7FFF
+#define INT32_MIN ((int)0x8000)
+#define UINT32_MAX 0xFFFFU
+
+#define INT64_MAX 0x7FFFFFFFL
+#define INT64_MIN ((long)0x80000000L)
+#define UINT64_MAX 0xFFFFFFFFUL
 
 /*Keys*/
 #define KEY_F1 0x03b
@@ -89,6 +109,7 @@ struct bitmapInfoHeader {
     uint32_t yPixelsPerMeter;
     uint32_t numberOfColors;
     uint32_t importantColors;
+    uint32_t mask[4]; /*Eh, some bitmaps use it*/
 };
 
 #define plotPixel(x,y,color) vgaMemory[(y<<8)+(y<<6)+x] = color
@@ -96,7 +117,7 @@ struct bitmapInfoHeader {
 #define fetchPixel(x,y) vgaMemory[(y<<8)+(y<<6)+x]
 
 #ifdef LEAF_ERROR
-uint8_t globalLeafErrorHandler;
+uint8_t globalLeafErrorHandler = 255;
 void _Cdecl setLeafError(uint8_t id);
 char * _Cdecl leafError(void);
 #endif
