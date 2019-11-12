@@ -11,23 +11,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
+#include <conio.h>
 #include <dos.h>
+#endif
 
-#define INT8_MAX 0x7F
-#define INT8_MIN -128
-#define UINT8_MAX 0xFFU
-
-#define INT16_MAX 0x7FFF
-#define INT16_MIN ((int)0x8000)
-#define UINT16_MAX 0xFFFFU
-
-#define INT32_MAX 0x7FFF
-#define INT32_MIN ((int)0x8000)
-#define UINT32_MAX 0xFFFFU
-
-#define INT64_MAX 0x7FFFFFFFL
-#define INT64_MIN ((long)0x80000000L)
-#define UINT64_MAX 0xFFFFFFFFUL
+#if defined(__linux) || defined(linux)
+#define getch() getchar() /*We will use getch() anywhere, so yeah*/
+#elif defined(__APPLE2__) /*Apple 2 uses something!*/
+#define getch() cgetc()
+#endif
 
 /*Keys*/
 #define KEY_F1 0x03b
@@ -58,6 +52,23 @@
 #define KEY_RIGHT 0x04d
 #define KEY_LEFT 0x04b
 
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
+#define INT8_MAX 0x7F
+#define INT8_MIN -128
+#define UINT8_MAX 0xFFU
+
+#define INT16_MAX 0x7FFF
+#define INT16_MIN ((int)0x8000)
+#define UINT16_MAX 0xFFFFU
+
+#define INT32_MAX 0x7FFF
+#define INT32_MIN ((int)0x8000)
+#define UINT32_MAX 0xFFFFU
+
+#define INT64_MAX 0x7FFFFFFFL
+#define INT64_MIN ((long)0x80000000L)
+#define UINT64_MAX 0xFFFFFFFFUL
+
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned long uint32_t;
@@ -67,6 +78,9 @@ typedef signed char int8_t;
 typedef signed short int16_t;
 typedef signed long int32_t;
 typedef signed long long int64_t;
+#elif defined(__linux) || defined(linux)
+#include <stdint.h>
+#endif
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 static uint8_t far *vgaMemory = (uint8_t far *)0xA0000000L;
