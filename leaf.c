@@ -74,7 +74,7 @@ void _Cdecl fskip(FILE *stream, uint64_t n) {
     return;
 }
 
-
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 /*
 @Action: Sets video to *video*
 @Parameters: video=16-bit long value of the desired video mode
@@ -97,6 +97,117 @@ int16_t _Cdecl setVideo(register int16_t video) { /*Sets the video using int 10h
     int86(0x10,&in,&out);
     return oldVideo;
 }
+
+/*
+@Action: Gets video adapter
+@Parameters: void
+@Output: Video adapter [see below]
+-0 Unknown (probably SVGA)
+-1 AHEAD adapters
+-2 PARADISE adapters
+-3 OAK TECH adapters
+-5 ATI 18800
+-6 ATI 18800-1
+-7 ATI 18800-2
+-8 ATI 18800-4
+-9 ATI 18800-5
+-10 ATI 68800AX
+-11 EGA Wonder
+-12 VGA Wonder
+-13 EGA Wonder8000+
+-14 Genoa 6200/6300
+-15 Genoa 6400/6600
+-16 Genoa 6100
+-17 Genoa 5100/5200
+-18 Genoa 5300/5400
+*/
+int32_t _Cdecl getVideoAdapter(void) {
+	static uint8_t *ptr;
+	static uint8_t *txt;
+	txt = (uint8_t *)malloc(sizeof(uint8_t)*6);
+	if(txt == NULL) {
+		return -1;
+	}
+	ptr = (uint8_t *)0xC0000025; /*Check for AHEAD adapters*/
+	strcpy(txt,"AHEAD\0"); /*Comparing memory, with string!*/
+	if(memcmp(ptr,txt,5) == 0) {
+		return 1;
+	}
+	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*5);
+	ptr = (uint8_t *)0xC000007D; /*Check for PARADISE adapters*/
+	strcpy(txt,"VGA=\0"); /*Comparing memory, with string!*/
+	if(memcmp(ptr,txt,5) == 0) {
+		return 2;
+	}
+	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*8);
+	ptr = (uint8_t *)0xC0000008; /*Check for OAK TECH adapters*/
+	strcpy(txt,"OAK VGA\0"); /*Comparing memory, with string!*/
+	if(memcmp(ptr,txt,5) == 0) {
+		return 3;
+	}
+	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*10);
+	ptr = (uint8_t *)0xC0000031; /*Check for ATI adapters*/
+	strcpy(txt,"761295520\0"); /*Comparing memory, with string!*/
+	if(memcmp(ptr,txt,5) == 0) {
+		ptr = (uint8_t *)0xC0000043; /*We also have to put the stupid revision*/
+		switch(*ptr) {
+			case 0x31:
+				free(txt);
+				return 5; /*18800*/
+			case 0x32:
+				free(txt);
+				return 6; /*18800-1*/
+			case 0x33:
+				free(txt);
+				return 7; /*18800-2*/
+			case 0x34:
+				free(txt);
+				return 8; /*18800-4*/
+			case 0x35:
+				free(txt);
+				return 9; /*18800-5*/
+			case 0x62:
+				free(txt);
+				return 10; /*68800AX*/
+		}
+		ptr = (uint8_t *)0xC0000040;
+		switch(ptr[0]) {
+			case '2':
+				switch(ptr[1]) {
+					case '2':
+						return 11; /*EGA Wonder*/
+				}
+				break;
+			case '3':
+				switch(ptr[1]) {
+					case '1':
+						return 12; /*VGA Wonder*/
+					case '2':
+						return 13; /*EGA Wonder8000+*/
+				}
+				break;
+		}
+	}
+	free(txt);
+	ptr = (uint8_t *)0xC0000037; /*Genoa Graphics Adapter*/
+	ptr = (uint8_t *)0xC0000000+(*ptr); /*Fuck, what a mess!*/
+	if(ptr[0] == 0x77 && ptr[2] == 0x99 && ptr[3] == 0x66) {
+		switch(ptr[1]) {
+			case 0x00:
+				return 14; /*Genoa 6200/6300*/
+			case 0x11:
+				return 15; /*Genoa 6400/6600*/
+			case 0x22:
+				return 16; /*Genoa 6100*/
+			case 0x33:
+				return 17; /*Genoa 5100/5200*/
+			case 0x55:
+				return 18; /*Genoa 5300/5400*/
+		}
+	}
+	return 0;
+}
+#endif
 
 /*
 @Action: Reads bitmap file header (before information)
@@ -404,116 +515,6 @@ void _Cdecl writeBitmap(FILE *stream, struct bitmapFileHeader *bfh, struct bitma
 		}
     }
 	return;
-}
-
-/*
-@Action: Gets video adapter
-@Parameters: void
-@Output: Video adapter [see below]
--0 Unknown (probably SVGA)
--1 AHEAD adapters
--2 PARADISE adapters
--3 OAK TECH adapters
--5 ATI 18800
--6 ATI 18800-1
--7 ATI 18800-2
--8 ATI 18800-4
--9 ATI 18800-5
--10 ATI 68800AX
--11 EGA Wonder
--12 VGA Wonder
--13 EGA Wonder8000+
--14 Genoa 6200/6300
--15 Genoa 6400/6600
--16 Genoa 6100
--17 Genoa 5100/5200
--18 Genoa 5300/5400
-*/
-int32_t _Cdecl getVideoAdapter(void) {
-	static uint8_t *ptr;
-	static uint8_t *txt;
-	txt = (uint8_t *)malloc(sizeof(uint8_t)*6);
-	if(txt == NULL) {
-		return -1;
-	}
-	ptr = (uint8_t *)0xC0000025; /*Check for AHEAD adapters*/
-	strcpy(txt,"AHEAD\0"); /*Comparing memory, with string!*/
-	if(memcmp(ptr,txt,5) == 0) {
-		return 1;
-	}
-	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*5);
-	ptr = (uint8_t *)0xC000007D; /*Check for PARADISE adapters*/
-	strcpy(txt,"VGA=\0"); /*Comparing memory, with string!*/
-	if(memcmp(ptr,txt,5) == 0) {
-		return 2;
-	}
-	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*8);
-	ptr = (uint8_t *)0xC0000008; /*Check for OAK TECH adapters*/
-	strcpy(txt,"OAK VGA\0"); /*Comparing memory, with string!*/
-	if(memcmp(ptr,txt,5) == 0) {
-		return 3;
-	}
-	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*10);
-	ptr = (uint8_t *)0xC0000031; /*Check for ATI adapters*/
-	strcpy(txt,"761295520\0"); /*Comparing memory, with string!*/
-	if(memcmp(ptr,txt,5) == 0) {
-		ptr = (uint8_t *)0xC0000043; /*We also have to put the stupid revision*/
-		switch(*ptr) {
-			case 0x31:
-				free(txt);
-				return 5; /*18800*/
-			case 0x32:
-				free(txt);
-				return 6; /*18800-1*/
-			case 0x33:
-				free(txt);
-				return 7; /*18800-2*/
-			case 0x34:
-				free(txt);
-				return 8; /*18800-4*/
-			case 0x35:
-				free(txt);
-				return 9; /*18800-5*/
-			case 0x62:
-				free(txt);
-				return 10; /*68800AX*/
-		}
-		ptr = (uint8_t *)0xC0000040;
-		switch(ptr[0]) {
-			case '2':
-				switch(ptr[1]) {
-					case '2':
-						return 11; /*EGA Wonder*/
-				}
-				break;
-			case '3':
-				switch(ptr[1]) {
-					case '1':
-						return 12; /*VGA Wonder*/
-					case '2':
-						return 13; /*EGA Wonder8000+*/
-				}
-				break;
-		}
-	}
-	free(txt);
-	ptr = (uint8_t *)0xC0000037; /*Genoa Graphics Adapter*/
-	ptr = (uint8_t *)0xC0000000+(*ptr); /*Fuck, what a mess!*/
-	if(ptr[0] == 0x77 && ptr[2] == 0x99 && ptr[3] == 0x66) {
-		switch(ptr[1]) {
-			case 0x00:
-				return 14; /*Genoa 6200/6300*/
-			case 0x11:
-				return 15; /*Genoa 6400/6600*/
-			case 0x22:
-				return 16; /*Genoa 6100*/
-			case 0x33:
-				return 17; /*Genoa 5100/5200*/
-			case 0x55:
-				return 18; /*Genoa 5300/5400*/
-		}
-	}
-	return 0;
 }
 
 /*

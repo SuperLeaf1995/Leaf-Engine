@@ -68,9 +68,11 @@ typedef signed short int16_t;
 typedef signed long int32_t;
 typedef signed long long int64_t;
 
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 static uint8_t far *vgaMemory = (uint8_t far *)0xA0000000L;
 static uint8_t far *textMemory = (uint8_t far *)0xB8000000L;
 static uint16_t far *clock = (uint16_t far *)0x0000046C;
+#endif
 
 union REGS in,out;
 
@@ -112,9 +114,11 @@ struct bitmapInfoHeader {
     uint32_t mask[4]; /*Eh, some bitmaps use it*/
 };
 
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 #define plotPixel(x,y,color) vgaMemory[(y<<8)+(y<<6)+x] = color
 #define plotLinearPixel(pos,color) vgaMemory[pos] = color
 #define fetchPixel(x,y) vgaMemory[(y<<8)+(y<<6)+x]
+#endif
 
 #ifdef LEAF_ERROR
 uint8_t globalLeafErrorHandler = 255;
@@ -123,8 +127,10 @@ char * _Cdecl leafError(void);
 #endif
 
 /*LEAF.C*/
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 int16_t _Cdecl setVideo(int16_t video);
 int32_t _Cdecl getVideoAdapter(void);
+#endif
 void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color);
 char _Cdecl initMouse(struct mouse *m);
 char _Cdecl initMouse(struct mouse *m);
