@@ -62,6 +62,17 @@ char * _Cdecl leafError(void) {
 #endif
 
 /*
+@Action: Gets computer endianess
+@Parameters: void
+@Output: 1 = Little, 0 = Big
+*/
+uint16_t _Cdecl getEndianess(void) {
+	static uint16_t w = 0x0001;
+	static uint8_t *b = (uint8_t *)&w;
+	return (b[0] ? 1 : 0);
+}
+
+/*
 @Action: Skips *n* number of chars
 @Parameters: stream=file stream. n=number of chars to skip
 @Output: void

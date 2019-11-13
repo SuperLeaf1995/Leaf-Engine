@@ -1,10 +1,13 @@
 #ifndef LEAF_H_INCLUDED
 #define LEAF_H_INCLUDED
 
-#if __STDC__
+#if defined(__STDC__) && !defined(__GNUC__)
 #define _Cdecl
-#else
+#elif !defined(__STDC__) && !defined(__GNUC__)
 #define _Cdecl	cdecl
+#elif defined(__GNUC__)
+#define _Cdecl __attribute__((cdecl)) /*POSIX stuff dosent has _Cdecl
+										like that, lets just warp the attribute*/
 #endif
 
 /*Include important headers*/
@@ -140,6 +143,9 @@ void _Cdecl setLeafError(uint8_t id);
 char * _Cdecl leafError(void);
 #endif
 
+uint16_t _Cdecl getEndianess(void);
+void _Cdecl fskip(FILE *stream, uint64_t n);
+
 /*LEAF.C*/
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 int16_t _Cdecl setVideo(int16_t video);
@@ -152,7 +158,6 @@ void _Cdecl showMouse(void);
 void _Cdecl hideMouse(void);
 void _Cdecl getMouseStatus(struct mouse *m);
 void _Cdecl redrawOnMouse(struct mouse *m);
-void _Cdecl fskip(FILE *stream, uint64_t n);
 void _Cdecl readBitmapHeader(FILE *stream, struct bitmapFileHeader *b, struct bitmapInfoHeader *e);
 uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall);
 void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
