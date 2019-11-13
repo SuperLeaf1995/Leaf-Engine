@@ -218,6 +218,38 @@ int32_t _Cdecl getVideoAdapter(void) {
 	}
 	return 0;
 }
+#elif defined(__GNUC__) && defined(linux)
+/*
+@Action: Sets video (opens framebuffer device)
+@Parameters: video=device
+@Output: Zero
+*/
+int16_t _Cdecl setVideo(register int16_t video
+	struct fb_fix_screeninfo finfo;
+	struct fb_var_screeninfo vinfo;
+	uint8_t *fb_p;
+	uint8_t temp[14];
+	sprintf(&temp,"/dev/fb%u",video);
+	int32_t fb_dev = open(temp, O_RDRW); /*Open the framebuffer device*/
+	if(fb_dev < 0) {
+		perror("Cant open requested device\n");
+		exit(EXIT_FAILURE);
+	}
+	if(ioctl(fb_dev, FBIOGET_FSCREENINFO, &finfo) < 0) {
+		perror("Cant get fixedscreeninfo\n");
+		exit(EXIT_FAILURE);
+	}
+	if(ioctl(fb_dev, FBIOGET_FSCREENINFO, &finfo) < 0) {
+		perror("Cant get varscreeninfo\n");
+		exit(EXIT_FAILURE);
+	}
+    uint8_t *fb_p = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fb_dev, 0);
+    if(fb_p == MAP_FAILED) {
+		perror("Could not map memory\n");
+		exit(EXIT_FAILURE);
+	}
+    return 0;
+}
 #endif
 
 /*

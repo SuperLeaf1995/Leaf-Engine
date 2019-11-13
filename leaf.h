@@ -13,12 +13,21 @@
 /*Include important headers*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <string.h>
+#include <limits.h>
+
+#if defined(linux) || defined(__unix__)
+#include <unistd.h>
+#endif
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 #include <conio.h>
 #include <dos.h>
+#elif defined(__GNUC__) && defined(linux)
+#include <linux/fb.h> /*Framebuffer device, like our VGA function, but in Linux!*/
+#include <fcntl.h>
+#include <sys/ioctl.h> /*IO stuff*/
+#include <sys/mman.h>
 #endif
 
 #if defined(__linux) || defined(linux)
@@ -149,8 +158,10 @@ void _Cdecl fskip(FILE *stream, uint64_t n);
 
 /*LEAF.C*/
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-int16_t _Cdecl setVideo(int16_t video);
+int16_t _Cdecl setVideo(register int16_t video);
 int32_t _Cdecl getVideoAdapter(void);
+#elif defined(__GNUC__) && defined(linux)
+int16_t _Cdecl setVideo(register int16_t video); /*TODO: Port getVideoAdapter() to Linux*/
 #endif
 
 void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color);
