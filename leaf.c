@@ -244,12 +244,12 @@ void _Cdecl readBitmapHeader(FILE *stream, struct bitmapFileHeader *b, struct bi
     /*Read file header*/
     fread(b->type,sizeof(uint16_t),1,stream);
     /*Confirmate that it is a actual bitmap*/
-    if(strncmp(b->type,"BM",2) == 0 /*Normal windows bitmap*/
-    || strncmp(b->type,"BA",2) == 0
-    || strncmp(b->type,"IC",2) == 0 /*Icons (OS/2)*/
-    || strncmp(b->type,"PT",2) == 0 /*Pointers (OS/2)*/
-    || strncmp(b->type,"CI",2) == 0 /*Color icons (OS/2)*/
-    || strncmp(b->type,"CP",2) == 0) /*Color pointers (OS/2)*/ {
+    if(strncmp((const char *)b->type,"BM",2) == 0 /*Normal windows bitmap*/
+    || strncmp((const char *)b->type,"BA",2) == 0
+    || strncmp((const char *)b->type,"IC",2) == 0 /*Icons (OS/2)*/
+    || strncmp((const char *)b->type,"PT",2) == 0 /*Pointers (OS/2)*/
+    || strncmp((const char *)b->type,"CI",2) == 0 /*Color icons (OS/2)*/
+    || strncmp((const char *)b->type,"CP",2) == 0) /*Color pointers (OS/2)*/ {
 		/*Its valid, proceed*/
 	}
 	else {
@@ -394,6 +394,7 @@ uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall) {
     return (uint8_t *)data;
 }
 
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 /*
 @Action: Displays image
 @Parameters: data=data pointer. x=x pos. y=y pos. wide=wide of image. tall=tall of image
@@ -462,6 +463,7 @@ void _Cdecl displayImageTileTransparent(uint8_t *data, uint32_t x, uint32_t y, u
     }
     return;
 }
+#endif
 
 /*
 @Action: Saves bitmap
@@ -528,6 +530,7 @@ void _Cdecl writeBitmap(FILE *stream, struct bitmapFileHeader *bfh, struct bitma
 	return;
 }
 
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 /*
 @Action: Plots a line
 @Parameters: fx=from x. fy=from y. tx=to x. ty=to y. color=color (byte)
@@ -626,7 +629,9 @@ void plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color) {
 	}
 	return;
 }
+#endif
 
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 /*
 @Action: Initializes mouse
 @Parameters: structure mouse=structure of the mouse, there should be one per program (recommended)
@@ -720,3 +725,4 @@ void _Cdecl redrawOnMouse(struct mouse *m) {
     }
     return;
 }
+#endif

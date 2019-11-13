@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <string.h>
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 #include <conio.h>
@@ -81,7 +82,7 @@ typedef signed char int8_t;
 typedef signed short int16_t;
 typedef signed long int32_t;
 typedef signed long long int64_t;
-#elif defined(__linux) || defined(linux)
+#else
 #include <stdint.h>
 #endif
 
@@ -89,16 +90,8 @@ typedef signed long long int64_t;
 static uint8_t far *vgaMemory = (uint8_t far *)0xA0000000L;
 static uint8_t far *textMemory = (uint8_t far *)0xB8000000L;
 static uint16_t far *clock = (uint16_t far *)0x0000046C;
-#endif
 
 union REGS in,out;
-
-struct image {
-    uint32_t wide;
-    uint32_t tall;
-    uint32_t tileTall; /*Tall of each tile (useful for tiled images)*/
-    uint8_t *data;
-};
 
 struct mouse {
     buttonLeft:1;
@@ -107,6 +100,14 @@ struct mouse {
     buttons:4;
     int16_t x;
     int16_t y;
+};
+#endif
+
+struct image {
+    uint32_t wide;
+    uint32_t tall;
+    uint32_t tileTall; /*Tall of each tile (useful for tiled images)*/
+    uint8_t *data;
 };
 
 struct bitmapFileHeader {
@@ -151,13 +152,21 @@ void _Cdecl fskip(FILE *stream, uint64_t n);
 int16_t _Cdecl setVideo(int16_t video);
 int32_t _Cdecl getVideoAdapter(void);
 #endif
+
 void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color);
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 char _Cdecl initMouse(struct mouse *m);
 char _Cdecl initMouse(struct mouse *m);
+#endif
+
 void _Cdecl showMouse(void);
 void _Cdecl hideMouse(void);
+
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 void _Cdecl getMouseStatus(struct mouse *m);
 void _Cdecl redrawOnMouse(struct mouse *m);
+#endif
+
 void _Cdecl readBitmapHeader(FILE *stream, struct bitmapFileHeader *b, struct bitmapInfoHeader *e);
 uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall);
 void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
