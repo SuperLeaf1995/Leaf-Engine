@@ -23,11 +23,6 @@
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 #include <conio.h>
 #include <dos.h>
-#elif defined(__GNUC__) && defined(linux)
-#include <linux/fb.h> /*Framebuffer device, like our VGA function, but in Linux!*/
-#include <fcntl.h>
-#include <sys/ioctl.h> /*IO stuff*/
-#include <sys/mman.h>
 #endif
 
 #if defined(__linux) || defined(linux)
@@ -119,15 +114,14 @@ struct image {
     uint8_t *data;
 };
 
-struct bitmapFileHeader {
+struct bitmapHeader {
+	/*File*/
     uint8_t type[3];
     uint32_t sizeOfFile;
     uint32_t reserved;
     uint32_t offset;
-};
-
-struct bitmapInfoHeader {
     uint32_t headerSize;
+    /*Info*/
     int32_t wide;
     int32_t tall;
     uint16_t planes;
@@ -139,6 +133,27 @@ struct bitmapInfoHeader {
     uint32_t numberOfColors;
     uint32_t importantColors;
     uint32_t mask[4]; /*Eh, some bitmaps use it*/
+};
+
+struct pcxHeader {
+	uint8_t id;
+	uint8_t version;
+	uint8_t encoding;
+	uint8_t bitsPerPixel;
+	uint16_t xStart;
+	uint16_t yStart;
+	uint16_t xEnd;
+	uint16_t yEnd;
+	uint16_t horizontalResolution;
+	uint16_t verticalResolution;
+	uint8_t palette[48]; /*EGA palette*/
+	uint8_t reserved;
+	uint8_t numberOfBitPlanes;
+	uint16_t bytesPerLine;
+	uint16_t paletteType;
+	uint16_t horizontalScreenSize;
+	uint16_t verticalScreenSize;
+	uint8_t zeroAfterHeader[54];
 };
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
@@ -160,12 +175,10 @@ void _Cdecl fskip(FILE *stream, uint64_t n);
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 int16_t _Cdecl setVideo(register int16_t video);
 int32_t _Cdecl getVideoAdapter(void);
-#elif defined(__GNUC__) && defined(linux)
-int16_t _Cdecl setVideo(register int16_t video); /*TODO: Port getVideoAdapter() to Linux*/
 #endif
 
-void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color);
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
+void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color);
 char _Cdecl initMouse(struct mouse *m);
 char _Cdecl initMouse(struct mouse *m);
 #endif
@@ -178,13 +191,17 @@ void _Cdecl getMouseStatus(struct mouse *m);
 void _Cdecl redrawOnMouse(struct mouse *m);
 #endif
 
-void _Cdecl readBitmapHeader(FILE *stream, struct bitmapFileHeader *b, struct bitmapInfoHeader *e);
-uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall);
+void _Cdecl readBitmapHeader(FILE *stream, struct bitmapHeader *e);
+uint8_t * _Cdecl readBitmapData(FILE *stream, struct bitmapHeader *b);
+void _Cdecl writeBitmap(FILE *stream, struct bitmapHeader *bih, uint8_t *data);
+
+void _Cdecl readPaintbrushHeader(FILE *stream, struct pcxHeader *p);
+uint8_t * _Cdecl readPaintbrushData(FILE *stream, struct pcxHeader *p);
+
 void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
 void _Cdecl displayBitmapImageWhileReading(FILE *stream, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
 void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index);
 void _Cdecl displayImageTileTransparent(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index, uint8_t trans);
-void _Cdecl writeBitmap(FILE *stream, struct bitmapFileHeader *bfh, struct bitmapInfoHeader *bih, uint8_t *data);
 
 #include "leaf.c" /*Primary functions!*/
 

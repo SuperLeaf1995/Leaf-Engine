@@ -218,38 +218,6 @@ int32_t _Cdecl getVideoAdapter(void) {
 	}
 	return 0;
 }
-#elif defined(__GNUC__) && defined(linux)
-/*
-@Action: Sets video (opens framebuffer device)
-@Parameters: video=device
-@Output: Zero
-*/
-int16_t _Cdecl setVideo(register int16_t video
-	struct fb_fix_screeninfo finfo;
-	struct fb_var_screeninfo vinfo;
-	uint8_t *fb_p;
-	uint8_t temp[14];
-	sprintf(&temp,"/dev/fb%u",video);
-	int32_t fb_dev = open(temp, O_RDRW); /*Open the framebuffer device*/
-	if(fb_dev < 0) {
-		perror("Cant open requested device\n");
-		exit(EXIT_FAILURE);
-	}
-	if(ioctl(fb_dev, FBIOGET_FSCREENINFO, &finfo) < 0) {
-		perror("Cant get fixedscreeninfo\n");
-		exit(EXIT_FAILURE);
-	}
-	if(ioctl(fb_dev, FBIOGET_FSCREENINFO, &finfo) < 0) {
-		perror("Cant get varscreeninfo\n");
-		exit(EXIT_FAILURE);
-	}
-    uint8_t *fb_p = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fb_dev, 0);
-    if(fb_p == MAP_FAILED) {
-		perror("Could not map memory\n");
-		exit(EXIT_FAILURE);
-	}
-    return 0;
-}
 #endif
 
 /*
@@ -257,7 +225,7 @@ int16_t _Cdecl setVideo(register int16_t video
 @Parameters: stream=file stream. structure bitmapFileHeader=structure pointer, we will write data there!
 @Output: void, but overwrites structure bitmapFileHeader
 */
-void _Cdecl readBitmapHeader(FILE *stream, struct bitmapFileHeader *b, struct bitmapInfoHeader *e) {
+void _Cdecl readBitmapHeader(FILE *stream, struct bitmapHeader *e) {
 	static uint32_t headerSize;
     static uint32_t wide;
     static uint32_t tall;
@@ -274,14 +242,14 @@ void _Cdecl readBitmapHeader(FILE *stream, struct bitmapFileHeader *b, struct bi
     static uint32_t offset;
     static uint32_t mask[4];
     /*Read file header*/
-    fread(b->type,sizeof(uint16_t),1,stream);
+    fread(e->type,sizeof(uint16_t),1,stream);
     /*Confirmate that it is a actual bitmap*/
-    if(strncmp((const char *)b->type,"BM",2) == 0 /*Normal windows bitmap*/
-    || strncmp((const char *)b->type,"BA",2) == 0
-    || strncmp((const char *)b->type,"IC",2) == 0 /*Icons (OS/2)*/
-    || strncmp((const char *)b->type,"PT",2) == 0 /*Pointers (OS/2)*/
-    || strncmp((const char *)b->type,"CI",2) == 0 /*Color icons (OS/2)*/
-    || strncmp((const char *)b->type,"CP",2) == 0) /*Color pointers (OS/2)*/ {
+    if(strncmp((const char *)e->type,"BM",2) == 0 /*Normal windows bitmap*/
+    || strncmp((const char *)e->type,"BA",2) == 0
+    || strncmp((const char *)e->type,"IC",2) == 0 /*Icons (OS/2)*/
+    || strncmp((const char *)e->type,"PT",2) == 0 /*Pointers (OS/2)*/
+    || strncmp((const char *)e->type,"CI",2) == 0 /*Color icons (OS/2)*/
+    || strncmp((const char *)e->type,"CP",2) == 0) /*Color pointers (OS/2)*/ {
 		/*Its valid, proceed*/
 	}
 	else {
@@ -294,9 +262,9 @@ void _Cdecl readBitmapHeader(FILE *stream, struct bitmapFileHeader *b, struct bi
     fread(&sizeOfFile,sizeof(uint32_t),1,stream);
 	fread(&reserved,sizeof(uint32_t),1,stream); /*reserved has an actual mean in OS/2*/
 	fread(&offset,sizeof(uint32_t),1,stream);
-    b->sizeOfFile = sizeOfFile;
-    b->reserved = reserved;
-    b->offset = offset;
+    e->sizeOfFile = sizeOfFile;
+    e->reserved = reserved;
+    e->offset = offset;
     /*Now information*/
     fread(&headerSize,sizeof(uint32_t),1,stream);
     e->headerSize = headerSize;
@@ -397,16 +365,16 @@ void _Cdecl readBitmapHeader(FILE *stream, struct bitmapFileHeader *b, struct bi
 @Parameters: stream=file stream. wide=wide of image. tall=tall of image.
 @Output: data pointer
 */
-uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall) {
+uint8_t * _Cdecl readBitmapData(FILE *stream, struct bitmapHeader *b) {
     static uint32_t i;
     static uint32_t i2;
     static uint16_t hold;
     uint8_t *data;
     fpos_t pos;
-    if(tall == 0 || wide == 0) {
+    if(b->tall == 0 || b->wide == 0) {
         return 0;
     }
-    data = (uint8_t *)malloc(wide*tall);
+    data = (uint8_t *)malloc(b->wide*b->tall);
     if(data == NULL) {
 		#ifdef LEAF_ERROR
 		setLeafError(4);
@@ -414,16 +382,81 @@ uint8_t * _Cdecl readBitmapData(FILE *stream, uint32_t wide, uint32_t tall) {
         return 0; /*Up to caller's, how to handle errors*/
     }
     fgetpos(stream,&pos);
-    for(i = 1; i < tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
-		for(i2 = 0; i2 < wide; i2++) {
+    for(i = 1; i < b->tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
+		for(i2 = 0; i2 < b->wide; i2++) {
 			fread(&hold,sizeof(uint8_t),1,stream);
-			data[(i2+((tall-i)*wide))] = hold;
+			data[(i2+((b->tall-i)*b->wide))] = hold;
 		}
-		if(wide%4 != 0) { /*Padding exists*/
-			fskip(stream,wide%4);
+		if(b->wide%4 != 0) { /*Padding exists*/
+			fskip(stream,b->wide%4);
 		}
     }
     return (uint8_t *)data;
+}
+
+/*
+@Action: Saves bitmap
+@Parameters: stream=file stream. bfh=bitmap file header pointer. bih=bitmap info header pointer.
+data=data pointer
+@Output: void
+*/
+void _Cdecl writeBitmap(FILE *stream, struct bitmapHeader *bih, uint8_t *data) {
+	static uint32_t sizeOfFile,reserved,offset; /*We do the same as in our read routines*/
+    static uint32_t headerSize;					/*we just switch the order of stuff and*/
+    static uint32_t wide;						/*change read with write.*/
+    static uint32_t tall;
+    static uint16_t planes;
+    static uint16_t bitsPerPixel;
+    static uint32_t compression;
+    static uint32_t sizeOfImage;
+    static uint32_t xPixelsPerMeter;
+    static uint32_t yPixelsPerMeter;
+    static uint32_t numberOfColors;
+    static uint32_t importantColors;
+    static uint32_t i;
+    static uint32_t i2;
+    static uint16_t hold;
+	sizeOfFile = bih->sizeOfFile;
+    reserved = bih->reserved;
+    offset = bih->offset;
+    headerSize = bih->headerSize;
+    wide = bih->wide;
+    tall = bih->tall;
+    planes = bih->planes;
+    bitsPerPixel = bih->bitsPerPixel;
+    compression = bih->compression;
+    sizeOfImage = bih->sizeOfImage;
+    xPixelsPerMeter = bih->xPixelsPerMeter;
+    yPixelsPerMeter = bih->yPixelsPerMeter;
+    numberOfColors = bih->numberOfColors;
+    importantColors = bih->importantColors;
+    fwrite(bih->type,sizeof(uint16_t),1,stream);
+    fwrite(&sizeOfFile,sizeof(uint32_t),1,stream);
+    fwrite(&reserved,sizeof(uint32_t),1,stream);
+    fwrite(&offset,sizeof(uint32_t),1,stream);
+	fwrite(&headerSize,sizeof(uint32_t),1,stream);
+    fwrite(&wide,sizeof(int32_t),1,stream);
+    fwrite(&tall,sizeof(int32_t),1,stream);
+    fwrite(&planes,sizeof(uint16_t),1,stream);
+    fwrite(&bitsPerPixel,sizeof(uint32_t),1,stream);
+    fwrite(&compression,sizeof(uint32_t),1,stream);
+    fwrite(&sizeOfImage,sizeof(uint32_t),1,stream);
+    fwrite(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
+    fwrite(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
+    fwrite(&numberOfColors,sizeof(uint32_t),1,stream);
+    fwrite(&importantColors,sizeof(uint32_t),1,stream);
+    /*Palette*/
+    for(i = 0; i < 1022; i++) {
+		fwrite(&i,sizeof(uint8_t),1,stream);
+	}
+	/*Bitmap data*/
+	for(i = 1; i < tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
+		for(i2 = 0; i2 < wide; i2++) { /*We just replotting our shit back again!*/
+			hold = data[(i2+((tall-i)*wide))];
+			fwrite(&hold,sizeof(uint8_t),1,stream);
+		}
+    }
+	return;
 }
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
@@ -496,71 +529,6 @@ void _Cdecl displayImageTileTransparent(uint8_t *data, uint32_t x, uint32_t y, u
     return;
 }
 #endif
-
-/*
-@Action: Saves bitmap
-@Parameters: stream=file stream. bfh=bitmap file header pointer. bih=bitmap info header pointer.
-data=data pointer
-@Output: void
-*/
-void _Cdecl writeBitmap(FILE *stream, struct bitmapFileHeader *bfh, struct bitmapInfoHeader *bih, uint8_t *data) {
-	static uint32_t sizeOfFile,reserved,offset; /*We do the same as in our read routines*/
-    static uint32_t headerSize;					/*we just switch the order of stuff and*/
-    static uint32_t wide;						/*change read with write.*/
-    static uint32_t tall;
-    static uint16_t planes;
-    static uint16_t bitsPerPixel;
-    static uint32_t compression;
-    static uint32_t sizeOfImage;
-    static uint32_t xPixelsPerMeter;
-    static uint32_t yPixelsPerMeter;
-    static uint32_t numberOfColors;
-    static uint32_t importantColors;
-    static uint32_t i;
-    static uint32_t i2;
-    static uint16_t hold;
-	sizeOfFile = bfh->sizeOfFile;
-    reserved = bfh->reserved;
-    offset = bfh->offset;
-    headerSize = bih->headerSize;
-    wide = bih->wide;
-    tall = bih->tall;
-    planes = bih->planes;
-    bitsPerPixel = bih->bitsPerPixel;
-    compression = bih->compression;
-    sizeOfImage = bih->sizeOfImage;
-    xPixelsPerMeter = bih->xPixelsPerMeter;
-    yPixelsPerMeter = bih->yPixelsPerMeter;
-    numberOfColors = bih->numberOfColors;
-    importantColors = bih->importantColors;
-    fwrite(bfh->type,sizeof(uint16_t),1,stream);
-    fwrite(&sizeOfFile,sizeof(uint32_t),1,stream);
-    fwrite(&reserved,sizeof(uint32_t),1,stream);
-    fwrite(&offset,sizeof(uint32_t),1,stream);
-	fwrite(&headerSize,sizeof(uint32_t),1,stream);
-    fwrite(&wide,sizeof(int32_t),1,stream);
-    fwrite(&tall,sizeof(int32_t),1,stream);
-    fwrite(&planes,sizeof(uint16_t),1,stream);
-    fwrite(&bitsPerPixel,sizeof(uint32_t),1,stream);
-    fwrite(&compression,sizeof(uint32_t),1,stream);
-    fwrite(&sizeOfImage,sizeof(uint32_t),1,stream);
-    fwrite(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
-    fwrite(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
-    fwrite(&numberOfColors,sizeof(uint32_t),1,stream);
-    fwrite(&importantColors,sizeof(uint32_t),1,stream);
-    /*Palette*/
-    for(i = 0; i < 1022; i++) {
-		fwrite(&i,sizeof(uint8_t),1,stream);
-	}
-	/*Bitmap data*/
-	for(i = 1; i < tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
-		for(i2 = 0; i2 < wide; i2++) { /*We just replotting our shit back again!*/
-			hold = data[(i2+((tall-i)*wide))];
-			fwrite(&hold,sizeof(uint8_t),1,stream);
-		}
-    }
-	return;
-}
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 /*
