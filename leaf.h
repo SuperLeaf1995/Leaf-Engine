@@ -10,22 +10,29 @@
 										like that, lets just warp the attribute*/
 #endif
 
+#if !defined(__LARGE__) && !defined(__HUGE__)
+#error "Error: Video mode won't work on small sizes"
+#endif
+
 /*Include important headers*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS) || defined(__OS2__)
+#include <conio.h>
+#endif
+
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
+#include <dos.h>
+#endif
+
 #if defined(linux) || defined(__unix__)
 #include <unistd.h>
 #endif
 
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-#include <conio.h>
-#include <dos.h>
-#endif
-
-#if defined(__linux) || defined(linux)
+#if defined(__GNUC__)
 #define getch() getchar() /*We will use getch() anywhere, so yeah*/
 #elif defined(__APPLE2__) /*Apple 2 uses something!*/
 #define getch() cgetc()
@@ -86,14 +93,17 @@ typedef signed char int8_t;
 typedef signed short int16_t;
 typedef signed long int32_t;
 typedef signed long long int64_t;
-#else
+#elif defined(__GNUC__)
 #include <stdint.h>
 #endif
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
+
+#if defined(__LARGE__) || defined(__HUGE__)
 static uint8_t far *vgaMemory = (uint8_t far *)0xA0000000L;
 static uint8_t far *textMemory = (uint8_t far *)0xB8000000L;
-static uint16_t far *clock = (uint16_t far *)0x0000046C;
+static volatile uint16_t far *clock = (uint16_t far *)0x0000046C; /*Clock always changes*/
+#endif
 
 union REGS in,out;
 
@@ -177,20 +187,6 @@ int16_t _Cdecl setVideo(register int16_t video);
 int32_t _Cdecl getVideoAdapter(void);
 #endif
 
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color);
-char _Cdecl initMouse(struct mouse *m);
-char _Cdecl initMouse(struct mouse *m);
-#endif
-
-void _Cdecl showMouse(void);
-void _Cdecl hideMouse(void);
-
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-void _Cdecl getMouseStatus(struct mouse *m);
-void _Cdecl redrawOnMouse(struct mouse *m);
-#endif
-
 void _Cdecl readBitmapHeader(FILE *stream, struct bitmapHeader *e);
 uint8_t * _Cdecl readBitmapData(FILE *stream, struct bitmapHeader *b);
 void _Cdecl writeBitmap(FILE *stream, struct bitmapHeader *bih, uint8_t *data);
@@ -198,10 +194,22 @@ void _Cdecl writeBitmap(FILE *stream, struct bitmapHeader *bih, uint8_t *data);
 void _Cdecl readPaintbrushHeader(FILE *stream, struct pcxHeader *p);
 uint8_t * _Cdecl readPaintbrushData(FILE *stream, struct pcxHeader *p);
 
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
 void _Cdecl displayBitmapImageWhileReading(FILE *stream, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
 void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index);
 void _Cdecl displayImageTileTransparent(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index, uint8_t trans);
+
+void _Cdecl plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color);
+char _Cdecl initMouse(struct mouse *m);
+char _Cdecl initMouse(struct mouse *m);
+
+void _Cdecl showMouse(void);
+void _Cdecl hideMouse(void);
+
+void _Cdecl getMouseStatus(struct mouse *m);
+void _Cdecl redrawOnMouse(struct mouse *m);
+#endif
 
 #include "leaf.c" /*Primary functions!*/
 

@@ -361,8 +361,8 @@ void _Cdecl readBitmapHeader(FILE *stream, struct bitmapHeader *e) {
 }
 
 /*
-@Action: Reads the image of a bitmap and then outputs it
-@Parameters: stream=file stream. wide=wide of image. tall=tall of image.
+@Action: Reads the image of a bitmap
+@Parameters: stream=file stream. b = bitmapheader
 @Output: data pointer
 */
 uint8_t * _Cdecl readBitmapData(FILE *stream, struct bitmapHeader *b) {
@@ -396,7 +396,7 @@ uint8_t * _Cdecl readBitmapData(FILE *stream, struct bitmapHeader *b) {
 
 /*
 @Action: Saves bitmap
-@Parameters: stream=file stream. bfh=bitmap file header pointer. bih=bitmap info header pointer.
+@Parameters: stream=file stream. bih=bitmap info header pointer. uint8_t * = pointer to data
 data=data pointer
 @Output: void
 */
@@ -457,6 +457,117 @@ void _Cdecl writeBitmap(FILE *stream, struct bitmapHeader *bih, uint8_t *data) {
 		}
     }
 	return;
+}
+
+/*
+@Action: Reads a pcx image
+@Parameters: stream=file stream. pcxHeader=struct containing stuff
+data=data pointer
+@Output: void
+*/
+void _Cdecl readPaintbrushHeader(FILE *stream, struct pcxHeader *p) {
+	static uint8_t id;
+	static uint8_t version;
+	static uint8_t encoding;
+	static uint8_t bitsPerPixel;
+	static uint16_t xStart;
+	static uint16_t yStart;
+	static uint16_t xEnd;
+	static uint16_t yEnd;
+	static uint16_t horizontalResolution;
+	static uint16_t verticalResolution;
+	static uint8_t palette[48];
+	static uint8_t reserved;
+	static uint8_t numberOfBitPlanes;
+	static uint16_t bytesPerLine;
+	static uint16_t paletteType;
+	static uint16_t horizontalScreenSize;
+	static uint16_t verticalScreenSize;
+	static uint8_t zeroAfterHeader[54];
+	fread(&id,sizeof(uint8_t),1,stream);
+	if(id != 0x0A) {
+		#ifdef LEAF_ERROR
+		setLeafError(2);
+		#endif
+		return;
+	}
+	fread(&version,sizeof(uint8_t),1,stream);
+	if(version > 5) { /*Only five versions!*/
+		#ifdef LEAF_ERROR
+		setLeafError(2);
+		#endif
+		return;
+	}
+	fread(&encoding,sizeof(uint8_t),1,stream);
+	if(encoding != 1) { /*No non-encoded images*/
+		#ifdef LEAF_ERROR
+		setLeafError(2);
+		#endif
+		return;
+	}
+	fread(&bitsPerPixel,sizeof(uint8_t),1,stream);
+	fread(&xStart,sizeof(uint16_t),1,stream); /*Eww, why someone even thinked of this?*/
+	fread(&yStart,sizeof(uint16_t),1,stream);
+	fread(&xEnd,sizeof(uint16_t),1,stream); /*This is like TALL and WIDE*/
+	fread(&yEnd,sizeof(uint16_t),1,stream);
+	fread(&horizontalResolution,sizeof(uint16_t),1,stream);
+	fread(&verticalResolution,sizeof(uint16_t),1,stream);
+	fread(&palette,sizeof(uint8_t),48,stream); /*EGA 16-bit palette*/
+	fread(&reserved,sizeof(uint8_t),1,stream);
+	if(reserved != 0) { /*Must be zero*/
+		#ifdef LEAF_ERROR
+		setLeafError(2);
+		#endif
+		return;
+	}
+	fread(&numberOfBitPlanes,sizeof(uint8_t),1,stream);
+	fread(&bytesPerLine,sizeof(uint16_t),1,stream);
+	fread(&paletteType,sizeof(uint16_t),1,stream);
+	fread(&horizontalScreenSize,sizeof(uint16_t),1,stream);
+	fread(&verticalScreenSize,sizeof(uint16_t),1,stream);
+	fread(&zeroAfterHeader,sizeof(uint8_t),54,stream);
+}
+
+/*
+@Action: Reads a pcx data
+@Parameters: stream=file stream. pcxHeader=struct containing stuff
+data=data pointer
+@Output: void
+*/
+uint8_t * _Cdecl readPaintbrushData(FILE *stream, struct pcxHeader *p) {
+	static uint16_t wide = p->xEnd-p->xStart+1;
+	static uint16_t tall = p->yEnd-p->yStart+1;
+	static uint16_t scanLenght = p->numberOfBitPlanes*p->bytesPerLine;
+	static uint16_t padding = ((p->bytesPerLine*p->numberOfBitPlanes)*(8/p->bitsPerPixel))-wide;
+	static uint16_t rleRepeat;
+	static uint16_t total;
+	static uint8_t *buffer;
+	static uint8_t rlePixel;
+	static uint8_t holder;
+	static uint8_t index;
+	buffer = (uint8_t *)malloc(wide*tall);
+	if(buffer == NULL) {
+		#ifdef LEAF_ERROR
+		setLeafError(4);
+		#endif
+		return;
+	}
+	while(index < wide*tall) {
+		fread(&holder,sizeof(uint8_t),1,stream);
+		if((holder & 0xC0) == 0xC0) {
+			rleRepeat = holder & 0x3F;
+			fread(&rlePixel,sizeof(uint8_t),1,stream);
+		}
+		else {
+			rleRepeat = 1;
+			rlePixel = holder;
+		}
+		for(total += rleRepeat; rleCount < wide*tall && index < wide*tall; index++) {
+			rleRepeat--;
+			buffer[index] = rlePixel;
+		}
+	}
+	return (uint8_t *)buffer;
 }
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
@@ -528,9 +639,7 @@ void _Cdecl displayImageTileTransparent(uint8_t *data, uint32_t x, uint32_t y, u
     }
     return;
 }
-#endif
 
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 /*
 @Action: Plots a line
 @Parameters: fx=from x. fy=from y. tx=to x. ty=to y. color=color (byte)
@@ -629,9 +738,7 @@ void plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color) {
 	}
 	return;
 }
-#endif
 
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 /*
 @Action: Initializes mouse
 @Parameters: structure mouse=structure of the mouse, there should be one per program (recommended)
