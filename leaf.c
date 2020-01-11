@@ -832,4 +832,33 @@ void _Cdecl redrawOnMouse(struct mouse *m) {
     }
     return;
 }
+
+#ifdef __USE_TASM__
+void experimentalPlaySound(int x) {
+    asm pusha
+    
+    asm mov al, 0b6h
+    asm out 43h, al
+    asm mov dx, 14h
+    asm mov ax, 4f38h
+    asm div, di
+    asm out 42h, al
+    asm mov al, ah
+    asm mov 42h, al
+    asm out 42h
+    asm in al, 61h
+    asm mov ah, al
+    asm or al, 3
+    asm out 61h, al
+    
+    asm dec bx
+    
+    asm mov al, ah
+    asm out 61h, al
+    
+    asm popa
+    return;
+}
+#endif
+
 #endif

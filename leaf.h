@@ -172,6 +172,9 @@ struct pcxHeader {
 #define fetchPixel(x,y) vgaMemory[(y<<8)+(y<<6)+x]
 #endif
 
+/*Some useful stuff*/
+#define isSigned(x) (x < 0) ? -1 : (x == 0) ? 0 : -1;
+
 #ifdef LEAF_ERROR
 uint8_t globalLeafErrorHandler = 255;
 void _Cdecl setLeafError(uint8_t id);
@@ -187,12 +190,14 @@ int16_t _Cdecl setVideo(register int16_t video);
 int32_t _Cdecl getVideoAdapter(void);
 #endif
 
+#ifndef __LEAF_DOS__
 void _Cdecl readBitmapHeader(FILE *stream, struct bitmapHeader *e);
 uint8_t * _Cdecl readBitmapData(FILE *stream, struct bitmapHeader *b);
 void _Cdecl writeBitmap(FILE *stream, struct bitmapHeader *bih, uint8_t *data);
 
 void _Cdecl readPaintbrushHeader(FILE *stream, struct pcxHeader *p);
 uint8_t * _Cdecl readPaintbrushData(FILE *stream, struct pcxHeader *p);
+#endif
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall);
