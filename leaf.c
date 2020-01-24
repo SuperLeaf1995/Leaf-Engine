@@ -1,654 +1,122 @@
-#ifdef LEAF_ERROR
-void _Cdecl setLeafError(uint8_t id) {
-	globalLeafErrorHandler = id;
-	return;
-}
+/* LEAF ENGINE
+ * Copyright (C) Jesus Antonio Diaz - 2020
+ * Licensed under Apache License, see LICENSE.md
+ */
 
-char * _Cdecl leafError(void) {
-	char *str;
-	switch(globalLeafErrorHandler) {
-		case 1:
-			str = (char *)malloc(strlen("ERR_MOUSE_INIT\0")+1);
-			if(str == NULL) {
-				return NULL;
-			}
-			strcpy(str,"ERR_MOUSE_INIT\0");
-			break;
-		case 2:
-			str = (char *)malloc(strlen("REQ_FILE_INVALID\0")+1);
-			if(str == NULL) {
-				return NULL;
-			}
-			strcpy(str,"REQ_FILE_INVALID\0");
-			break;
-		case 3:
-			str = (char *)malloc(strlen("ERR_UNDEF\0")+1);
-			if(str == NULL) {
-				return NULL;
-			}
-			strcpy(str,"ERR_UNDEF\0");
-			break;
-		case 4:
-			str = (char *)malloc(strlen("ERR_ALLOC\0")+1);
-			if(str == NULL) {
-				return NULL;
-			}
-			strcpy(str,"ERR_ALLOC\0");
-			break;
-		case 5:
-			str = (char *)malloc(strlen("ERR_UNSUPPORTED_FEATURE\0")+1);
-			if(str == NULL) {
-				return NULL;
-			}
-			strcpy(str,"ERR_UNSUPPORTED_FEATURE\0");
-			break;
-		case 6:
-			str = (char *)malloc(strlen("ERR_OVERFLOW_AVOIDAGE\0")+1);
-			if(str == NULL) {
-				return NULL;
-			}
-			strcpy(str,"ERR_OVERFLOW_AVOIDAGE\0");
-			break;
-		default:
-			str = (char *)malloc(strlen("NO_ERR\0")+1);
-			if(str == NULL) {
-				return NULL;
-			}
-			strcpy(str,"NO_ERR\0");
-			break;
-	}
-	return str;
-}
-#endif
+#ifndef LEAF_ENGINE_H
+#define LEAF_ENGINE_H
 
-/*
-@Action: Gets computer endianess
-@Parameters: void
-@Output: 1 = Little, 0 = Big
-*/
-uint16_t _Cdecl getEndianess(void) {
-	static uint16_t w = 0x0001;
-	static uint8_t *b = (uint8_t *)&w;
-	return (b[0] ? 1 : 0);
-}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <conio.h>
+#include <dos.h>
 
-/*
-@Action: Skips *n* number of chars
-@Parameters: stream=file stream. n=number of chars to skip
-@Output: void
-*/
+#define MOUSE_STATUS_HIDE 2
+#define MOUSE_STATUS_SHOW 1
+
+#define INT8_MAX 0x7F
+#define INT8_MIN -128
+#define UINT8_MAX 0xFFU
+#define INT16_MAX 0x7FFF
+#define INT16_MIN ((int)0x8000)
+#define UINT16_MAX 0xFFFFU
+#define INT32_MAX 0x7FFF
+#define INT32_MIN ((int)0x8000)
+#define UINT32_MAX 0xFFFFU
+#define INT64_MAX 0x7FFFFFFFL
+#define INT64_MIN ((long)0x80000000L)
+#define UINT64_MAX 0xFFFFFFFFUL
+
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned long uint32_t;
+typedef unsigned long long uint64_t;
+typedef signed char int8_t;
+typedef signed short int16_t;
+typedef signed long int32_t;
+typedef signed long long int64_t;
+
+static uint8_t far *vgaMemory = (uint8_t far *)0xA0000000L;
+static uint8_t far *textMemory = (uint8_t far *)0xB8000000L;
+static volatile uint16_t far *clock = (uint16_t far *)0x0000046C; /*Clock always changes*/
+union REGS in,out;
+
+#define plotPixel(x,y,color) vgaMemory[(y<<8)+(y<<6)+x] = color
+#define plotLinearPixel(pos,color) vgaMemory[pos] = color
+#define fetchPixel(x,y) vgaMemory[(y<<8)+(y<<6)+x]
+#define isMouseOnPosition(x,y,m) (m.x == x) ? ((m.y == y) ? 1 : 0) : 0 /*0 if false, 1 if true*/
+#define isSigned(x) (x < 0) ? -1 : (x == 0) ? 0 : -1
+
+struct mouse {
+	buttonLeft:1;
+	buttonRight:1;
+	buttonMiddle:1;
+	buttons:4;
+	int16_t x;
+	int16_t y;
+};
+
+struct image {
+	uint32_t wide;
+	uint32_t tall;
+	uint32_t tileTall; /*Tall of each tile (useful for tiled images)*/
+	uint8_t *data;
+};
+
+struct bitmapHeader {
+	uint8_t type[3]; /*File*/
+	uint32_t sizeOfFile;
+	uint32_t reserved;
+	uint32_t offset;
+	uint32_t headerSize;
+	int32_t wide; /*Info*/
+	int32_t tall;
+	uint16_t planes;
+	uint16_t bitsPerPixel;
+	uint32_t compression;
+	uint32_t sizeOfImage;
+	uint32_t xPixelsPerMeter;
+	uint32_t yPixelsPerMeter;
+	uint32_t numberOfColors;
+	uint32_t importantColors;
+	uint32_t mask[4]; /*Eh, some bitmaps use it*/
+};
+
+/* ====================================================================
+ *
+ * IMPORTANT SUBFUNCTIONS
+ *
+ * ====================================================================
+ */
+
 void _Cdecl fskip(FILE *stream, uint64_t n) {
-    static uint64_t i;
-    for(i = 0; i < (n+1); i++) {
-        fgetc(stream); /*Skip characters*/
-    }
-    return;
-}
-
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-/*
-@Action: Sets video to *video*
-@Parameters: video=16-bit long value of the desired video mode
-@Output: Old video mode
-*/
-int16_t _Cdecl setVideo(register int16_t video) { /*Sets the video using int 10h*/
-	static int16_t oldVideo;
-	in.h.ah = 0x0F;
-    int86(0x10,&in,&out);
-    oldVideo = out.h.al;
-    if(oldVideo == 0x29) { /*Realtek RTVGA BIOS v3.C10 crashes when switching to mode 0x21 or 0x27*/
-		if(video == 0x21 || video == 0x27) {
-			in.h.ah = 0x00;
-			in.h.al = 0x13;
-			int86(0x10,&in,&out);
-		}
+	static uint64_t i;
+	for(i = 0; i < (n+1); i++) {
+		fgetc(stream); /*Skip characters*/
 	}
-    in.h.ah = 0x00;
-    in.h.al = video;
-    int86(0x10,&in,&out);
-    return oldVideo;
-}
-
-/*
-@Action: Gets video adapter
-@Parameters: void
-@Output: Video adapter [see below]
--0 Unknown (probably SVGA)
--1 AHEAD adapters
--2 PARADISE adapters
--3 OAK TECH adapters
--5 ATI 18800
--6 ATI 18800-1
--7 ATI 18800-2
--8 ATI 18800-4
--9 ATI 18800-5
--10 ATI 68800AX
--11 EGA Wonder
--12 VGA Wonder
--13 EGA Wonder8000+
--14 Genoa 6200/6300
--15 Genoa 6400/6600
--16 Genoa 6100
--17 Genoa 5100/5200
--18 Genoa 5300/5400
-*/
-int32_t _Cdecl getVideoAdapter(void) {
-	static uint8_t *ptr;
-	static uint8_t *txt;
-	txt = (uint8_t *)malloc(sizeof(uint8_t)*6);
-	if(txt == NULL) {
-		return -1;
-	}
-	ptr = (uint8_t *)0xC0000025; /*Check for AHEAD adapters*/
-	strcpy(txt,"AHEAD\0"); /*Comparing memory, with string!*/
-	if(memcmp(ptr,txt,5) == 0) {
-		return 1;
-	}
-	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*5);
-	ptr = (uint8_t *)0xC000007D; /*Check for PARADISE adapters*/
-	strcpy(txt,"VGA=\0"); /*Comparing memory, with string!*/
-	if(memcmp(ptr,txt,5) == 0) {
-		return 2;
-	}
-	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*8);
-	ptr = (uint8_t *)0xC0000008; /*Check for OAK TECH adapters*/
-	strcpy(txt,"OAK VGA\0"); /*Comparing memory, with string!*/
-	if(memcmp(ptr,txt,5) == 0) {
-		return 3;
-	}
-	txt = (uint8_t *)realloc(txt,sizeof(uint8_t)*10);
-	ptr = (uint8_t *)0xC0000031; /*Check for ATI adapters*/
-	strcpy(txt,"761295520\0"); /*Comparing memory, with string!*/
-	if(memcmp(ptr,txt,5) == 0) {
-		ptr = (uint8_t *)0xC0000043; /*We also have to put the stupid revision*/
-		switch(*ptr) {
-			case 0x31:
-				free(txt);
-				return 5; /*18800*/
-			case 0x32:
-				free(txt);
-				return 6; /*18800-1*/
-			case 0x33:
-				free(txt);
-				return 7; /*18800-2*/
-			case 0x34:
-				free(txt);
-				return 8; /*18800-4*/
-			case 0x35:
-				free(txt);
-				return 9; /*18800-5*/
-			case 0x62:
-				free(txt);
-				return 10; /*68800AX*/
-		}
-		ptr = (uint8_t *)0xC0000040;
-		switch(ptr[0]) {
-			case '2':
-				switch(ptr[1]) {
-					case '2':
-						return 11; /*EGA Wonder*/
-				}
-				break;
-			case '3':
-				switch(ptr[1]) {
-					case '1':
-						return 12; /*VGA Wonder*/
-					case '2':
-						return 13; /*EGA Wonder8000+*/
-				}
-				break;
-		}
-	}
-	free(txt);
-	ptr = (uint8_t *)0xC0000037; /*Genoa Graphics Adapter*/
-	ptr = (uint8_t *)0xC0000000+(*ptr); /*Fuck, what a mess!*/
-	if(ptr[0] == 0x77 && ptr[2] == 0x99 && ptr[3] == 0x66) {
-		switch(ptr[1]) {
-			case 0x00:
-				return 14; /*Genoa 6200/6300*/
-			case 0x11:
-				return 15; /*Genoa 6400/6600*/
-			case 0x22:
-				return 16; /*Genoa 6100*/
-			case 0x33:
-				return 17; /*Genoa 5100/5200*/
-			case 0x55:
-				return 18; /*Genoa 5300/5400*/
-		}
-	}
-	return 0;
-}
-#endif
-
-/*
-@Action: Reads bitmap file header (before information)
-@Parameters: stream=file stream. structure bitmapFileHeader=structure pointer, we will write data there!
-@Output: void, but overwrites structure bitmapFileHeader
-*/
-void _Cdecl readBitmapHeader(FILE *stream, struct bitmapHeader *e) {
-	static uint32_t headerSize;
-    static uint32_t wide;
-    static uint32_t tall;
-    static uint16_t planes;
-    static uint16_t bitsPerPixel;
-    static uint32_t compression;
-    static uint32_t sizeOfImage;
-    static uint32_t xPixelsPerMeter;
-    static uint32_t yPixelsPerMeter;
-    static uint32_t numberOfColors;
-    static uint32_t importantColors;
-    static uint32_t sizeOfFile;
-    static uint32_t reserved;
-    static uint32_t offset;
-    static uint32_t mask[4];
-    /*Read file header*/
-    fread(e->type,sizeof(uint16_t),1,stream);
-    /*Confirmate that it is a actual bitmap*/
-    if(strncmp((const char *)e->type,"BM",2) == 0 /*Normal windows bitmap*/
-    || strncmp((const char *)e->type,"BA",2) == 0
-    || strncmp((const char *)e->type,"IC",2) == 0 /*Icons (OS/2)*/
-    || strncmp((const char *)e->type,"PT",2) == 0 /*Pointers (OS/2)*/
-    || strncmp((const char *)e->type,"CI",2) == 0 /*Color icons (OS/2)*/
-    || strncmp((const char *)e->type,"CP",2) == 0) /*Color pointers (OS/2)*/ {
-		/*Its valid, proceed*/
-	}
-	else {
-		/*Damn, return error*/
-		#ifdef LEAF_ERROR
-		setLeafError(2);
-		#endif
-		return;
-	}
-    fread(&sizeOfFile,sizeof(uint32_t),1,stream);
-	fread(&reserved,sizeof(uint32_t),1,stream); /*reserved has an actual mean in OS/2*/
-	fread(&offset,sizeof(uint32_t),1,stream);
-    e->sizeOfFile = sizeOfFile;
-    e->reserved = reserved;
-    e->offset = offset;
-    /*Now information*/
-    fread(&headerSize,sizeof(uint32_t),1,stream);
-    e->headerSize = headerSize;
-    /*Check the header size*/
-    if(headerSize == 40) { /*Windows 3.x*/
-		fread(&wide,sizeof(int32_t),1,stream);
-		fread(&tall,sizeof(int32_t),1,stream);
-		fread(&planes,sizeof(uint16_t),1,stream);
-		fread(&bitsPerPixel,sizeof(uint16_t),1,stream);
-		fread(&compression,sizeof(uint32_t),1,stream);
-		fread(&sizeOfImage,sizeof(uint32_t),1,stream);
-		fread(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
-		fread(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
-		fread(&numberOfColors,sizeof(uint32_t),1,stream);
-		fread(&importantColors,sizeof(uint32_t),1,stream);
-		e->mask[0] = 0;
-		e->mask[1] = 0;
-		e->mask[2] = 0;
-		e->mask[3] = 0;
-	}
-	else if(headerSize == 12) { /*OS/2 1.x*/
-		fread(&wide,sizeof(uint16_t),1,stream);
-		fread(&tall,sizeof(uint16_t),1,stream);
-		fread(&planes,sizeof(uint16_t),1,stream);
-		fread(&bitsPerPixel,sizeof(uint16_t),1,stream);
-	}
-	else if(headerSize >= 56 && headerSize <= 64) { /*Windows (95,98,2000,XP,Vista,7,8,8.1,10) bitmap*/
-		fread(&wide,sizeof(int32_t),1,stream);
-		fread(&tall,sizeof(int32_t),1,stream);
-		fread(&planes,sizeof(uint16_t),1,stream);
-		fread(&bitsPerPixel,sizeof(uint16_t),1,stream);
-		fread(&compression,sizeof(uint32_t),1,stream);
-		fread(&sizeOfImage,sizeof(uint32_t),1,stream);
-		fread(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
-		fread(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
-		fread(&numberOfColors,sizeof(uint32_t),1,stream);
-		fread(&importantColors,sizeof(uint32_t),1,stream);
-		fread(&mask[0],sizeof(uint32_t),1,stream);
-		fread(&mask[1],sizeof(uint32_t),1,stream);
-		fread(&mask[2],sizeof(uint32_t),1,stream);
-		fread(&mask[3],sizeof(uint32_t),1,stream);
-		/*Inmediately place masks, on the struct*/
-		e->mask[0] = mask[0];
-		e->mask[1] = mask[1];
-		e->mask[2] = mask[2];
-		e->mask[3] = mask[3];
-	}
-	else {
-		#ifdef LEAF_ERROR
-		setLeafError(4);
-		#endif
-		return;
-	}
-	e->planes = planes;
-    e->bitsPerPixel = bitsPerPixel;
-    e->compression = compression;
-    e->sizeOfImage = sizeOfImage;
-    e->xPixelsPerMeter = xPixelsPerMeter;
-    e->yPixelsPerMeter = yPixelsPerMeter;
-    e->numberOfColors = numberOfColors;
-    e->importantColors = importantColors;
-    /*Check if bit's are valid*/
-    switch(bitsPerPixel) {
-		case 1:
-		case 2:
-		case 4:
-		case 8:
-		case 16:
-		case 24:
-		case 32:
-			break;
-		default:
-			#ifdef LEAF_ERROR
-			setLeafError(2);
-			#endif
-			return;
-	}
-	if(wide < 0 || tall < 0 || planes != 1 || numberOfColors > 256) { /*We did something wrong!*/
-		#ifdef LEAF_ERROR
-		setLeafError(2);
-		#endif
-		return;
-	}
-	e->wide = wide;
-    e->tall = tall;
-	if((uint64_t)wide > INT32_MAX/bitsPerPixel
-	|| (uint64_t)wide > (INT32_MAX/abs(tall))/4) { /*Avoid overflows*/
-		#ifdef LEAF_ERROR
-		setLeafError(6);
-		#endif
-		return;
-	}
-    return;
-}
-
-/*
-@Action: Reads the image of a bitmap
-@Parameters: stream=file stream. b = bitmapheader
-@Output: data pointer
-*/
-uint8_t * _Cdecl readBitmapData(FILE *stream, struct bitmapHeader *b) {
-    static uint32_t i;
-    static uint32_t i2;
-    static uint16_t hold;
-    uint8_t *data;
-    fpos_t pos;
-    if(b->tall == 0 || b->wide == 0) {
-        return 0;
-    }
-    data = (uint8_t *)malloc(b->wide*b->tall);
-    if(data == NULL) {
-		#ifdef LEAF_ERROR
-		setLeafError(4);
-		#endif
-        return 0; /*Up to caller's, how to handle errors*/
-    }
-    fgetpos(stream,&pos);
-    for(i = 1; i < b->tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
-		for(i2 = 0; i2 < b->wide; i2++) {
-			fread(&hold,sizeof(uint8_t),1,stream);
-			data[(i2+((b->tall-i)*b->wide))] = hold;
-		}
-		if(b->wide%4 != 0) { /*Padding exists*/
-			fskip(stream,b->wide%4);
-		}
-    }
-    return (uint8_t *)data;
-}
-
-/*
-@Action: Saves bitmap
-@Parameters: stream=file stream. bih=bitmap info header pointer. uint8_t * = pointer to data
-data=data pointer
-@Output: void
-*/
-void _Cdecl writeBitmap(FILE *stream, struct bitmapHeader *bih, uint8_t *data) {
-	static uint32_t sizeOfFile,reserved,offset; /*We do the same as in our read routines*/
-    static uint32_t headerSize;					/*we just switch the order of stuff and*/
-    static uint32_t wide;						/*change read with write.*/
-    static uint32_t tall;
-    static uint16_t planes;
-    static uint16_t bitsPerPixel;
-    static uint32_t compression;
-    static uint32_t sizeOfImage;
-    static uint32_t xPixelsPerMeter;
-    static uint32_t yPixelsPerMeter;
-    static uint32_t numberOfColors;
-    static uint32_t importantColors;
-    static uint32_t i;
-    static uint32_t i2;
-    static uint16_t hold;
-	sizeOfFile = bih->sizeOfFile;
-    reserved = bih->reserved;
-    offset = bih->offset;
-    headerSize = bih->headerSize;
-    wide = bih->wide;
-    tall = bih->tall;
-    planes = bih->planes;
-    bitsPerPixel = bih->bitsPerPixel;
-    compression = bih->compression;
-    sizeOfImage = bih->sizeOfImage;
-    xPixelsPerMeter = bih->xPixelsPerMeter;
-    yPixelsPerMeter = bih->yPixelsPerMeter;
-    numberOfColors = bih->numberOfColors;
-    importantColors = bih->importantColors;
-    fwrite(bih->type,sizeof(uint16_t),1,stream);
-    fwrite(&sizeOfFile,sizeof(uint32_t),1,stream);
-    fwrite(&reserved,sizeof(uint32_t),1,stream);
-    fwrite(&offset,sizeof(uint32_t),1,stream);
-	fwrite(&headerSize,sizeof(uint32_t),1,stream);
-    fwrite(&wide,sizeof(int32_t),1,stream);
-    fwrite(&tall,sizeof(int32_t),1,stream);
-    fwrite(&planes,sizeof(uint16_t),1,stream);
-    fwrite(&bitsPerPixel,sizeof(uint32_t),1,stream);
-    fwrite(&compression,sizeof(uint32_t),1,stream);
-    fwrite(&sizeOfImage,sizeof(uint32_t),1,stream);
-    fwrite(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
-    fwrite(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
-    fwrite(&numberOfColors,sizeof(uint32_t),1,stream);
-    fwrite(&importantColors,sizeof(uint32_t),1,stream);
-    /*Palette*/
-    for(i = 0; i < 1022; i++) {
-		fwrite(&i,sizeof(uint8_t),1,stream);
-	}
-	/*Bitmap data*/
-	for(i = 1; i < tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
-		for(i2 = 0; i2 < wide; i2++) { /*We just replotting our shit back again!*/
-			hold = data[(i2+((tall-i)*wide))];
-			fwrite(&hold,sizeof(uint8_t),1,stream);
-		}
-    }
 	return;
 }
 
-/*
-@Action: Reads a pcx image
-@Parameters: stream=file stream. pcxHeader=struct containing stuff
-data=data pointer
-@Output: void
-*/
-void _Cdecl readPaintbrushHeader(FILE *stream, struct pcxHeader *p) {
-	static uint8_t id;
-	static uint8_t version;
-	static uint8_t encoding;
-	static uint8_t bitsPerPixel;
-	static uint16_t xStart;
-	static uint16_t yStart;
-	static uint16_t xEnd;
-	static uint16_t yEnd;
-	static uint16_t horizontalResolution;
-	static uint16_t verticalResolution;
-	static uint8_t palette[48];
-	static uint8_t reserved;
-	static uint8_t numberOfBitPlanes;
-	static uint16_t bytesPerLine;
-	static uint16_t paletteType;
-	static uint16_t horizontalScreenSize;
-	static uint16_t verticalScreenSize;
-	static uint8_t zeroAfterHeader[54];
-	fread(&id,sizeof(uint8_t),1,stream);
-	if(id != 0x0A) {
-		#ifdef LEAF_ERROR
-		setLeafError(2);
-		#endif
-		return;
-	}
-	fread(&version,sizeof(uint8_t),1,stream);
-	if(version > 5) { /*Only five versions!*/
-		#ifdef LEAF_ERROR
-		setLeafError(2);
-		#endif
-		return;
-	}
-	fread(&encoding,sizeof(uint8_t),1,stream);
-	if(encoding != 1) { /*No non-encoded images*/
-		#ifdef LEAF_ERROR
-		setLeafError(2);
-		#endif
-		return;
-	}
-	fread(&bitsPerPixel,sizeof(uint8_t),1,stream);
-	fread(&xStart,sizeof(uint16_t),1,stream); /*Eww, why someone even thinked of this?*/
-	fread(&yStart,sizeof(uint16_t),1,stream);
-	fread(&xEnd,sizeof(uint16_t),1,stream); /*This is like TALL and WIDE*/
-	fread(&yEnd,sizeof(uint16_t),1,stream);
-	fread(&horizontalResolution,sizeof(uint16_t),1,stream);
-	fread(&verticalResolution,sizeof(uint16_t),1,stream);
-	fread(&palette,sizeof(uint8_t),48,stream); /*EGA 16-bit palette*/
-	fread(&reserved,sizeof(uint8_t),1,stream);
-	if(reserved != 0) { /*Must be zero*/
-		#ifdef LEAF_ERROR
-		setLeafError(2);
-		#endif
-		return;
-	}
-	fread(&numberOfBitPlanes,sizeof(uint8_t),1,stream);
-	fread(&bytesPerLine,sizeof(uint16_t),1,stream);
-	fread(&paletteType,sizeof(uint16_t),1,stream);
-	fread(&horizontalScreenSize,sizeof(uint16_t),1,stream);
-	fread(&verticalScreenSize,sizeof(uint16_t),1,stream);
-	fread(&zeroAfterHeader,sizeof(uint8_t),54,stream);
+/* ====================================================================
+ *
+ * VIDEO AND DISPLAY (GRAPHICAL) FUNCTIONS
+ *
+ * ====================================================================
+ */
+uint8_t _Cdecl setVideo(register uint8_t video) {
+	static uint8_t oldVideo;
+	in.h.al = 0x0f;
+	int86(0x10,&in,&out);
+	oldVideo = out.h.al;
+	in.h.al = video;
+	in.h.ah = 0;
+	int86(0x10,&in,&out);
+	return oldVideo;
 }
 
-/*
-@Action: Reads a pcx data
-@Parameters: stream=file stream. pcxHeader=struct containing stuff
-data=data pointer
-@Output: void
-*/
-uint8_t * _Cdecl readPaintbrushData(FILE *stream, struct pcxHeader *p) {
-	static uint16_t wide = p->xEnd-p->xStart+1;
-	static uint16_t tall = p->yEnd-p->yStart+1;
-	static uint16_t scanLenght = p->numberOfBitPlanes*p->bytesPerLine;
-	static uint16_t padding = ((p->bytesPerLine*p->numberOfBitPlanes)*(8/p->bitsPerPixel))-wide;
-	static uint16_t rleRepeat;
-	static uint16_t total;
-	static uint8_t *buffer;
-	static uint8_t rlePixel;
-	static uint8_t holder;
-	static uint8_t index;
-	buffer = (uint8_t *)malloc(wide*tall);
-	if(buffer == NULL) {
-		#ifdef LEAF_ERROR
-		setLeafError(4);
-		#endif
-		return;
-	}
-	while(index < wide*tall) {
-		fread(&holder,sizeof(uint8_t),1,stream);
-		if((holder & 0xC0) == 0xC0) {
-			rleRepeat = holder & 0x3F;
-			fread(&rlePixel,sizeof(uint8_t),1,stream);
-		}
-		else {
-			rleRepeat = 1;
-			rlePixel = holder;
-		}
-		for(total += rleRepeat; rleCount < wide*tall && index < wide*tall; index++) {
-			rleRepeat--;
-			buffer[index] = rlePixel;
-		}
-	}
-	return (uint8_t *)buffer;
-}
-
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-/*
-@Action: Displays image
-@Parameters: data=data pointer. x=x pos. y=y pos. wide=wide of image. tall=tall of image
-@Output: void
-*/
-void _Cdecl displayImage(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall) {
-    static uint32_t i;
-    static uint32_t i2;
-    for(i2 = 0; i2 < tall; i2++) {
-        for(i = 0; i < wide; i++) {
-            plotPixel(x+i,y+i2,data[i+(i2*wide)]);
-        }
-    }
-    return;
-}
-
-/*
-@Action: Displays image while reading file
-@Parameters: x=x pos. y=y pos. wide=wide of image. tall=tall of image
-@Output: void
-*/
-void _Cdecl displayBitmapImageWhileReading(FILE *stream, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall) {
-    static uint32_t i;
-    static uint32_t i2;
-    static uint16_t hold;
-    for(i = tall; i > 0; i--) { /*Reverse scan, reverse tall, but not wide*/
-		for(i2 = 0; i2 < wide; i2++) {
-			fread(&hold,sizeof(uint8_t),1,stream);
-			/*(i2+((tall-i)*wide))*/
-			plotPixel(x+i2,y+i,hold);
-		}
-    }
-    return;
-}
-
-/*
-@Action: Displays image in tiled mode
-@Parameters: data=data pointer. x=x pos. y=y pos. wide=wide of tile. tall=tall of tile. index=tile number
-@Output: void
-*/
-void _Cdecl displayImageTile(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index) {
-    register uint32_t i;
-    register uint32_t i2;
-    for(i2 = 0; i2 < tall; i2++) {
-        for(i = 0; i < wide; i++) {
-			plotPixel(x+i,y+i2,data[((i2*wide)+i)+index]);
-        }
-    }
-    return;
-}
-
-/*
-@Action: Displays image in tiled mode (Transparent)
-@Parameters: data=data pointer. x=x pos. y=y pos. wide=wide of tile. tall=tall of tile. index=tile number. trans=transparent color
-@Output: void
-*/
-void _Cdecl displayImageTileTransparent(uint8_t *data, uint32_t x, uint32_t y, uint32_t wide, uint32_t tall, uint32_t index, uint8_t trans) {
-    register uint32_t i;
-    register uint32_t i2;
-    for(i2 = 0; i2 < tall; i2++) {
-        for(i = 0; i < wide; i++) {
-			if(data[((i2*wide)+i)+index] != trans) {
-				plotPixel(x+i,y+i2,data[((i2*wide)+i)+index]);
-			}
-        }
-    }
-    return;
-}
-
-/*
-@Action: Plots a line
-@Parameters: fx=from x. fy=from y. tx=to x. ty=to y. color=color (byte)
-@Output: void
-*/
-/*Adapted from wikipedia's pseudo code*/
 void plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color) {
-	static int16_t dx;
-	static int16_t dy;
+	static int16_t dx,dy;
 	static int16_t xi;
 	static int16_t yi;
 	static int16_t d;
@@ -739,74 +207,283 @@ void plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color) {
 	return;
 }
 
-/*
-@Action: Initializes mouse
-@Parameters: structure mouse=structure of the mouse, there should be one per program (recommended)
-because this structure will hold all mouses. And i don't think anyone uses more than 2
-bloody mouses.
-@Output: void, but returns overwritten structure *m
-*/
-char _Cdecl initMouse(struct mouse *m) {
+/* ====================================================================
+ *
+ * SOUND
+ *
+ * ====================================================================
+ */
+
+void playSound(uint32_t x) {
+	uint32_t cot;
+	uint8_t tmp;
+	cot = (uint32_t)1193180/500;
+	outportb(0x43,0xb6);
+	outportb(0x42,(uint8_t)cot);
+	outportb(0x42,(uint8_t)cot>>8);
+	tmp = inportb(0x61);
+	if(tmp != (tmp|3)) {
+		outportb(0x61,tmp|3);
+	}	
+	return;
+}
+
+void stopSound(void) {
+	uint8_t tmp = inportb(0x61)&0xfc;
+	outportb(0x61,tmp);
+	return;
+}
+
+/* ====================================================================
+ *
+ * IMAGE FILES AND READ (BMP,ICO,ETC) FUNCTIONS
+ *
+ * ====================================================================
+ */
+int8_t _Cdecl readBitmapHeader(FILE *stream, struct bitmapHeader *e) {
+	static uint32_t headerSize;
+	static uint32_t wide;
+	static uint32_t tall;
+	static uint16_t planes;
+	static uint16_t bitsPerPixel;
+	static uint32_t compression;
+	static uint32_t sizeOfImage;
+	static uint32_t xPixelsPerMeter;
+	static uint32_t yPixelsPerMeter;
+	static uint32_t numberOfColors;
+	static uint32_t importantColors;
+	static uint32_t sizeOfFile;
+	static uint32_t reserved;
+	static uint32_t offset;
+	static uint32_t mask[4];
+	/*Read file header*/
+	fread(e->type,sizeof(uint16_t),1,stream);
+	/*Confirmate that it is a actual bitmap*/
+	if(strncmp((const char *)e->type,"BM",2) == 0 /*Normal windows bitmap*/
+	|| strncmp((const char *)e->type,"BA",2) == 0
+	|| strncmp((const char *)e->type,"IC",2) == 0 /*Icons (OS/2)*/
+	|| strncmp((const char *)e->type,"PT",2) == 0 /*Pointers (OS/2)*/
+	|| strncmp((const char *)e->type,"CI",2) == 0 /*Color icons (OS/2)*/
+	|| strncmp((const char *)e->type,"CP",2) == 0) /*Color pointers (OS/2)*/ {
+		/*Its valid, proceed*/
+	}
+	else {
+		/*Damn, return error*/
+		return -1;
+	}
+	fread(&sizeOfFile,sizeof(uint32_t),1,stream);
+	fread(&reserved,sizeof(uint32_t),1,stream); /*reserved has an actual mean in OS/2*/
+	fread(&offset,sizeof(uint32_t),1,stream);
+	e->sizeOfFile = sizeOfFile;
+	e->reserved = reserved;
+	e->offset = offset;
+	/*Now information*/
+	fread(&headerSize,sizeof(uint32_t),1,stream);
+	e->headerSize = headerSize;
+	/*Check the header size*/
+	if(headerSize == 40) { /*Windows 3.x*/
+		fread(&wide,sizeof(int32_t),1,stream);
+		fread(&tall,sizeof(int32_t),1,stream);
+		fread(&planes,sizeof(uint16_t),1,stream);
+		fread(&bitsPerPixel,sizeof(uint16_t),1,stream);
+		fread(&compression,sizeof(uint32_t),1,stream);
+		fread(&sizeOfImage,sizeof(uint32_t),1,stream);
+		fread(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
+		fread(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
+		fread(&numberOfColors,sizeof(uint32_t),1,stream);
+		fread(&importantColors,sizeof(uint32_t),1,stream);
+		e->mask[0] = 0;
+		e->mask[1] = 0;
+		e->mask[2] = 0;
+		e->mask[3] = 0;
+	}
+	else if(headerSize == 12) { /*OS/2 1.x*/
+		fread(&wide,sizeof(uint16_t),1,stream);
+		fread(&tall,sizeof(uint16_t),1,stream);
+		fread(&planes,sizeof(uint16_t),1,stream);
+		fread(&bitsPerPixel,sizeof(uint16_t),1,stream);
+	}
+	else if(headerSize >= 56 && headerSize <= 64) { /*Windows (95,98,2000,XP,Vista,7,8,8.1,10) bitmap*/
+		fread(&wide,sizeof(int32_t),1,stream);
+		fread(&tall,sizeof(int32_t),1,stream);
+		fread(&planes,sizeof(uint16_t),1,stream);
+		fread(&bitsPerPixel,sizeof(uint16_t),1,stream);
+		fread(&compression,sizeof(uint32_t),1,stream);
+		fread(&sizeOfImage,sizeof(uint32_t),1,stream);
+		fread(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
+		fread(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
+		fread(&numberOfColors,sizeof(uint32_t),1,stream);
+		fread(&importantColors,sizeof(uint32_t),1,stream);
+		fread(&mask[0],sizeof(uint32_t),1,stream);
+		fread(&mask[1],sizeof(uint32_t),1,stream);
+		fread(&mask[2],sizeof(uint32_t),1,stream);
+		fread(&mask[3],sizeof(uint32_t),1,stream);
+		/*Inmediately place masks, on the struct*/
+		e->mask[0] = mask[0];
+		e->mask[1] = mask[1];
+		e->mask[2] = mask[2];
+		e->mask[3] = mask[3];
+	}
+	else {
+		return -1;
+	}
+	e->planes = planes;
+	e->bitsPerPixel = bitsPerPixel;
+	e->compression = compression;
+	e->sizeOfImage = sizeOfImage;
+	e->xPixelsPerMeter = xPixelsPerMeter;
+	e->yPixelsPerMeter = yPixelsPerMeter;
+	e->numberOfColors = numberOfColors;
+	e->importantColors = importantColors;
+	/*Check if bit's are valid*/
+	switch(bitsPerPixel) {
+		case 1:
+		case 2:
+		case 4:
+		case 8:
+		case 16:
+		case 24:
+		case 32:
+			break;
+		default:
+			return -1;
+	}
+	if(wide < 0 || tall < 0 || planes != 1 || numberOfColors > 256) { /*We did something wrong!*/
+		return -1;
+	}
+	e->wide = wide;
+	e->tall = tall;
+	if((uint64_t)wide > INT32_MAX/bitsPerPixel
+	|| (uint64_t)wide > (INT32_MAX/abs(tall))/4) { /*Avoid overflows*/
+		return -1;
+	}
+	return 0;
+}
+
+uint8_t * _Cdecl readBitmapData(FILE *stream, struct bitmapHeader *b) {
+	static uint32_t i;
+	static uint32_t i2;
+	static uint16_t hold;
+	uint8_t *data;
+	fpos_t pos;
+	if(b->tall == 0 || b->wide == 0) {
+		return 0;
+	}
+	data = (uint8_t *)malloc(b->wide*b->tall);
+	if(data == NULL) {
+		return 0; /*Up to caller's, how to handle errors*/
+	}
+	fgetpos(stream,&pos);
+	for(i = 1; i < b->tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
+		for(i2 = 0; i2 < b->wide; i2++) {
+			fread(&hold,sizeof(uint8_t),1,stream);
+			data[(i2+((b->tall-i)*b->wide))] = hold;
+		}
+		if(b->wide%4 != 0) { /*Padding exists*/
+			fskip(stream,b->wide%4);
+		}
+	}
+	return (uint8_t *)data;
+}
+
+void _Cdecl writeBitmap(FILE *stream, struct bitmapHeader *bih, uint8_t *data) {
+	static uint32_t sizeOfFile,reserved,offset; /*We do the same as in our read routines*/
+	static uint32_t headerSize;					/*we just switch the order of stuff and*/
+	static uint32_t wide;						/*change read with write.*/
+	static uint32_t tall;
+	static uint16_t planes;
+	static uint16_t bitsPerPixel;
+	static uint32_t compression;
+	static uint32_t sizeOfImage;
+	static uint32_t xPixelsPerMeter;
+	static uint32_t yPixelsPerMeter;
+	static uint32_t numberOfColors;
+	static uint32_t importantColors;
+	static uint32_t i;
+	static uint32_t i2;
+	static uint16_t hold;
+	sizeOfFile = bih->sizeOfFile;
+	reserved = bih->reserved;
+	offset = bih->offset;
+	headerSize = bih->headerSize;
+	wide = bih->wide;
+	tall = bih->tall;
+	planes = bih->planes;
+	bitsPerPixel = bih->bitsPerPixel;
+	compression = bih->compression;
+	sizeOfImage = bih->sizeOfImage;
+	xPixelsPerMeter = bih->xPixelsPerMeter;
+	yPixelsPerMeter = bih->yPixelsPerMeter;
+	numberOfColors = bih->numberOfColors;
+	importantColors = bih->importantColors;
+	fwrite(bih->type,sizeof(uint16_t),1,stream);
+	fwrite(&sizeOfFile,sizeof(uint32_t),1,stream);
+	fwrite(&reserved,sizeof(uint32_t),1,stream);
+	fwrite(&offset,sizeof(uint32_t),1,stream);
+	fwrite(&headerSize,sizeof(uint32_t),1,stream);
+	fwrite(&wide,sizeof(int32_t),1,stream);
+	fwrite(&tall,sizeof(int32_t),1,stream);
+	fwrite(&planes,sizeof(uint16_t),1,stream);
+	fwrite(&bitsPerPixel,sizeof(uint32_t),1,stream);
+	fwrite(&compression,sizeof(uint32_t),1,stream);
+	fwrite(&sizeOfImage,sizeof(uint32_t),1,stream);
+	fwrite(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
+	fwrite(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
+	fwrite(&numberOfColors,sizeof(uint32_t),1,stream);
+	fwrite(&importantColors,sizeof(uint32_t),1,stream);
+	/*Palette*/
+	for(i = 0; i < 1022; i++) {
+		fwrite(&i,sizeof(uint8_t),1,stream);
+	}
+	/*Bitmap data*/
+	for(i = 1; i < tall+1; i++) { /*Reverse scan, reverse tall, but not wide*/
+		for(i2 = 0; i2 < wide; i2++) { /*We just replotting our shit back again!*/
+			hold = data[(i2+((tall-i)*wide))];
+			fwrite(&hold,sizeof(uint8_t),1,stream);
+		}
+	}
+	return;
+}
+
+/* ====================================================================
+ * 
+ * MOUSE FUNCTIONS
+ * 
+ * ====================================================================
+ */
+
+void _Cdecl setMouseStatus(uint8_t status) {
+	in.x.ax = status;
+	int86(0x33,&in,&out);
+	return;
+}
+
+int8_t _Cdecl initMouse(struct mouse *m) {
 	in.x.ax = 0x00;
 	in.x.bx = 0x00;
 	int86(0x33,&in,&out);
-	if((in.x.bx&2) != 0) { /*Two button mouse*/
-        m->buttons = 2;
+	/*set the correct button stuff*/
+	if((in.x.bx&2) != 0) {
+		m->buttons = 2;
+	} else if((in.x.bx&2) != 0) {
+		m->buttons = 3;
+	} else {
+		m->buttons = 0;
 	}
-	else if((in.x.bx&3) != 0) { /*Three button mouse*/
-        m->buttons = 3;
+	if(out.x.ax != 0) {
+		setMouseStatus(MOUSE_STATUS_SHOW); /*automaticaly show mouse if the mouse was initialized*/
 	}
-	else { /*Unknown buttons*/
-        m->buttons = 0;
-	}
-	#ifdef LEAF_ERROR
-	if(out.x.ax == 0) {
-		setLeafError(1);
-	}
-	#endif
-	return (out.x.ax != 0) ? 0 : -1; /*If the mouse was initialized return 0, else return -1*/
+	return (out.x.ax != 0) ? 0 : -1; /*If the mouse was initialized return 1, else return 0*/
 }
 
-/*
-@Action: Sets position of mouse
-@Parameters: x=x position. y=y position
-@Output: void
-*/
 void _Cdecl setMousePosition(uint16_t x,uint16_t y) {
-	in.x.ax = 0x04;
-	in.x.cx = x;
+	in.x.ax = 4;
+	in.x.cx = x; /*set the coordinates and stuff*/
 	in.x.dx = y;
 	int86(0x33,&in,&out);
 	return;
 }
 
-/*
-@Action: Shows mouse
-@Parameters: void
-@Output: void
-*/
-void _Cdecl showMouse(void) {
-	in.x.ax = 0x01;
-	int86(0x33,&in,&out);
-	return;
-}
-
-/*
-@Action: Hide mouse
-@Parameters: void
-@Output: void
-*/
-void _Cdecl hideMouse(void) {
-	in.x.ax = 0x02;
-	int86(0x33,&in,&out);
-	return;
-}
-
-/*
-@Action: Get mouse status
-@Parameters: structure mouse=structure of the mouse to write to
-@Output: void, but returns overwritten structure *m
-*/
 void _Cdecl getMouseStatus(struct mouse *m) {
 	in.x.ax = 0x03;
 	int86(0x33,&in,&out);
@@ -818,47 +495,17 @@ void _Cdecl getMouseStatus(struct mouse *m) {
 	return;
 }
 
-/*
-@Action: "redraws" black area left by initialized mouse once a thing has been draw
-@Parameters: structure mouse=structure of the mouse
-@Output: void
-*/
-void _Cdecl redrawOnMouse(struct mouse *m) {
-    static uint16_t i,i2;
-    for(i = 0; i < 16; i++) {
-        for(i2 = 0; i2 < 16; i2++) {
-            plotPixel(i+(m->x/2),i2+(m->y/2),fetchPixel(i+(m->x/2),i2+(m->y/2)));
-        }
-    }
-    return;
+/*Extra functions for compatibility with old Leaf Engine programs/games*/
+void _Cdecl showMouse(void) {
+	in.x.ax = 1;
+	int86(0x33,&in,&out);
+	return;
+}
+void _Cdecl hideMouse(void) {
+	in.x.ax = 2;
+	int86(0x33,&in,&out);
+	return;
 }
 
-#ifdef __USE_TASM__
-void experimentalPlaySound(int x) {
-    asm pusha
-    
-    asm mov al, 0b6h
-    asm out 43h, al
-    asm mov dx, 14h
-    asm mov ax, 4f38h
-    asm div, di
-    asm out 42h, al
-    asm mov al, ah
-    asm mov 42h, al
-    asm out 42h
-    asm in al, 61h
-    asm mov ah, al
-    asm or al, 3
-    asm out 61h, al
-    
-    asm dec bx
-    
-    asm mov al, ah
-    asm out 61h, al
-    
-    asm popa
-    return;
-}
 #endif
-
-#endif
+
