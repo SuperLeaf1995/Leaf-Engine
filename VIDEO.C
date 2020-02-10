@@ -1,8 +1,3 @@
-/* LEAF ENGINE
- * Copyright (C) Jesus Antonio Diaz - 2020
- * Licensed under Apache License, see LICENSE.md
- */
-
 /* VIDEO.C
  * Includes video-mode independent functions, like plotting a line and
  * getting video mode, setting video mode, etc*/
@@ -22,6 +17,25 @@ uint8_t _Cdecl getVideo(void) {
 	in.h.al = 0x0f;
 	int86(0x10,&in,&out); /*issue interrupt*/
 	return out.h.al; /*return video we got*/
+}
+
+void _Cdecl setPaletteElement(uint8_t r, uint8_t g, uint8_t b, uint8_t n) {
+	outp(0x03c8,n);
+	outp(0x03c9,r>>2);
+	outp(0x03c9,g>>2);
+	outp(0x03c9,b>>2);
+	return;
+}
+
+void _Cdecl setPalette(paletteEntry *pal, uint16_t n) {
+	register uint16_t i;
+	outp(0x03c8,0);
+	for(i = 0; i < n; i++) {
+		outp(0x03c9,pal[i].red>>2);
+		outp(0x03c9,pal[i].green>>2);
+		outp(0x03c9,pal[i].blue>>2);
+	}
+	return;
 }
 
 void plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color) {
@@ -108,3 +122,13 @@ void plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color) {
 	}
 	return;
 }
+
+void plotPoly(int32_t n, int32_t *v, uint8_t color) {
+	int32_t i;
+	for(i = 0; i < n-1; i++) {
+		/*iterate trough all vertices*/
+  		plotLine(v[(i<<1)+0],v[(i<<1)+1],v[(i<<1)+2],v[(i<<1)+3],color);
+	}
+	plotLine(v[0],v[1],v[(n<<1)-2],v[(n<<1)-1],color);
+}
+

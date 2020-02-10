@@ -1,8 +1,3 @@
-/* LEAF ENGINE
- * Copyright (C) Jesus Antonio Diaz - 2020
- * Licensed under Apache License, see LICENSE.md
- */
-
 /* LEAF.H
  * Main leaf file, should be included as "leaf.h" or "leaf/leaf.h" in program*/
 
@@ -80,5 +75,6 @@ typedef struct mouse {
 #include "leaf/file/bmp.c"
 #include "leaf/file/pal.c"
 #include "leaf/file/pcx.c"
+#include "leaf/file/tiff.c"
 
 #endif

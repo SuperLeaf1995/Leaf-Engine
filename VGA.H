@@ -1,8 +1,3 @@
-/* LEAF ENGINE
- * Copyright (C) Jesus Antonio Diaz - 2020
- * Licensed under Apache License, see LICENSE.md
- */
-
 /* VGA.H
  * Header for VGA memory and routines for plotting pixels and stuff*/
 

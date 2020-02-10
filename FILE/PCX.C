@@ -1,7 +1,5 @@
-/* LEAF ENGINE
- * Copyright (C) Jesus Antonio Diaz - 2020
- * Licensed under Apache License, see LICENSE.md
- */
+/*PCX.C
+ *ZSoft paintbrush file format parser and reader*/
 
 typedef struct pcxHeader {
 	uint8_t type;
@@ -56,9 +54,9 @@ int8_t _Cdecl readImagePcxHeader(FILE *stream, pcxHeader *p) {
 	fread(&verticalResolution,sizeof(uint16_t),1,stream);
 	/*read the EGA palette for once*/
 	for(i = 0; i < 16; i++) {
-		p->egaPalette->red = fgetc(stream);
-		p->egaPalette->green = fgetc(stream);
-		p->egaPalette->blue = fgetc(stream);
+		p->egaPalette[i].red = fgetc(stream);
+		p->egaPalette[i].green = fgetc(stream);
+		p->egaPalette[i].blue = fgetc(stream);
 	}
 	fread(&reserved,sizeof(uint8_t),1,stream);
 	if(reserved != 0) { return -6; } /*reserved is always 0*/
@@ -88,38 +86,43 @@ int8_t _Cdecl readImagePcxHeader(FILE *stream, pcxHeader *p) {
 	return 0;
 }
 
-/*
-palette = (paletteEntry *)malloc(sizeof(paletteEntry)*16);
-	if(palette == NULL) { return -5; }
-	for(i = 0; i < 16; i++) {
-		fread((uint8_t *)palette[i]->red,sizeof(uint8_t),1,stream);
-		fread((uint8_t *)palette[i]->green,sizeof(uint8_t),1,stream);
-		fread((uint8_t *)palette[i]->blue,sizeof(uint8_t),1,stream);
-	}
-*/
-
 uint8_t * _Cdecl readImagePcxData(FILE *stream, pcxHeader *p) {
-	static uint8_t i = 0; /*initialize all shit*/
-	static uint8_t tmp = 0;
-	static uint8_t val,i2;
-	static uint32_t i3 = 0;
-	static uint32_t dataSize;
+	register uint8_t rLen,tmp,val;
+	register uint32_t index,dataSize,total;
 	static uint8_t *data;
-	dataSize = (p->xEnd)*(p->yEnd);
+	dataSize = (p->xEnd+1)*(p->yEnd+1);
+	index = 0; total = 0;
 	data = (uint8_t *)malloc(dataSize);
 	if(data == NULL) { return 0; }
-	while(i3 < dataSize) {
+	while(index < dataSize) {
 		tmp = fgetc(stream);
 		if((tmp&0xC0) == 0xC0) { /*is it a 2 byte value*/
-			i = tmp&0x3F;
-			val = fgetc(stream);
+			rLen = tmp&0x3F; val = fgetc(stream);
 		} else { /*1 byte value*/
-			i = 1;
-			val = tmp;
+			rLen = 1; val = tmp;
 		}
-		for(i2 += i; i&&i3 < dataSize; i--, i3++) { /*decompress the data*/
-			data[i3] = val;
+		for(total += rLen; rLen&&index < dataSize; rLen--, index++) { /*decompress the data*/
+			data[index] = val;
 		}
 	}
 	return (uint8_t *)data;
 }
+
+/*TODO: Fix this function*/
+paletteEntry * _Cdecl readImagePcxVgaPalette(FILE *stream) {
+	register int16_t vgaPaletteChecker;
+	register uint16_t i;
+	paletteEntry * pal;
+	vgaPaletteChecker = fgetc(stream); /*is last byte 0x0C or EOF?*/
+	if(vgaPaletteChecker != 0x0C || vgaPaletteChecker == EOF) { return NULL; }
+	pal = (paletteEntry *)malloc(256*sizeof(paletteEntry));
+	if(pal == NULL) { return NULL; } /*allocation error*/
+	/*read rgb components into the palette entry*/
+	for(i = 0; i < 256; i++) {
+		pal[i].red = fgetc(stream);
+		pal[i].green = fgetc(stream);
+		pal[i].blue = fgetc(stream);
+	}
+	return (paletteEntry *)pal;
+}
+

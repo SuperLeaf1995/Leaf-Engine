@@ -25,7 +25,7 @@ typedef struct bmpHeader {
 	uint32_t importantColors;
 	uint32_t mask[4];
 	
-	uint8_t paletteEntries;
+	uint16_t paletteEntries;
 	paletteEntry *palette;
 }bmpHeader;
 
@@ -33,8 +33,6 @@ int8_t _Cdecl readImageBitmapHeader(FILE *stream, bmpHeader *e) {
 	static uint32_t headerSize,wide,tall,planes,bitsPerPixel,compression,sizeOfImage;
 	static uint32_t xPixelsPerMeter,yPixelsPerMeter,numberOfColors;
 	static uint32_t importantColors,sizeOfFile,reserved,offset,mask[4];
-	static uint8_t palEntries;
-	static uint16_t i;
 	if(!stream) { /*check if file is open*/
 		return -1; /*nope, bail out!*/
 	}
@@ -119,24 +117,24 @@ int8_t _Cdecl readImageBitmapHeader(FILE *stream, bmpHeader *e) {
 	if(wide < 0 || tall < 0 || planes != 1 || numberOfColors > 256) { /*we did something wrong!*/
 		return -4;
 	}
-	if((uint64_t)wide > ((uint64_t)(INT32_MAX/bitsPerPixel))
-	|| (uint64_t)wide > ((uint64_t)(INT32_MAX/abs(tall))/4)) { /*avoid overflows*/
-		return -5;
-	}
+	return 0;
+}
+
+paletteEntry * _Cdecl readImageBitmapPalette(FILE *stream, bmpHeader *b) {
+	uint16_t i;
+	paletteEntry * pal;
 	b->paletteEntries = (1<<(b->bitsPerPixel)); /*number of palette entries to read*/
-	b->palette = malloc(sizeof(paletteEntry)*4);
-	if(b->palette == NULL) {
-		return 0;
-	}
+	pal = (paletteEntry *)malloc(sizeof(paletteEntry)*b->paletteEntries);
+	if(pal == NULL) { return NULL; }
 	for(i = 0; i < b->paletteEntries; i++) { /*read the palette thing*/
-		b->palette[i]->blue = fgetc(stream); /*bitmap has reverse RGB order for each entry*/
-		b->palette[i]->green = fgetc(stream);
-		b->palette[i]->red = fgetc(stream);
+		pal[i].blue = fgetc(stream); /*bitmap has reverse RGB order for each entry*/
+		pal[i].green = fgetc(stream);
+		pal[i].red = fgetc(stream);
 		if(b->headerSize >= 40) { /*later versions require 4 byte palette elements*/
 			fgetc(stream); /*padding*/
 		}
 	}
-	return 0;
+	return (paletteEntry *)pal;
 }
 
 uint8_t * _Cdecl readImageBitmapData(FILE *stream, bmpHeader *b) {
@@ -206,56 +204,5 @@ uint8_t * _Cdecl readImageBitmapData(FILE *stream, bmpHeader *b) {
 			return 0;
 	}
 	return (uint8_t *)data;
-}
-
-void _Cdecl writeImageBitmap(FILE *stream, bmpHeader *bih, uint8_t *data, paletteEntry *pal) {
-	static uint32_t headerSize,wide,tall,planes,bitsPerPixel,compression,sizeOfImage;
-	static uint32_t xPixelsPerMeter,yPixelsPerMeter,numberOfColors;
-	static uint32_t importantColors,sizeOfFile,reserved,offset,mask[4];
-	static uint32_t i,i2;
-	static uint16_t hold;
-	sizeOfFile = bih->sizeOfFile;
-	reserved = bih->reserved;
-	offset = bih->offset;
-	headerSize = bih->headerSize;
-	wide = bih->wide;
-	tall = bih->tall;
-	planes = bih->planes;
-	bitsPerPixel = bih->bitsPerPixel;
-	compression = bih->compression;
-	sizeOfImage = bih->sizeOfImage;
-	xPixelsPerMeter = bih->xPixelsPerMeter;
-	yPixelsPerMeter = bih->yPixelsPerMeter;
-	numberOfColors = bih->numberOfColors;
-	importantColors = bih->importantColors;
-	fwrite(bih->type,sizeof(uint16_t),1,stream);
-	fwrite(&sizeOfFile,sizeof(uint32_t),1,stream);
-	fwrite(&reserved,sizeof(uint32_t),1,stream);
-	fwrite(&offset,sizeof(uint32_t),1,stream);
-	fwrite(&headerSize,sizeof(uint32_t),1,stream);
-	fwrite(&wide,sizeof(int32_t),1,stream);
-	fwrite(&tall,sizeof(int32_t),1,stream);
-	fwrite(&planes,sizeof(uint16_t),1,stream);
-	fwrite(&bitsPerPixel,sizeof(uint32_t),1,stream);
-	fwrite(&compression,sizeof(uint32_t),1,stream);
-	fwrite(&sizeOfImage,sizeof(uint32_t),1,stream);
-	fwrite(&xPixelsPerMeter,sizeof(uint32_t),1,stream);
-	fwrite(&yPixelsPerMeter,sizeof(uint32_t),1,stream);
-	fwrite(&numberOfColors,sizeof(uint32_t),1,stream);
-	fwrite(&importantColors,sizeof(uint32_t),1,stream);
-	for(i = 0; i < 256; i++) { /*palette*/
-		fwrite((uint8_t *)pal[i].blue,sizeof(uint8_t),1,stream); /*reverse palette order*/
-		fwrite((uint8_t *)pal[i].green,sizeof(uint8_t),1,stream);
-		fwrite((uint8_t *)pal[i].red,sizeof(uint8_t),1,stream);
-		fwrite(&i,sizeof(uint8_t),1,stream); /*padding, lets think it's an index number*/
-	}
-	/*bitmap data*/
-	for(i = 1; i < bih->tall+1; i++) { /*reverse scan, reverse tall, but not wide*/
-		for(i2 = 0; i2 < bih->wide; i2++) { /*we just replotting our shit back again!*/
-			hold = data[(i2+((bih->tall-i)*bih->wide))];
-			fwrite(&hold,sizeof(uint8_t),1,stream);
-		}
-	}
-	return;
 }
 

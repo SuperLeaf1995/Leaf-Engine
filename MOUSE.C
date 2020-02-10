@@ -1,8 +1,3 @@
-/* LEAF ENGINE
- * Copyright (C) Jesus Antonio Diaz - 2020
- * Licensed under Apache License, see LICENSE.md
- */
-
 /* MOUSE.C
  * Contains mouse functions (MOUSE.COM driver stuff, useful for clicking
  * actions and stuff that involves mouse interaction*/
@@ -49,5 +44,13 @@ void _Cdecl getMouseStatus(struct mouse *m) {
 	m->buttonLeft = (out.x.bx & 1); /*while it is not equal 0, its*/
 	m->buttonRight = (out.x.bx & 2); /*HOLD/PRESSED, else its RELEASED*/
 	m->buttonMiddle = (out.x.bx & 4);
+	return;
+}
+
+void _Cdecl updateMouse(struct mouse *m) {
+	in.x.ax = 0x0B;
+	int86(0x33,&in,&out);
+	m->x += (int16_t)out.x.cx; /*add the movement!*/
+	m->y += (int16_t)out.x.dx;
 	return;
 }

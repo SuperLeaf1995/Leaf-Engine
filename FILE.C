@@ -1,8 +1,3 @@
-/* LEAF ENGINE
- * Copyright (C) Jesus Antonio Diaz - 2020
- * Licensed under Apache License, see LICENSE.md
- */
-
 /* FILE.C
  * Miscellaneous file functions for handling files better*/
 

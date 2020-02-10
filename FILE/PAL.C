@@ -14,6 +14,7 @@ void _Cdecl writePaletteFile(FILE *stream,paletteEntry *paletteInfo) {
 		fwrite((uint8_t *)paletteInfo[i].green,sizeof(uint8_t),1,stream);
 		fwrite((uint8_t *)paletteInfo[i].blue,sizeof(uint8_t),1,stream);
 	}
+	return;
 }
 
 paletteEntry * _Cdecl readPaletteFile(FILE *stream) {
