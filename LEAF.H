@@ -45,8 +45,6 @@ static uint8_t far *textMemory = (uint8_t far *)0xB8000000L;
 static volatile uint16_t far *clock = (uint16_t far *)0x0000046C; /*Clock always changes*/
 union REGS in,out;
 
-#define isSigned(x) (x < 0) ? -1 : (x == 0) ? 0 : -1
-
 typedef struct paletteEntry {
 	uint8_t red;
 	uint8_t green;
@@ -63,13 +61,25 @@ typedef struct mouse {
 }mouse;
 
 /*files that dosen't requieres of other files*/
-#include "leaf/vga.h" /*vga defines and stuff*/
-#include "leaf/file.c" /*file functions*/
+#include "leaf/leaf.c" /*the entire base game engine*/
 
-/*extra stuff needed*/
-#include "leaf/mouse.c" /*mouse functions*/
-#include "leaf/video.c" /*video functions*/
-#include "leaf/pcspeak.c" /*square sound functions*/
+/*void plotPixel(uint16_t x,uint16_t y,uint8_t color);*/
+/*void plotLinearPixel(uint16_t pos,uint8_t color);*/
+/*uint8_t fetchPixel(uint16_t x,uint16_t y);*/
+uint8_t setVideo(register uint8_t video);
+uint8_t getVideo(void);
+void setPalette(paletteEntry *pal, uint16_t n);
+void plotLine(int16_t fx, int16_t fy, int16_t tx, int16_t ty, uint8_t color);
+void plotPoly(int32_t n, int32_t *v, uint8_t color);
+void soundPlay(uint32_t x);
+void soundStop(void);
+int8_t soundPlayRawSoundFile(FILE *stream);
+void fskip(FILE *stream, uint64_t n);
+void setMouseStatus(uint8_t status);
+int8_t initMouse(struct mouse *m);
+void setMousePosition(uint16_t x,uint16_t y);
+void getMouseStatus(struct mouse *m);
+void updateMouse(struct mouse *m);
 
 /*stuff for file formats*/
 #include "leaf/file/bmp.c"
