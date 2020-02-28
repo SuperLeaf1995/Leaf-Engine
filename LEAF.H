@@ -41,8 +41,8 @@ typedef signed short int16_t;
 typedef signed long int32_t;
 typedef signed long long int64_t;
 
-static uint8_t far *textMemory = (uint8_t far *)0xB8000000L;
-static volatile uint16_t far *clock = (uint16_t far *)0x0000046C; /*Clock always changes*/
+/*static uint8_t *textMemory = (uint8_t *)0xB8000000L;*/
+static volatile uint16_t *clock = (uint16_t *)0x0000046C; /*Clock always changes*/
 union REGS in,out;
 
 typedef struct paletteEntry {
@@ -52,16 +52,16 @@ typedef struct paletteEntry {
 }paletteEntry;
 
 typedef struct mouse {
-	buttonLeft:1;
-	buttonRight:1;
-	buttonMiddle:1;
-	buttons:4;
+	uint8_t buttonLeft;
+	uint8_t buttonRight;
+	uint8_t buttonMiddle;
+	uint8_t buttons;
 	int16_t x;
 	int16_t y;
 }mouse;
 
 /*files that dosen't requieres of other files*/
-#include "leaf/leaf.c" /*the entire base game engine*/
+#include "leaf.c" /*the entire base game engine*/
 
 /*void plotPixel(uint16_t x,uint16_t y,uint8_t color);*/
 /*void plotLinearPixel(uint16_t pos,uint8_t color);*/
@@ -82,9 +82,9 @@ void getMouseStatus(struct mouse *m);
 void updateMouse(struct mouse *m);
 
 /*stuff for file formats*/
-#include "leaf/file/bmp.c"
-#include "leaf/file/pal.c"
-#include "leaf/file/pcx.c"
-#include "leaf/file/tiff.c"
+#include "file/bmp.c"
+#include "file/pal.c"
+#include "file/pcx.c"
+#include "file/tiff.c"
 
 #endif

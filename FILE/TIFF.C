@@ -20,7 +20,7 @@ typedef struct tiffIfd {
 	uint32_t nextIfdOff; /*next ifd*/
 }tiffIfd;
 
-uint8_t _Cdecl readImageTiffHeader(FILE *stream, tiffHeader *t) {
+uint8_t readImageTiffHeader(FILE *stream, tiffHeader *t) {
 	static uint16_t id,version;
 	static uint32_t ifdOff;
 	fread(&id,sizeof(uint16_t),1,stream);

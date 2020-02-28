@@ -7,13 +7,13 @@
  * Header for video stuff and routines for plotting pixels and stuff*/
 
 /*VGA*/
-uint8_t far *videoMemory = (uint8_t far *)0xA0000000L;
+uint8_t *videoMemory = (uint8_t *)0xA0000000L;
 /*CGA*/
-uint8_t far *oddCgaLines = (uint8_t far *)0xBA000000L;
-uint8_t far *evenCgaLines = (uint8_t far *)0xB8000000L;
+uint8_t *oddCgaLines = (uint8_t *)0xBA000000L;
+uint8_t *evenCgaLines = (uint8_t *)0xB8000000L;
 uint8_t *cga[2] = {
-	(uint8_t far *)0xB8000000,
-	(uint8_t far *)0xBA000000
+	(uint8_t *)0xB8000000,
+	(uint8_t *)0xBA000000
 };
 
 /*VGA functions*/

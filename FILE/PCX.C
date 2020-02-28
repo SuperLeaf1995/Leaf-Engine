@@ -24,7 +24,7 @@ typedef struct pcxHeader {
 	paletteEntry *vgaPalette;
 }pcxHeader;
 
-int8_t _Cdecl readImagePcxHeader(FILE *stream, pcxHeader *p) {
+int8_t  readImagePcxHeader(FILE *stream, pcxHeader *p) {
 	static uint8_t type,version,compression,bitsPerPixel,reserved,planes;
 	static uint8_t paletteType,horizontalScreenSize,verticalScreenSize;
 	static uint16_t xStart,yStart,xEnd,yEnd,horizontalResolution,verticalResolution,bytesPerLine;
@@ -86,7 +86,7 @@ int8_t _Cdecl readImagePcxHeader(FILE *stream, pcxHeader *p) {
 	return 0;
 }
 
-uint8_t * _Cdecl readImagePcxData(FILE *stream, pcxHeader *p) {
+uint8_t *  readImagePcxData(FILE *stream, pcxHeader *p) {
 	register uint8_t rLen,tmp,val;
 	register uint32_t index,dataSize,total;
 	static uint8_t *data;
@@ -109,7 +109,7 @@ uint8_t * _Cdecl readImagePcxData(FILE *stream, pcxHeader *p) {
 }
 
 /*TODO: Fix this function*/
-paletteEntry * _Cdecl readImagePcxVgaPalette(FILE *stream) {
+paletteEntry *  readImagePcxVgaPalette(FILE *stream) {
 	register int16_t vgaPaletteChecker;
 	register uint16_t i;
 	paletteEntry * pal;
@@ -125,4 +125,3 @@ paletteEntry * _Cdecl readImagePcxVgaPalette(FILE *stream) {
 	}
 	return (paletteEntry *)pal;
 }
-
