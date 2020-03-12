@@ -1,4 +1,4 @@
-/* BASE.C
+/* ENGINE.C
  * Base stuff, like functions used for the internal of everything*/
 
 #define isSigned(x) (x < 0) ? -1 : (x == 0) ? 0 : -1
@@ -6,31 +6,9 @@
 /* VIDEO.C
  * Header for video stuff and routines for plotting pixels and stuff*/
 
-/*VGA*/
-uint8_t *videoMemory = (uint8_t *)0xA0000000L;
-/*CGA*/
-uint8_t *oddCgaLines = (uint8_t *)0xBA000000L;
-uint8_t *evenCgaLines = (uint8_t *)0xB8000000L;
-uint8_t *cga[2] = {
-	(uint8_t *)0xB8000000,
-	(uint8_t *)0xBA000000
-};
-
 /*VGA functions*/
 void vgaPlotPixel(register uint16_t x,register uint16_t y,register uint8_t color) {
-	#if defined(__ASM__)
-	asm mov ax, videoMemory
-	asm mov es, ax
-	asm mov di, x
-	asm mov ax, y
-	asm shl ax, 8
-	asm shl ax, 6
-	asm add di, ax
-	asm mov al, color
-	asm mov [es:di], al
-	#else
 	videoMemory[(y<<8)+(y<<6)+x] = color;
-	#endif
 	return;
 }
 void vgaPlotLinearPixel(register uint16_t pos,register uint8_t color) {
@@ -39,14 +17,6 @@ void vgaPlotLinearPixel(register uint16_t pos,register uint8_t color) {
 }
 uint8_t vgaFetchPixel(register uint16_t x,register uint16_t y) {
 	return videoMemory[(y<<8)+(y<<6)+x];
-}
-
-void cgaPlotPixel(register uint16_t x,register uint16_t y,register uint8_t color) {
-	uint8_t mask = (0x80>>(x%8));
-	uint16_t offs = ((y/2)*(640/8)+(x/8));
-	if(color) { *(cga[y%2]+offs) |= mask; }
-	else { *(cga[y%2]+offs) &= mask; }
-	return;
 }
 
 /*default stuff*/
@@ -60,32 +30,18 @@ void (*plotLinearPixel)(register uint16_t,register uint8_t) = vgaPlotLinearPixel
 
 uint8_t setVideo(register uint8_t video) {
 	static uint8_t oldVideo;
-	#if !defined(__ASM__)
 	in.h.al = 0x0f;
 	int86(0x10,&in,&out); /*get old video*/
 	oldVideo = out.h.al; /*save old video*/
 	in.h.al = video; /*now set video that we want*/
 	in.h.ah = 0;
 	int86(0x10,&in,&out); /*issue interrupt*/
-	#else
-	asm mov al, 0x0f
-	asm int 0x10
-	asm mov oldVideo, al
-	asm mov al, video;
-	asm xor ah, ah
-	asm int 0x10
-	#endif
 	return oldVideo; /*return the old video*/
 }
 
 uint8_t getVideo(void) {
-	#if defined(__ASM__)
-	asm mov al, 0x0f
-	asm int 0x10
-	#else
 	in.h.al = 0x0f;
 	int86(0x10,&in,&out); /*issue interrupt*/
-	#endif
 	return out.h.al; /*return video we got*/
 }
 
