@@ -12,12 +12,10 @@ _setMouseStatus:
 _setCursorStatus:
 	push bp
 	mov bp, sp
-	push ax
 	
-	mov ax, [bp+8] ;WORD STATUS
+	mov ax, [bp+4] ;BYTE STATUS
 	int 0x33
 	
-	pop ax
 	pop bp
 	ret
 
@@ -25,16 +23,12 @@ _setMousePosition:
 _setCursorPosition:
 	push bp
 	mov bp, sp
-	push ax
-	push dx
 	
-	mov cx, [bp+8] ;WORD X
-	mov dx, [bp+10] ;WORD Y
+	mov cx, [bp+4] ;WORD X
+	mov dx, [bp+6] ;WORD Y
 	mov ax, 4
 	int 0x33
 	
-	pop dx
-	pop ax
 	pop bp
 	ret
 	

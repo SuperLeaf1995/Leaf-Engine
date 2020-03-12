@@ -3,6 +3,7 @@
 
 [section .text]
 
+global _vgaPlotPixel
 global _plotPixel
 global _plotVideoPixel
 global _setPixel
@@ -14,30 +15,55 @@ global _setPalette
 
 _videoAddress dw 0xA000
 
+_vgaPlotPixel:
 _plotPixel:
 _plotVideoPixel:
 _setPixel:
 _setVideoPixel:
 	push bp
 	mov bp, sp
-	push ax
 	push es
-	push di
 	
-	mov ax, _videoAddress
+	mov ax, _videoAddress ;change to video address segment
 	mov es, ax
-	mov di, [bp+8] ;WORD Y
+	
+	mov si, [bp+4] ;word Y
+	mov di, si
 	shl di, 8
-	mov ax, [bp+8] ;WORD Y
+	mov ax, si
 	shl ax, 6
 	add di, ax ;Y is shifted to left 6,8 and this gives us ((320*Y)+X)=P
-	add di, [bp+10] ;BYTE X
+	add di, [bp+6] ;word X
 	
-	mov [es:di], [bp+12] ;BYTE COLOR
+	mov al, [es:di] ;return byte COLOR
+	xor ah, ah ;clear higher byte of ah to only leave al
 	
-	pop di
 	pop es
-	pop ax
+	pop bp
+	ret
+	
+_vgaFetchPixel:
+_vgaGetPixel:
+_getPixel:
+_getVideoPixel:
+	push bp
+	mov bp, sp
+	push es
+	
+	mov ax, _videoAddress ;change to video address segment
+	mov es, ax
+	
+	mov si, [bp+4] ;word Y
+	mov di, si
+	shl di, 8
+	mov ax, si
+	shl ax, 6
+	add di, ax ;Y is shifted to left 6,8 and this gives us ((320*Y)+X)=P
+	add di, [bp+6] ;word X
+	
+	mov [es:di], [bp+8] ;byte COLOR
+	
+	pop es
 	pop bp
 	ret
 
@@ -45,13 +71,11 @@ _setVideo:
 _setVideoMode:
 	push bp
 	mov bp, sp
-	push ax
 	
-	mov al, [bp+8] ;BYTE MODE
+	mov al, [bp+4] ;byte MODE
 	xor ah, ah
 	int 10h
 	
-	pop ax
 	pop bp
 	ret
 	
@@ -62,9 +86,9 @@ _getVideoMode:
 	
 	mov ah, 0x0F
 	int 10h
-	
 	;C compiler expects result on AX
 	xor ah, ah ;clear high part of AX to leave AL
+	
 	pop bp
 	ret
 	
@@ -72,10 +96,9 @@ _setPalette:
 _setVideoPalette:
 	push bp
 	mov bp, sp
-	push ax
 	
-	mov bx, [bp+8] ;WORD N
-	mov si, [bp+10] ;PTR (WORD) RAW PALETTE ENTRIES
+	mov bx, [bp+4] ;word N
+	mov si, [bp+6] ;ptr RAW PALETTE ENTRIES
 	;use CX as iterator
 	xor cx, cx ;set to zero
 	mov dx, 03C8h
@@ -84,7 +107,7 @@ _setVideoPalette:
 	mov dx, 03C9h
 .forLoop:
 	cmp cx, bx
-	jge .end
+	jge short .end
 	
 	lodsb
 	shr al, 2
@@ -98,8 +121,7 @@ _setVideoPalette:
 	shr al, 2
 	out dx, al
 	
-	jmp .forLoop
+	jmp short .forLoop
 .end:
-	pop ax
 	pop bp
 	ret
