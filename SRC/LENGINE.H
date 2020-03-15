@@ -12,9 +12,9 @@
 
 #if defined(__FAST__)
 #if !defined (__GNUC__)
-#include "LEAF-E~1/SRC/A2C.H"
+#include "A2C.H"
 #else
-#include "Leaf-Engine/SRC/A2C.H"
+#include "A2C.H"
 #endif
 #endif
 
