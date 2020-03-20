@@ -1,5 +1,3 @@
 *.o
 *.exe
-
-# samples contains some samples that makes parsed C a joke
-samples/
+*.obj
