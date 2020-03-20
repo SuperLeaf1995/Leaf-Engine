@@ -1,3 +1,5 @@
+#include "src\lengine.h"
+
 /* ENGINE.C
  * Base stuff, like functions used for the internal of everything*/
 
@@ -50,7 +52,6 @@ void setPalette(paletteEntry *pal, register uint16_t n) {
 	}
 	return;
 }
-#endif
 
 void plotLine(register int16_t fx, register int16_t fy, register int16_t tx, register int16_t ty, register uint8_t color) {
 	static int16_t dx,dy,xi,yi,d,x,y,i;
@@ -539,7 +540,7 @@ int8_t  readImagePcxHeader(FILE *stream, pcxHeader *p) {
 uint8_t *  readImagePcxData(FILE *stream, pcxHeader *p) {
 	register uint8_t rLen,tmp,val;
 	register uint32_t index,dataSize,total;
-	static uint8_t *data;
+	static uint8_t * data;
 	dataSize = (p->xEnd+1)*(p->yEnd+1);
 	index = 0; total = 0;
 	data = (uint8_t *)malloc(dataSize);

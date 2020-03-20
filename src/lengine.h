@@ -133,3 +133,4 @@ typedef struct bmpHeader {
 	paletteEntry *palette;
 }bmpHeader;
 
+#endif
