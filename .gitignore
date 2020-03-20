@@ -1,3 +1,6 @@
 *.o
 *.exe
 *.obj
+
+#do not include sample game for testing
+main.c

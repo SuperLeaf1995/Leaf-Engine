@@ -49,11 +49,6 @@ typedef signed long long int64_t;
 #define INT64_MIN ((long)0x80000000L)
 #define UINT64_MAX 0xFFFFFFFFUL
 
-/*static uint8_t *textMemory = (uint8_t *)0xB8000000L;*/
-uint8_t *videoMemory = (uint8_t *)0xA0000000L;
-static volatile uint16_t *clock = (uint16_t *)0x0000046C; /*Clock always changes*/
-union REGS in,out;
-
 typedef struct paletteEntry {
 	uint8_t red;
 	uint8_t green;
@@ -132,5 +127,32 @@ typedef struct bmpHeader {
 	uint16_t paletteEntries;
 	paletteEntry *palette;
 }bmpHeader;
+
+void plotPixel(register uint16_t x,register uint16_t y,register uint8_t color);
+void plotLinearPixel(register uint16_t pos,register uint8_t color);
+uint8_t fetchPixel(register uint16_t x,register uint16_t y);
+uint8_t setVideo(register uint8_t video);
+uint8_t getVideo(void);
+void setPalette(paletteEntry *pal, register uint16_t n);
+void plotLine(register int16_t fx, register int16_t fy, register int16_t tx, register int16_t ty, register uint8_t color);
+void plotPoly(int32_t n, int32_t *v, uint8_t color);
+void soundPlay(uint32_t x);
+void soundStop(void);
+int8_t soundPlayRawSoundFile(FILE *stream);
+void fskip(FILE *stream, uint64_t n);
+void setMouseStatus(uint8_t status);
+int8_t initMouse(struct mouse *m);
+void setMousePosition(uint16_t x,uint16_t y);
+void getMouseStatus(struct mouse *m);
+void updateMouse(struct mouse *m);
+int8_t  readImageBitmapHeader(FILE *stream, bmpHeader *e);
+paletteEntry *readImageBitmapPalette(FILE *stream, bmpHeader *b);
+uint8_t *readImageBitmapData(FILE *stream, bmpHeader *b);
+void  writePaletteFile(FILE *stream,paletteEntry *paletteInfo);
+paletteEntry *  readPaletteFile(FILE *stream);
+int8_t  readImagePcxHeader(FILE *stream, pcxHeader *p);
+uint8_t *  readImagePcxData(FILE *stream, pcxHeader *p);
+paletteEntry *  readImagePcxVgaPalette(FILE *stream);
+uint8_t readImageTiffHeader(FILE *stream, tiffHeader *t);
 
 #endif

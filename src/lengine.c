@@ -1,5 +1,10 @@
 #include "src\lengine.h"
 
+/*static uint8_t *textMemory = (uint8_t *)0xB8000000L;*/
+uint8_t *videoMemory = (uint8_t *)0xA0000000L;
+static volatile uint16_t *clock = (uint16_t *)0x0000046C; /*Clock always changes*/
+union REGS in,out;
+
 /* ENGINE.C
  * Base stuff, like functions used for the internal of everything*/
 
@@ -9,15 +14,15 @@
  * Header for video stuff and routines for plotting pixels and stuff*/
 
 /*VGA functions*/
-void vgaPlotPixel(register uint16_t x,register uint16_t y,register uint8_t color) {
+void plotPixel(register uint16_t x,register uint16_t y,register uint8_t color) {
 	videoMemory[(y<<8)+(y<<6)+x] = color;
 	return;
 }
-void vgaPlotLinearPixel(register uint16_t pos,register uint8_t color) {
+void plotLinearPixel(register uint16_t pos,register uint8_t color) {
 	videoMemory[pos] = color;
 	return;
 }
-uint8_t vgaFetchPixel(register uint16_t x,register uint16_t y) {
+uint8_t fetchPixel(register uint16_t x,register uint16_t y) {
 	return videoMemory[(y<<8)+(y<<6)+x];
 }
 
@@ -197,13 +202,11 @@ void fskip(FILE *stream, uint64_t n) {
 
 #define isMouseOnPosition(x,y,m) (m.x == x) ? ((m.y == y) ? 1 : 0) : 0 /*0 if false, 1 if true*/
 
-#if !defined (__FAST__)
 void setMouseStatus(uint8_t status) {
 	in.x.ax = status; /*See MOUSE_STATUS_HIDE and MOUSE_STATUS_SHOW for more information*/
 	int86(0x33,&in,&out); /*issue an interrupt*/
 	return;
 }
-#endif
 
 int8_t initMouse(struct mouse *m) {
 	in.x.ax = 0x00; /*ax 0 and bx 0 = mouse.com initializes mouse*/
@@ -223,7 +226,6 @@ int8_t initMouse(struct mouse *m) {
 	return (out.x.ax != 0) ? 0 : -1; /*if the mouse was initialized return 0, else return -1*/
 }
 
-#if !defined (__FAST__)
 void setMousePosition(uint16_t x,uint16_t y) {
 	in.x.ax = 4; /*ax: 4, set mouse coordinates*/
 	in.x.cx = x; /*set the coordinates and stuff*/
@@ -231,7 +233,6 @@ void setMousePosition(uint16_t x,uint16_t y) {
 	int86(0x33,&in,&out); /*issue the interrupt*/
 	return;
 }
-#endif
 
 void getMouseStatus(struct mouse *m) {
 	in.x.ax = 0x03; /*command 0x03, get mouse info*/
