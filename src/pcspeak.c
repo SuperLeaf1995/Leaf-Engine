@@ -29,11 +29,11 @@ void soundStop(void) {
 }
 
 int8_t soundPlayRawSoundFile(FILE *stream) {
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 	int16_t i = fgetc(stream);
 	if(i == EOF) {
 		fseek(stream,SEEK_SET,0); /*rewind file*/
 	}
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 	soundPlay(i*30); /*TODO: know why multiplying by 30 makes a nice noise*/
 #endif
 	return 0;

@@ -1,2 +1,0 @@
-cd TC
-tcc

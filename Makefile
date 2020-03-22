@@ -5,29 +5,23 @@ OUT_DIR = out
 SRC_DIR = src
 INC_DIR = src
 
-all: $(OUT_DIR)/leaf.a
-	echo Done compiling LEAF library
+all: compile
 
-$(OUT_DIR)/leaf.a: $(OUT_DIR)/mlib.obj $(OUT_DIR)/video.obj $(OUT_DIR)/leaf.obj $(OUT_DIR)/palette.obj $(OUT_DIR)/pcspeak.obj $(OUT_DIR)/bmp.obj $(OUT_DIR)/pcx.obj $(OUT_DIR)/tiff.obj
+compile: $(OUT_DIR)/libleaf.a
+
+$(OUT_DIR)/libleaf.a: $(OUT_DIR)/mlib.o $(OUT_DIR)/video.o $(OUT_DIR)/palette.o $(OUT_DIR)/pcspeak.o $(OUT_DIR)/bmp.o $(OUT_DIR)/pcx.o $(OUT_DIR)/tiff.o
 	ar rcs $@ $^
 
-$(OUT_DIR)/bmp.obj: $(SRC_DIR)/bmp.c
+$(OUT_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -I$(INC_DIR) -c $^ -o $@
 	
-$(OUT_DIR)/mlib.obj: $(SRC_DIR)/mlib.c
-	$(CC) $(CFLAGS) -I$(INC_DIR) -c $^ -o $@
-
-$(OUT_DIR)/palette.obj: $(SRC_DIR)/palette.c
-	$(CC) $(CFLAGS) -I$(INC_DIR) -c $^ -o $@
-
-$(OUT_DIR)/pcspeak.obj: $(SRC_DIR)/pcspeak.c
-	$(CC) $(CFLAGS) -I$(INC_DIR) -c $^ -o $@
-
-$(OUT_DIR)/pcx.obj: $(SRC_DIR)/pcx.c
-	$(CC) $(CFLAGS) -I$(INC_DIR) -c $^ -o $@
-
-$(OUT_DIR)/tiff.obj: $(SRC_DIR)/tiff.c
-	$(CC) $(CFLAGS) -I$(INC_DIR) -c $^ -o $@
+install: /usr/include/leaf /usr/lib compile
+	cp $(SRC_DIR)/*.h /usr/include/leaf
+	cp $(OUT_DIR)/*.a /usr/lib
 	
-$(OUT_DIR)/video.obj: $(SRC_DIR)/video.c
-	$(CC) $(CFLAGS) -I$(INC_DIR) -c $^ -o $@
+/usr/include/leaf:
+	mkdir /usr/include/leaf
+
+clean:
+	rm out/*.*
+	rm /usr/include/leaf/*.h

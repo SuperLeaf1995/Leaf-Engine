@@ -14,8 +14,11 @@
 #include <sys/utsname.h>
 #endif
 
+#include <stdint.h>
+
 void fskip(FILE *stream, uint64_t n);
 void initLeaf(void);
+signed int getEvent(void);
 void endLeaf(void);
 
 #endif

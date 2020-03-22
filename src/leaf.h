@@ -17,7 +17,6 @@
 #endif
 
 #include "stddefc.h"
-
 #include "video.h"
 #include "mouse.h"
 #include "bmp.h"
