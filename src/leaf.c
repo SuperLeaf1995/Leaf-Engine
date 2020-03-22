@@ -19,8 +19,9 @@ void seedRandom(void) {
 #endif
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 	unsigned short *clock = (unsigned short *)0x0000046CL;
-	srand(clock);
+	srand(*clock);
 #endif
+	return;
 }
 
 signed int generateRandom(void) {
@@ -80,7 +81,7 @@ unsigned short toRgb(register unsigned short r, register unsigned short g, regis
 
 signed int leafEventUpdate(leafGame *g, leafEvent * e) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	union regs in,out;
+	union REGS in,out;
 	in.x.ax = 0x0B; int86(0x33,&in,&out);
 	l->cx = (int16_t)out.x.cx;
 	l->cy = (int16_t)out.x.dx;
