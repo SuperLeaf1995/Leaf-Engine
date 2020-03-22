@@ -1,5 +1,5 @@
-#ifndef LEAF_H
-#define LEAF_H
+#ifndef MLIB_H
+#define MLIB_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@
 #include <stdint.h>
 
 void fskip(FILE *stream, uint64_t n);
-void initLeaf(void);
+signed int initLeaf(void);
 signed int getEvent(void);
 void endLeaf(void);
 

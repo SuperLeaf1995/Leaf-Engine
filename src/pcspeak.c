@@ -17,6 +17,7 @@ void soundPlay(uint32_t x) {
 		outportb(0x61,tmp|3);
 	}
 #endif
+	x = 1;
 	return;
 }
 
