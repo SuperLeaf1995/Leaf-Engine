@@ -1,12 +1,16 @@
 #include "video.h"
 
 #define isSigned(x) (x < 0) ? -1 : (x == 0) ? 0 : -1
+
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 uint8_t *videoMemory = (uint8_t *)0xA0000000L;
 union REGS in,out;
+#endif
 
 /* VIDEO.C
  * Header for video stuff and routines for plotting pixels and stuff*/
 
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 /*VGA functions*/
 void plotPixel(register uint16_t x,register uint16_t y,register uint8_t color) {
 	videoMemory[(y<<8)+(y<<6)+x] = color;
@@ -145,3 +149,4 @@ void plotPoly(int32_t n, int32_t *v, uint8_t color) {
 	}
 	plotLine(v[0],v[1],v[(n<<1)-2],v[(n<<1)-1],color);
 }
+#endif

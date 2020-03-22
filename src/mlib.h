@@ -1,9 +1,8 @@
-#ifndef PCSPEAK_H
-#define PCSPEAK_H
+#ifndef LEAF_H
+#define LEAF_H
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 #include <dos.h>
@@ -12,12 +11,11 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/X.h>
+#include <sys/utsname.h>
 #endif
 
-#include "stddefc.h"
-
-void soundPlay(uint32_t x);
-void soundStop(void);
-int8_t soundPlayRawSoundFile(FILE *stream);
+void fskip(FILE *stream, uint64_t n);
+void initLeaf(void);
+void endLeaf(void);
 
 #endif

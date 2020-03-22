@@ -118,7 +118,7 @@ paletteEntry *readImageBitmapPalette(FILE *stream, bmpHeader *b) {
 }
 
 uint8_t *readImageBitmapData(FILE *stream, bmpHeader *b) {
-	static uint32_t i,i2;
+	static int32_t i,i2;
 	static uint16_t hold;
 	uint8_t *data;
 	if(b->tall == 0 || b->wide == 0) {
@@ -136,7 +136,7 @@ uint8_t *readImageBitmapData(FILE *stream, bmpHeader *b) {
 							data[(i2+((b->tall-i)*b->wide))] = hold;
 						}
 						if(((((b->wide*8)+7)>>3)&3)) { /*skip padding (dword)*/
-							fskip(stream,3-((((b->wide*8)+7)>>3)&3));
+							fseek(stream,3-((((b->wide*8)+7)>>3)&3),SEEK_CUR);
 						}
 					}
 					break;
@@ -149,7 +149,7 @@ uint8_t *readImageBitmapData(FILE *stream, bmpHeader *b) {
 							data[(i2+((b->tall-i)*b->wide))] = hold&0x0F;
 						}
 						if(((((b->wide*4)+7)>>3)&3)) {
-							fskip(stream,3-((((b->wide*4)+7)>>3)&3));
+							fseek(stream,3-((((b->wide*4)+7)>>3)&3),SEEK_CUR);
 						}
 					}
 					break;
@@ -163,7 +163,7 @@ uint8_t *readImageBitmapData(FILE *stream, bmpHeader *b) {
 							hold = hold<<2;
 						}
 						if(((((b->wide*2)+7)>>3)&3)) {
-							fskip(stream,3-((((b->wide*2)+7)>>3)&3));
+							fseek(stream,3-((((b->wide*2)+7)>>3)&3),SEEK_CUR);
 						}
 					}
 					break;
@@ -177,7 +177,7 @@ uint8_t *readImageBitmapData(FILE *stream, bmpHeader *b) {
 							hold <<= 1;
 						}
 						if(((((b->wide*1)+7)>>3)&3)) {
-							fskip(stream,3-((((b->wide*1)+7)>>3)&3));
+							fseek(stream,3-((((b->wide*1)+7)>>3)&3),SEEK_CUR);
 						}
 					}
 					break;

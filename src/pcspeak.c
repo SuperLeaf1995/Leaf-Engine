@@ -5,6 +5,7 @@
 #include "pcspeak.h"
 
 void soundPlay(uint32_t x) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 	uint32_t cot; /*countdown value*/
 	uint8_t tmp; /*temporal value stuff*/
 	cot = (uint32_t)(1193180/x);
@@ -15,20 +16,25 @@ void soundPlay(uint32_t x) {
 	if(tmp != (tmp|3)) {
 		outportb(0x61,tmp|3);
 	}
+#endif
 	return;
 }
 
 void soundStop(void) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 	uint8_t tmp = inportb(0x61)&0xfc; /*shutdown speaker command*/
 	outportb(0x61,tmp);
+#endif
 	return;
 }
 
 int8_t soundPlayRawSoundFile(FILE *stream) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 	int16_t i = fgetc(stream);
 	if(i == EOF) {
 		fseek(stream,SEEK_SET,0); /*rewind file*/
 	}
 	soundPlay(i*30); /*TODO: know why multiplying by 30 makes a nice noise*/
+#endif
 	return 0;
 }
