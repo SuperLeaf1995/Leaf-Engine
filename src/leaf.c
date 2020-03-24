@@ -9,6 +9,12 @@
 #if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 signed int leafErrorCatch(Display * d, XErrorEvent * e) {
 	fprintf(stderr,"X11 Error occoured\n");
+	if(e == NULL) {
+		return -1;
+	}
+	if(d == NULL) {
+		return -2;
+	}
 	return 0;
 }
 #endif
@@ -33,7 +39,6 @@ signed int leafGameCreate(leafGame * g) {
 	/*do absolutely nothing important (yet)*/
 #endif
 #if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	unsigned short i;
 	g->xdisplay = XOpenDisplay(0); /*open the x11 display*/
 	if(g->xdisplay == NULL) { return -1; } /*error opening x11 display*/
 	g->xwindow = XCreateSimpleWindow(g->xdisplay,RootWindow(g->xdisplay,BlackPixel(g->xdisplay,DefaultScreen(g->xdisplay))),10,10,320,200,1,WhitePixel(g->xdisplay,DefaultScreen(g->xdisplay)),BlackPixel(g->xdisplay,DefaultScreen(g->xdisplay)));
@@ -47,35 +52,16 @@ signed int leafGameCreate(leafGame * g) {
 	/*Load a default VGA palette (DOSBox and other programs does this)*/
 	g->xpalette = malloc(255*sizeof(paletteEntry));
 	if(g->xpalette == NULL) { return -2; }
-	for(i = 0; i < 64; i++) {
-		g->xpalette[i].r = i;
-		g->xpalette[i+64].g = 0;
-		g->xpalette[i+64].b = 0;
-	}
-	for(i = 0; i < 64; i++) {
-		g->xpalette[i+64].r = 0;
-		g->xpalette[i+64].g = i;
-		g->xpalette[i+64].b = 0;
-	}
-	for(i = 0; i < 64; i++) {
-		g->xpalette[i+128].r = 0;
-		g->xpalette[i+128].g = 0;
-		g->xpalette[i+128].b = i;
-	}
-	for(i = 0; i < 64; i++) {
-		g->xpalette[i+192].r = i;
-		g->xpalette[i+192].g = i;
-		g->xpalette[i+192].b = i;
-	}
 	XSetErrorHandler(leafErrorCatch);
 #endif
+	g->videoConf = _video_auto;
 	g->vwide = 320; g->vtall = 200;
 	return 0;
 }
 
 #if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 unsigned short toRgb(register unsigned short r, register unsigned short g, register unsigned short b) {
-	return (r+(g<<8)+(b<<16));
+	return ((b)+(g<<8)+(r<<16));
 }
 #endif
 
@@ -83,8 +69,8 @@ signed int leafEventUpdate(leafGame *g, leafEvent * e) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 	union REGS in,out;
 	in.x.ax = 0x0B; int86(0x33,&in,&out);
-	l->cx = (int16_t)out.x.cx;
-	l->cy = (int16_t)out.x.dx;
+	l->cx = (signed short)out.x.cx;
+	l->cy = (signed short)out.x.dx;
 	in.x.ax = 0x03; int86(0x33,&in,&out);
 	l->eventStatus += (out.x.bx<<1); /*shift to leave space for key bit*/
 	if(kbhit) { l->eventStatus |= 1; } /*set keypress bit*/
@@ -95,6 +81,7 @@ signed int leafEventUpdate(leafGame *g, leafEvent * e) {
 	register unsigned short i;
 	register unsigned short i2;
 	register unsigned short d;
+	register unsigned short rgb;
 	XNextEvent(g->xdisplay,&e->xevent);
 	if((e->xevent.type == ClientMessage)&&((unsigned int)e->xevent.xclient.data.l[0] == g->WM_DELETE_WINDOW)) {
 		e->ui = _exit_code; /*set UI as "exit_code"*/
@@ -105,9 +92,11 @@ signed int leafEventUpdate(leafGame *g, leafEvent * e) {
 	else if(g->vwide == 0) { return -3; }
 	for(i = 0; i < g->vwide; i++) {
 		for(i2 = 0; i2 < g->vtall; i2++) {
-			d = g->video[((i2*g->vwide)+i)]; /*point at the current pixel's address*/
-			XSetForeground(g->xdisplay,g->xgraphic,toRgb(g->xpalette[d].r,g->xpalette[d].g,g->xpalette[d].b));
-			XDrawPoint(g->xdisplay,g->xwindow,g->xgraphic,i,i2);
+			d = g->video[((i2*g->vwide)+i)]; /*get current pixel color*/
+			rgb = toRgb(g->xpalette[d].r,g->xpalette[d].g,g->xpalette[d].b); /*color in emulated palette*/
+			XSetForeground(g->xdisplay,g->xgraphic,rgb);
+			XDrawPoint(g->xdisplay,g->xwindow,g->xgraphic,i,i2); /*draw it on the X11*/
+			XFlush(g->xdisplay);
 		}
 	}
 #endif
@@ -127,14 +116,9 @@ signed int leafGameDestroy(leafGame * g) {
 
 signed int leafSetVideo(leafGame * g) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	unsigned char video; union REGS in,out;
-#endif
+	unsigned char video;
+	union REGS in,out;
 	if(g->videoConf == _video_auto) {
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-		g->video = malloc((g->vwide*g->vtall)*sizeof(unsigned char));
-		if(g->video == NULL) { return -1; } /*error on video allocation*/
-#endif
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 		if(g->vwide == 320) {
 			if(g->vtall == 200) {
 				video = 0x13;
@@ -142,28 +126,29 @@ signed int leafSetVideo(leafGame * g) {
 		}
 		in.h.al = video; in.h.ah = 0; /*set the video we want*/
 		int86(0x10,&in,&out);
-#endif
 	}
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	return (int)video; /*return casted int video*/
+	return (signed int)video; /*return casted signed int video*/
 #endif
 #if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	/*g->colormap = XCreateColormap(g->xdisplay,g->xwindow,g->xvinfo.visual,256);*/
-	return -1; /*let know the program we are running in linux*/
+	if(g->videoConf == _video_auto) {
+		g->video = malloc((g->vwide*g->vtall)*sizeof(unsigned char));
+		if(g->video == NULL) { /*error on video allocation*/
+			return VideoErrorOnSet;
+		}
+	}
+	return VideoUsesLinux; /*let know the program we are running in linux*/
 #endif
 }
 
-void plotPixel(leafGame * g, register unsigned char x, register unsigned char y, register unsigned char c) {
+void plotPixel(leafGame * g, register unsigned short x, register unsigned short y, register unsigned char c) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 	unsigned char * video = (unsigned char * )0xA0000000L;
+	video[(y*g->vwide)+x] = c;
 #endif
 #if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 	if(g->video != NULL && !(x > g->vwide) && !(y > g->vtall)) {
 		g->video[(y*g->vwide)+x] = c; /*plot pixel in framebuffer*/
 	}
-#endif
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	video[(y*g->vwide)+x] = c;
 #endif
 	return;
 }
@@ -173,7 +158,7 @@ void plotLinearPixel(leafGame * g, register unsigned short p,register unsigned c
 	unsigned char * video = (unsigned char * )0xA0000000L;
 #endif
 #if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	if(g->video != NULL && !(p > g->vwide*g->vtall)) {
+	if(g->video != NULL && !(p > (g->vwide*g->vtall))) {
 		g->video[p] = c; /*plot pixel in framebuffer*/
 	}
 #endif
@@ -210,7 +195,7 @@ signed int setPalette(leafGame * g, paletteEntry * p, register unsigned short n)
 	}
 #endif
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	outportb(0x03c8,0);
+	outportb(0x03c8,0); /*send to the vga registers that we are going to send palette data*/
 	for(i = 0; i < n; i++) {
 		outportb(0x03c9,(p[i].r>>2));
 		outportb(0x03c9,(p[i].g>>2));
@@ -221,31 +206,43 @@ signed int setPalette(leafGame * g, paletteEntry * p, register unsigned short n)
 }
 
 signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
-	unsigned long headerSize,wide,tall,planes,bitsPerPixel,compression,sizeOfImage;
-	unsigned long xPixelsPerMeter,yPixelsPerMeter,numberOfColors;
-	unsigned long importantColors,sizeOfFile,reserved,offset,mask[4];
+	unsigned long sizeOfFile;
+	unsigned long reserved;
+	unsigned long offset;
+	unsigned long headerSize;
+	signed long wide;
+	signed long tall;
+	unsigned short planes;
+	unsigned short bitsPerPixel;
+	unsigned long compression;
+	unsigned long sizeOfImage;
+	unsigned long xPixelsPerMeter;
+	unsigned long yPixelsPerMeter;
+	unsigned long numberOfColors;
+	unsigned long importantColors;
+	unsigned long mask[4];
 	if(!stream) { /*check if file is open*/
-		return -1; /*nope, bail out!*/
+		return BitmapErrorFile; /*nope, bail out!*/
 	}
 	fread(e->type,sizeof(unsigned short),1,stream); /*read file header*/
 	/*check that it is a actual bitmap*/
 	if(strncmp((const char *)e->type,"BM",2) != 0 && strncmp((const char *)e->type,"BA",2) != 0
 	&& strncmp((const char *)e->type,"IC",2) != 0 && strncmp((const char *)e->type,"PT",2) != 0
 	&& strncmp((const char *)e->type,"CI",2) != 0 && strncmp((const char *)e->type,"CP",2) != 0) {
-		return -1; /*invalid bitmap!*/
+		return BitmapErrorSignature; /*invalid bitmap!*/
 	}
-	fread(&sizeOfFile,sizeof(unsigned long),1,stream);
-	fread(&reserved,sizeof(unsigned long),1,stream); /*reserved has an actual mean in OS/2*/
+	if(fread(&sizeOfFile,sizeof(unsigned long),1,stream) != 1) {
+		return BitmapErrorFileReadSizeOfFile;
+	}
+	if(fread(&reserved,sizeof(unsigned long),1,stream) != 1) { /*reserved has an actual mean in OS/2*/
+		return BitmapErrorFileReadReserved;
+	}
 	fread(&offset,sizeof(unsigned long),1,stream);
 	fread(&headerSize,sizeof(unsigned long),1,stream);
-	e->sizeOfFile = sizeOfFile; /*save everything in the struct pointer thing*/
-	e->reserved = reserved;
-	e->offset = offset;
-	e->headerSize = headerSize;
 	/*check the header size*/
 	if(headerSize == 40) { /*Windows 3.x bitmap*/
-		fread(&wide,sizeof(int32_t),1,stream);
-		fread(&tall,sizeof(int32_t),1,stream);
+		fread(&wide,sizeof(signed long),1,stream);
+		fread(&tall,sizeof(signed long),1,stream);
 		fread(&planes,sizeof(unsigned short),1,stream);
 		fread(&bitsPerPixel,sizeof(unsigned short),1,stream);
 		fread(&compression,sizeof(unsigned long),1,stream);
@@ -260,8 +257,8 @@ signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
 		fread(&planes,sizeof(unsigned short),1,stream);
 		fread(&bitsPerPixel,sizeof(unsigned short),1,stream);
 	} else if(headerSize >= 56 && headerSize <= 64) { /*Windows 95 bitmap*/
-		fread(&wide,sizeof(int32_t),1,stream);
-		fread(&tall,sizeof(int32_t),1,stream);
+		fread(&wide,sizeof(signed long),1,stream);
+		fread(&tall,sizeof(signed long),1,stream);
 		fread(&planes,sizeof(unsigned short),1,stream);
 		fread(&bitsPerPixel,sizeof(unsigned short),1,stream);
 		fread(&compression,sizeof(unsigned long),1,stream);
@@ -274,15 +271,30 @@ signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
 		fread(&mask[1],sizeof(unsigned long),1,stream);
 		fread(&mask[2],sizeof(unsigned long),1,stream);
 		fread(&mask[3],sizeof(unsigned long),1,stream);
-		/*inmediately place masks, on the struct*/
-		e->mask[0] = mask[0];
+		e->mask[0] = mask[0]; /*inmediately place masks, on the struct*/
 		e->mask[1] = mask[1];
 		e->mask[2] = mask[2];
 		e->mask[3] = mask[3];
 	} else {
-		return -2;
+		return BitmapErrorInvalidHeader;
 	}
-	e->planes = planes;
+	/*check if bit's are valid*/
+	if((bitsPerPixel != 1)
+	&& (bitsPerPixel != 2)
+	&& (bitsPerPixel != 4)
+	&& (bitsPerPixel != 8)
+	&& (bitsPerPixel != 16)
+	&& (bitsPerPixel != 24)
+	&& (bitsPerPixel != 32)) {
+		return BitmapErrorBpp;
+	}
+	if(planes != 1) { /*we did something wrong!*/
+		return BitmapErrorWrongPlanes;
+	}
+	if(numberOfColors > 256) {
+		return BitmapErrorInvalidColorsOutOfRange;
+	}
+	e->planes = planes; /*save everything in the struct pointer thing*/
 	e->bitsPerPixel = bitsPerPixel;
 	e->compression = compression;
 	e->sizeOfImage = sizeOfImage;
@@ -290,25 +302,13 @@ signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
 	e->yPixelsPerMeter = yPixelsPerMeter;
 	e->numberOfColors = numberOfColors;
 	e->importantColors = importantColors;
-	/*check if bit's are valid*/
-	switch(bitsPerPixel) {
-		case 1:
-		case 2:
-		case 4:
-		case 8:
-		case 16:
-		case 24:
-		case 32:
-			break;
-		default:
-			return -3;
-	}
 	e->wide = wide;
 	e->tall = tall;
-	if(planes != 1 || numberOfColors > 256) { /*we did something wrong!*/
-		return -4;
-	}
-	return 0;
+	e->sizeOfFile = sizeOfFile;
+	e->reserved = reserved;
+	e->offset = offset;
+	e->headerSize = headerSize;
+	return BitmapSucess;
 }
 
 paletteEntry * readImageBitmapPalette(FILE *stream, bmpHeader * b) {
@@ -335,13 +335,15 @@ paletteEntry * readImageBitmapPalette(FILE *stream, bmpHeader * b) {
 
 unsigned char * readImageBitmapData(FILE *stream, bmpHeader * b) {
 	unsigned long i,i2;
-	unsigned short hold;
+	unsigned char hold;
 	unsigned char *data;
-	if(b->tall == 0 || b->wide == 0) {
-		return 0;
+	if((signed long)b->tall <= 0 || (signed long)b->wide <= 0) {
+		return NULL;
 	}
 	data = (unsigned char *)malloc((b->wide*b->tall)); /*allocate data for bitmap*/
-	if(data == NULL) { return 0; }
+	if(data == NULL) {
+		return NULL;
+	}
 	switch(b->compression) {
 		case 0: /*no compression*/
 			switch(b->bitsPerPixel) {
@@ -372,7 +374,7 @@ unsigned char * readImageBitmapData(FILE *stream, bmpHeader * b) {
 				case 2: /*4 colors*/
 					for(i = 1; (signed long)i < b->tall+1; i++) { /*reverse read wide, but not tall*/
 						for(i2 = 0; (signed long)i2 < b->wide; i2++) {
-							if((i2&3) == 0) {
+							if(!(i2&3)) {
 								fread(&hold,sizeof(unsigned char),1,stream);
 							}
 							data[(i2+((b->tall-i)*b->wide))] = (hold>>6)&3;
@@ -399,12 +401,114 @@ unsigned char * readImageBitmapData(FILE *stream, bmpHeader * b) {
 					break;
 				default:
 					free(data); /*de allocate data if we have invalid setup*/
-					return 0;
+					return NULL;
 			}
 			break;
 		default:
-			free(data); /*de allocate data if we have invalid setup*/
-			return 0;
+			free(data);
+			return NULL;
 	}
 	return (unsigned char * )data;
+}
+
+signed int  readImagePcxHeader(FILE * stream, pcxHeader * p) {
+	unsigned char type,version,compression,bitsPerPixel,reserved,planes;
+	unsigned char paletteType,horizontalScreenSize,verticalScreenSize;
+	unsigned short xStart,yStart,xEnd,yEnd,horizontalResolution,verticalResolution,bytesPerLine;
+	unsigned char i; /*iterator*/
+	unsigned char *reserved2; /*54/58 bytes*/
+	fread(&type,sizeof(unsigned char),1,stream);
+	if(type != 10) { return -1; } /*pcx specification states that 10h is signature*/
+	fread(&version,sizeof(unsigned char),1,stream);
+	if(version > 5) { return -2; } /*pcx hasn't any version above 3.0 (0x05)*/
+	fread(&compression,sizeof(unsigned char),1,stream);
+	if(compression != 1) { return -3; } /*pcx is rle-only file*/
+	fread(&bitsPerPixel,sizeof(unsigned char),1,stream);
+	switch(bitsPerPixel) {
+		case 1:
+		case 2:
+		case 4:
+		case 8:
+			break;
+		default:
+			return -4; /*not valid!*/
+	}
+	fread(&xStart,sizeof(unsigned short),1,stream); /*useless stuff, but useful*/
+	fread(&yStart,sizeof(unsigned short),1,stream); /*if the game has some sort of magic*/
+	fread(&xEnd,sizeof(unsigned short),1,stream); /*stuff that makes pcx files to fly*/
+	fread(&yEnd,sizeof(unsigned short),1,stream);
+	fread(&horizontalResolution,sizeof(unsigned short),1,stream);
+	fread(&verticalResolution,sizeof(unsigned short),1,stream);
+	/*read the EGA palette for once*/
+	for(i = 0; i < 16; i++) {
+		p->egaPalette[i].r = fgetc(stream);
+		p->egaPalette[i].g = fgetc(stream);
+		p->egaPalette[i].b = fgetc(stream);
+	}
+	fread(&reserved,sizeof(unsigned char),1,stream);
+	if(reserved != 0) { return -6; } /*reserved is always 0*/
+	fread(&planes,sizeof(unsigned char),1,stream);
+	fread(&bytesPerLine,sizeof(unsigned short),1,stream);
+	fread(&paletteType,sizeof(unsigned short),1,stream);
+	fread(&horizontalScreenSize,sizeof(unsigned short),1,stream);
+	fread(&verticalScreenSize,sizeof(unsigned short),1,stream);
+	reserved2 = (unsigned char *)malloc(54);
+	if(reserved2 == NULL) { return -7; }
+	fread((unsigned char *)reserved2,sizeof(unsigned char),54,stream);
+	/*save the stuff in the struct if all went ok*/
+	p->type = type;
+	p->version = version;
+	p->compression = compression;
+	p->bitsPerPixel = bitsPerPixel;
+	p->bytesPerLine = bytesPerLine;
+	p->xStart = xStart;
+	p->yStart = yStart;
+	p->xEnd = xEnd;
+	p->yEnd = yEnd;
+	p->horizontalResolution = horizontalResolution;
+	p->verticalResolution = verticalResolution;
+	p->reserved = reserved;
+	p->reserved2 = reserved2;
+	p->planes = planes;
+	return 0;
+}
+
+unsigned char *  readImagePcxData(FILE * stream, pcxHeader * p) {
+	register unsigned char rLen,tmp,val;
+	register unsigned long index,dataSize,total;
+	static unsigned char * data;
+	dataSize = (p->xEnd+1)*(p->yEnd+1);
+	index = 0; total = 0;
+	data = (unsigned char *)malloc(dataSize);
+	if(data == NULL) { return 0; }
+	while(index < dataSize) {
+		tmp = fgetc(stream);
+		if((tmp&0xC0) == 0xC0) { /*is it a 2 byte value*/
+			rLen = tmp&0x3F; val = fgetc(stream);
+		} else { /*1 byte value*/
+			rLen = 1; val = tmp;
+		}
+		for(total += rLen; rLen&&index < dataSize; rLen--, index++) { /*decompress the data*/
+			data[index] = val;
+		}
+	}
+	return (unsigned char *)data;
+}
+
+/*TODO: Fix this function*/
+paletteEntry *  readImagePcxVgaPalette(FILE * stream) {
+	register signed short vgaPaletteChecker;
+	register unsigned short i;
+	paletteEntry * pal;
+	vgaPaletteChecker = fgetc(stream); /*is last byte 0x0C or EOF?*/
+	if(vgaPaletteChecker != 0x0C || vgaPaletteChecker == EOF) { return NULL; }
+	pal = (paletteEntry *)malloc(256*sizeof(paletteEntry));
+	if(pal == NULL) { return NULL; } /*allocation error*/
+	/*read rgb components into the palette entry*/
+	for(i = 0; i < 256; i++) {
+		pal[i].r = fgetc(stream);
+		pal[i].g = fgetc(stream);
+		pal[i].b = fgetc(stream);
+	}
+	return (paletteEntry *)pal;
 }

@@ -27,6 +27,10 @@
 #include <limits.h>
 #endif
 
+#if defined(__no_ctype_h)
+#include <ctype.h>
+#endif
+
 #ifndef _exit_code
 #define _exit_code 1
 #endif
@@ -35,9 +39,18 @@
 #define _video_auto 1
 #endif
 
-#if defined(__no_ctype_h)
-#include <ctype.h>
-#endif
+#define BitmapSucess 0
+#define BitmapErrorSignature -1
+#define BitmapErrorBpp -3
+#define BitmapErrorInvalidHeader -2
+#define BitmapErrorFile -4
+#define BitmapErrorInvalidColorsOutOfRange -5
+#define BitmapErrorWrongPlanes -6
+#define BitmapErrorFileReadSizeOfFile -7
+#define BitmapErrorFileReadReserved -8
+
+#define VideoUsesLinux -1
+#define VideoErrorOnSet -2
 
 typedef struct paletteEntry {
 	unsigned char r;
@@ -66,8 +79,8 @@ typedef struct leafGame {
 	Window xwindow; /*Our main window in X11*/
 	Atom WM_DELETE_WINDOW; /*"x" atom in window (to close it)*/
 	GC xgraphic; /*The X11 graphic context where we will draw on*/
-	paletteEntry * xpalette; /*Emulated palette*/
 	unsigned char * video; /*Used to emulate a monitor*/
+	paletteEntry * xpalette; /*Emulated palette (Linux/BSD/macOS)*/
 #endif
 	const char * name; /*name of the game*/
 	unsigned char videoConf; /*used for video mode usage*/
@@ -75,14 +88,18 @@ typedef struct leafGame {
 	unsigned short vtall; /*height of the screen*/
 }leafGame;
 
+void seedRandom(void);
 signed int generateRandom(void);
+
 signed int leafGameCreate(leafGame * g);
 signed int leafEventUpdate(leafGame * g, leafEvent * e);
 signed int leafGameDestroy(leafGame * g);
+
 signed int leafSetVideo(leafGame * g);
-void plotPixel(leafGame * g, register unsigned char x, register unsigned char y, register unsigned char c);
+void plotPixel(leafGame * g, register unsigned short x, register unsigned short y, register unsigned char c);
 void plotLinearPixel(leafGame * g, register unsigned short pos,register unsigned char color);
 unsigned char fetchPixel(leafGame * g, register unsigned short x,register unsigned short y);
+
 signed int setPalette(leafGame * g, paletteEntry * p, register unsigned short n);
 
 typedef struct _bmpHeader {
@@ -103,11 +120,39 @@ typedef struct _bmpHeader {
 	unsigned long importantColors;
 	unsigned long mask[4];
 	unsigned long paletteEntries;
-	paletteEntry *palette;
+	
+	paletteEntry * palette;
 }bmpHeader;
 
 signed int readImageBitmapHeader(FILE * stream, bmpHeader * e);
 paletteEntry * readImageBitmapPalette(FILE * stream, bmpHeader * b);
 unsigned char * readImageBitmapData(FILE * stream, bmpHeader * b);
+
+typedef struct pcxHeader {
+	unsigned char type;
+	unsigned char version;
+	unsigned char compression;
+	unsigned char bitsPerPixel;
+	unsigned short xStart;
+	unsigned short yStart;
+	unsigned short xEnd;
+	unsigned short yEnd;
+	unsigned short horizontalResolution;
+	unsigned short verticalResolution;
+	unsigned char reserved;
+	unsigned char planes;
+	unsigned short bytesPerLine;
+	unsigned short paletteType;
+	unsigned short horizontalScreenSize;
+	unsigned short verticalScreenSize;
+	unsigned char * reserved2;
+	
+	paletteEntry * egaPalette;
+	paletteEntry * vgaPalette;
+}pcxHeader;
+
+signed int readImagePcxHeader(FILE * stream, pcxHeader * p);
+unsigned char * readImagePcxData(FILE * stream, pcxHeader * p);
+paletteEntry * readImagePcxVgaPalette(FILE * stream);
 
 #endif
