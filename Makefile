@@ -8,6 +8,10 @@ CFLAGS = -fpic -Wall -Wextra -ansi -pedantic -lX11 -I$(INC_DIR)
 
 all: $(OUT_DIR)/libleaf.so
 
+install:
+	cp $(OUT_DIR)/libleaf.so /usr/lib
+	cp $(SRC_DIR)/leaf.h /usr/include
+
 clean:
 	rm out/*.*
 
