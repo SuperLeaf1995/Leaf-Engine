@@ -1,32 +1,19 @@
+#if defined(__TURBOC__) && !defined(__BORLANDC__)
+#define __no_current_dir
+#define __no_ctype_h
+#endif
+
 #if !defined(__no_current_dir)
 #include "leaf.h"
 #endif
 
 #if defined(__no_current_dir)
-#include "leaf/src/leaf.h"
-#endif
-
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-signed int leafErrorCatch(Display * d, XErrorEvent * e) {
-	fprintf(stderr,"X11 Error occoured\n");
-	if(e == NULL) {
-		return -1;
-	}
-	if(d == NULL) {
-		return -2;
-	}
-	return 0;
-}
+#include "src/leaf.h"
 #endif
 
 void seedRandom(void) {
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	srand(time(NULL));
-#endif
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 	unsigned short *clock = (unsigned short *)0x0000046CL;
 	srand(*clock);
-#endif
 	return;
 }
 
@@ -35,84 +22,12 @@ signed int generateRandom(void) {
 }
 
 signed int leafGameCreate(leafGame * g) {
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	g->xdisplay = XOpenDisplay(0); /*open the x11 display*/
-	if(g->xdisplay == NULL) { return -1; } /*error opening x11 display*/
-	g->xwindow = XCreateSimpleWindow(g->xdisplay,RootWindow(g->xdisplay,BlackPixel(g->xdisplay,DefaultScreen(g->xdisplay))),10,10,320,200,1,WhitePixel(g->xdisplay,DefaultScreen(g->xdisplay)),BlackPixel(g->xdisplay,DefaultScreen(g->xdisplay)));
-	XSelectInput(g->xdisplay,g->xwindow,ExposureMask|KeyReleaseMask); /*select input...*/
-	XMapWindow(g->xdisplay,g->xwindow); /*display it (or map it)*/
-	XStoreName(g->xdisplay,g->xwindow,g->name); /*set the window's title*/
-	/*display the close button*/
-	g->WM_DELETE_WINDOW = XInternAtom(g->xdisplay,"WM_DELETE_WINDOW",False);
-	XSetWMProtocols(g->xdisplay,g->xwindow,&g->WM_DELETE_WINDOW,1);
-	g->xgraphic = XCreateGC(g->xdisplay,g->xwindow,0,0);
-	/*Load a default VGA palette (DOSBox and other programs does this)*/
-	g->xpalette = malloc(255*sizeof(paletteEntry));
-	if(g->xpalette == NULL) { return -2; }
-	XSetErrorHandler(leafErrorCatch);
-#endif
 	g->videoConf = _video_auto; /*Default*/
 	g->vwide = 320; g->vtall = 200;
 	return 0;
 }
 
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-unsigned short toRgb(register unsigned short r, register unsigned short g, register unsigned short b) {
-	return ((b)+(g<<8)+(r<<16));
-}
-#endif
-
-signed int leafEventUpdate(leafGame *g, leafEvent * e) {
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	union REGS in,out;
-	in.x.ax = 0x0B; int86(0x33,&in,&out);
-	l->cx = (signed short)out.x.cx;
-	l->cy = (signed short)out.x.dx;
-	in.x.ax = 0x03; int86(0x33,&in,&out);
-	l->eventStatus += (out.x.bx<<1); /*shift to leave space for key bit*/
-	if(kbhit) { l->eventStatus |= 1; } /*set keypress bit*/
-	else { l->eventStatus ^= 1; }
-	l->key = getch();
-#endif
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	register unsigned short i;
-	register unsigned short i2;
-	register unsigned short d;
-	register unsigned short rgb;
-	XNextEvent(g->xdisplay,&e->xevent);
-	if((e->xevent.type == ClientMessage)&&((unsigned int)e->xevent.xclient.data.l[0] == g->WM_DELETE_WINDOW)) {
-		e->ui = _exit_code; /*set UI as "exit_code"*/
-	}
-	/*Also update screen with the framebuffer*/
-	if(g->video == NULL) { return -1; }
-	else if(g->vtall == 0) { return -2; }
-	else if(g->vwide == 0) { return -3; }
-	for(i = 0; i < g->vwide; i++) {
-		for(i2 = 0; i2 < g->vtall; i2++) {
-			d = g->video[((i2*g->vwide)+i)]; /*get current pixel color*/
-			rgb = toRgb(g->xpalette[d].r,g->xpalette[d].g,g->xpalette[d].b); /*color in emulated palette*/
-			XSetForeground(g->xdisplay,g->xgraphic,rgb);
-			XDrawPoint(g->xdisplay,g->xwindow,g->xgraphic,i,i2); /*draw it on the X11*/
-			XFlush(g->xdisplay);
-		}
-	}
-#endif
-	return 0;
-}
-
-signed int leafGameDestroy(leafGame * g) {
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	XDestroyWindow(g->xdisplay,g->xwindow);
-	XCloseDisplay(g->xdisplay); /*close xwindow*/
-	if(g->video != NULL) { free(g->video); } /*free memory and avoid leaks*/
-	if(g->xpalette != NULL) { free(g->xpalette); }
-	XSetErrorHandler(NULL); /*restore error handler*/
-#endif
-	return 0;
-}
-
 signed int leafSetVideo(leafGame * g) {
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 	unsigned char video;
 	union REGS in,out;
 	if(g->videoConf == _video_auto) {
@@ -125,81 +40,83 @@ signed int leafSetVideo(leafGame * g) {
 		int86(0x10,&in,&out);
 	}
 	return (signed int)video; /*return casted signed int video*/
-#endif
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	if(g->videoConf == _video_auto) {
-		g->video = malloc((g->vwide*g->vtall)*sizeof(unsigned char));
-		if(g->video == NULL) { /*error on video allocation*/
-			return VideoErrorOnSet;
+}
+
+unsigned int setVideo(unsigned char v) {
+	union REGS in,out;
+	in.h.al = v;
+	in.h.ah = 0; /*set the video we want*/
+	int86(0x10,&in,&out);
+	return (signed int)0x03;
+}
+
+void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c) {
+	unsigned char * video = (unsigned char * )0xA0000000L;
+	video[(y*320)+x] = c;
+	return;
+}
+
+void plotLinearPixel(register unsigned short p,register unsigned char c) {
+	unsigned char * video = (unsigned char * )0xA0000000L;
+	video[p] = c;
+	return;
+}
+
+unsigned char fetchPixel(register unsigned short x,register unsigned short y) {
+	unsigned char * video = (unsigned char * )0xA0000000L;
+	return video[(y*320)+x];
+}
+
+void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c) {
+	signed short i,dx,dy,sdx,sdy,dxabs,dyabs,px,py,x,y;
+	dx = ex-sx; dy = ey-sy;
+	sdx = ((dx < 0) ? -1 : ((dx > 0) ? 1 : 0));
+	sdy = ((dy < 0) ? -1 : ((dy > 0) ? 1 : 0));
+	dxabs = abs(dx); dyabs = abs(dy);
+	x = (dyabs>>1); y = (dxabs>>1);
+	px = sx; py = sy;
+	
+	plotPixel(px,py,c);
+	
+	if(dxabs >= dyabs) {
+		for(i = 0; i < dxabs; i++) {
+			y += dyabs;
+			if(y >= dxabs) {
+				y -= dxabs; py += sdy;
+			}
+			px += sdx;
+			plotPixel(px,py,c);
+		}
+	} else {
+		for(i = 0; i < dyabs; i++) {
+			x += dxabs;
+			if(x >= dyabs) {
+				x -= dyabs; px += sdx;
+			}
+			py += sdy;
+			plotPixel(px,py,c);
 		}
 	}
-	return VideoUsesLinux; /*let know the program we are running in linux*/
-#endif
-}
-
-void plotPixel(leafGame * g, register unsigned short x, register unsigned short y, register unsigned char c) {
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	unsigned char * video = (unsigned char * )0xA0000000L;
-	video[(y*g->vwide)+x] = c;
-#endif
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	if(g->video != NULL && !(x > g->vwide) && !(y > g->vtall)) {
-		g->video[(y*g->vwide)+x] = c; /*plot pixel in framebuffer*/
-	}
-#endif
 	return;
 }
 
-void plotLinearPixel(leafGame * g, register unsigned short p,register unsigned char c) {
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	unsigned char * video = (unsigned char * )0xA0000000L;
-#endif
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	if(g->video != NULL && !(p > (g->vwide*g->vtall))) {
-		g->video[p] = c; /*plot pixel in framebuffer*/
-	}
-#endif
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	video[p] = c;
-#endif
+void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c) {
+	plotLine(x1,y1,x2,y1,c);
+	plotLine(x1,y1,x1,y2,c);
+	plotLine(x1,y2,x2,y2,c);
+	plotLine(x2,y2,x2,y1,c);
 	return;
 }
 
-unsigned char fetchPixel(leafGame * g, register unsigned short x,register unsigned short y) {
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	unsigned char * video = (unsigned char * )0xA0000000L;
-#endif
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	if(g->video != NULL && !(x > g->vwide) && !(y > g->vtall)) {
-		return g->video[(y*g->vwide)+x];
-	} else {
-		return 0;
-	}
-#endif
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	return video[(y*g->vwide)+x];
-#endif
-}
-
-signed int setPalette(leafGame * g, paletteEntry * p, register unsigned short n) {
+void setPalette(paletteEntry * p, register unsigned short n) {
 	register unsigned short i;
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	if(g->xpalette == NULL) { return -1; }
-	for(i = 0; i < n; i++) {
-		g->xpalette[i].r = p[i].r;
-		g->xpalette[i].g = p[i].g;
-		g->xpalette[i].b = p[i].b;
-	}
-#endif
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 	outportb(0x03c8,0); /*send to the vga registers that we are going to send palette data*/
 	for(i = 0; i < n; i++) {
 		outportb(0x03c9,(p[i].r>>2));
 		outportb(0x03c9,(p[i].g>>2));
 		outportb(0x03c9,(p[i].b>>2));
 	}
-#endif
-	return 0;
+	return;
 }
 
 signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
@@ -314,7 +231,7 @@ paletteEntry * readImageBitmapPalette(FILE *stream, bmpHeader * b) {
 	if(b->bitsPerPixel == 8 || b->bitsPerPixel == 4 || b->bitsPerPixel == 2
 	|| b->bitsPerPixel == 1) { /*check if it really has palette...*/
 		b->paletteEntries = (1<<(b->bitsPerPixel)); /*number of palette entries to read*/
-		pal = (paletteEntry *)malloc(sizeof(paletteEntry)*b->paletteEntries);
+		pal = (paletteEntry *)malloc((sizeof(paletteEntry)*b->paletteEntries));
 		if(pal == NULL) { return NULL; }
 		for(i = 0; i < b->paletteEntries; i++) { /*read the palette thing*/
 			pal[i].b = fgetc(stream); /*bitmap has reverse RGB order for each entry*/
@@ -510,56 +427,54 @@ paletteEntry *  readImagePcxVgaPalette(FILE * stream) {
 	return (paletteEntry *)pal;
 }
 
-#if defined(__easy_leaf)
-
-#define _sprite_error_file_not_found -1
-#define _sprite_error_no_data -2
-
-signed char createSprite(sprite * s, const char * filename) {
-	s->fp = fopen(filename,"rb");
-	if(!s->fp) {
-		return _sprite_error_file_not_found;
+char initMouse(struct mouse *m) {
+	union REGS in,out;
+	in.x.ax = 0x00;
+	in.x.bx = 0x00;
+	int86(0x33,&in,&out);
+	if((in.x.bx&2) != 0) { /*Two button mouse*/
+        m->buttons = 2;
 	}
-	
-	/*read bitmap*/
-	readImageBitmapHeader(s->fp,s->&b);
-	s->data = readImageBitmapData(s->fp,s->&b);
-	if(s->data == NULL) {
-		return _sprite_error_no_data;
+	else if((in.x.bx&3) != 0) { /*Three button mouse*/
+        m->buttons = 3;
 	}
-	s->palette = readImageBitmapPalette(s->fp,s->&b);
-	
-	/*on no error, return*/
-	return 0;
+	else { /*Unknown buttons*/
+        m->buttons = 0;
+	}
+	return (out.x.ax != 0) ? 0 : -1; /*If the mouse was initialized return 0, else return -1*/
 }
 
-void drawSprite(leafGame * g, sprite * s, unsigned short x, unsigned short y) {
-	unsigned short i;
-	unsigned short i2;
-	
-	/*Check for errors*/
-	if(s->data == NULL) {
-		return _sprite_error_no_data;
-	}
-	
-	/*Draw the sprite*/
-	for(i = 0; i < s->b.wide; i++) {
-		for(i2 = 0; i2 < s->b.wide; i2++) {
-			plotPixel(g,x,y,s->data[(i2*s->b.wide)+i]);
-		}
-	}
-	
-	return 0;
+void setMousePosition(unsigned short x, unsigned short y) {
+	union REGS in,out;
+	in.x.ax = 0x04;
+	in.x.cx = x;
+	in.x.dx = y;
+	int86(0x33,&in,&out);
+	return;
 }
 
-void destroySprite(sprite * s) {
-	if(s->fp) {
-		fclose(s->fp);
-	}
-	if(s->data != NULL) {
-		free(s->data);
-	}
-	return 0;
+void showMouse(void) {
+	union REGS in,out;
+	in.x.ax = 0x01;
+	int86(0x33,&in,&out);
+	return;
 }
 
-#endif
+void hideMouse(void) {
+	union REGS in,out;
+	in.x.ax = 0x02;
+	int86(0x33,&in,&out);
+	return;
+}
+
+void getMouseStatus(struct mouse *m) {
+	union REGS in,out;
+	in.x.ax = 0x03;
+	int86(0x33,&in,&out);
+	m->x = out.x.cx;
+	m->y = out.x.dx;
+	m->buttonLeft = (out.x.bx & 1); /*While it is not equal 0, its HOLD/PRESSED, else its RELEASED*/
+	m->buttonRight = (out.x.bx & 2);
+	m->buttonMiddle = (out.x.bx & 4);
+	return;
+}

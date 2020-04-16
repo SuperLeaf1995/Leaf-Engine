@@ -3,22 +3,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <float.h>
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
+#include <conio.h>
 #include <dos.h>
-#endif
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-#include <unistd.h>
-#include <sys/utsname.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xos.h>
-#include <X11/Xatom.h>
-#include <X11/X.h>
-#include <time.h>
-#endif
-
-#if defined(_WIN32) || defined(_WIN64)
-#error "You can't use Windows to compile Leaf-Engine, use Linux or BSD, or DOSBox. Or add the Windows GUI functions yourself"
 #endif
 
 #if defined(__TURBOC__) && !defined(__BORLANDC__)
@@ -59,9 +49,6 @@ typedef struct paletteEntry {
 }paletteEntry;
 
 typedef struct leafEvent {
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	XEvent xevent;
-#endif
 	signed int key; /*Key scancode (0-255) or SPECIAL_KEY
 					(used by Leaf-Engine for arrow keys and stuff)*/
 	signed short cx; /*Change of X movement of mouse*/
@@ -74,14 +61,6 @@ typedef struct leafEvent {
 }leafEvent;
 
 typedef struct leafGame {
-#if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	Display * xdisplay; /*Main X11 display for our X11 game*/
-	Window xwindow; /*Our main window in X11*/
-	Atom WM_DELETE_WINDOW; /*"x" atom in window (to close it)*/
-	GC xgraphic; /*The X11 graphic context where we will draw on*/
-	unsigned char * video; /*Used to emulate a monitor*/
-	paletteEntry * xpalette; /*Emulated palette (Linux/BSD/macOS)*/
-#endif
 	const char * name; /*name of the game*/
 	unsigned char videoConf; /*used for video mode usage*/
 	unsigned short vwide; /*wide of heritage screen*/
@@ -92,15 +71,15 @@ void seedRandom(void);
 signed int generateRandom(void);
 
 signed int leafGameCreate(leafGame * g);
-signed int leafEventUpdate(leafGame * g, leafEvent * e);
-signed int leafGameDestroy(leafGame * g);
-
 signed int leafSetVideo(leafGame * g);
-void plotPixel(leafGame * g, register unsigned short x, register unsigned short y, register unsigned char c);
-void plotLinearPixel(leafGame * g, register unsigned short pos,register unsigned char color);
-unsigned char fetchPixel(leafGame * g, register unsigned short x,register unsigned short y);
 
-signed int setPalette(leafGame * g, paletteEntry * p, register unsigned short n);
+unsigned int setVideo(unsigned char v);
+void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c);
+void plotLinearPixel(register unsigned short pos,register unsigned char color);
+unsigned char fetchPixel(register unsigned short x,register unsigned short y);
+void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
+void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
+void setPalette(paletteEntry * p, register unsigned short n);
 
 typedef struct _bmpHeader {
 	unsigned char type[3];
@@ -155,21 +134,19 @@ signed int readImagePcxHeader(FILE * stream, pcxHeader * p);
 unsigned char * readImagePcxData(FILE * stream, pcxHeader * p);
 paletteEntry * readImagePcxVgaPalette(FILE * stream);
 
-#if defined(__easy_leaf)
+struct mouse {
+	buttonLeft:1;
+	buttonRight:1;
+	buttonMiddle:1;
+	buttons:4;
+	signed short x;
+	signed short y;
+};
 
-typedef struct sprite {
-	unsigned char * data;
-	signed short wide;
-	signed short tall;
-	paletteEntry * palette;
-	bmpHeader b;
-	FILE * fp;
-}sprite;
-
-signed char createSprite(sprite * s, const char * filename);
-void drawSprite(leafGame * g, sprite * s, unsigned short x, unsigned short y);
-void destroySprite(sprite * s);
-
-#endif
+char initMouse(struct mouse *m);
+void setMousePosition(unsigned short x, unsigned short y);
+void showMouse(void);
+void hideMouse(void);
+void getMouseStatus(struct mouse *m);
 
 #endif
