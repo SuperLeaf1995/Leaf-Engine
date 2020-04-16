@@ -155,4 +155,21 @@ signed int readImagePcxHeader(FILE * stream, pcxHeader * p);
 unsigned char * readImagePcxData(FILE * stream, pcxHeader * p);
 paletteEntry * readImagePcxVgaPalette(FILE * stream);
 
+#if defined(__easy_leaf)
+
+typedef struct sprite {
+	unsigned char * data;
+	signed short wide;
+	signed short tall;
+	paletteEntry * palette;
+	bmpHeader b;
+	FILE * fp;
+}sprite;
+
+signed char createSprite(sprite * s, const char * filename);
+void drawSprite(leafGame * g, sprite * s, unsigned short x, unsigned short y);
+void destroySprite(sprite * s);
+
+#endif
+
 #endif

@@ -35,9 +35,6 @@ signed int generateRandom(void) {
 }
 
 signed int leafGameCreate(leafGame * g) {
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
-	/*do absolutely nothing important (yet)*/
-#endif
 #if defined(__linux) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 	g->xdisplay = XOpenDisplay(0); /*open the x11 display*/
 	if(g->xdisplay == NULL) { return -1; } /*error opening x11 display*/
@@ -54,7 +51,7 @@ signed int leafGameCreate(leafGame * g) {
 	if(g->xpalette == NULL) { return -2; }
 	XSetErrorHandler(leafErrorCatch);
 #endif
-	g->videoConf = _video_auto;
+	g->videoConf = _video_auto; /*Default*/
 	g->vwide = 320; g->vtall = 200;
 	return 0;
 }
@@ -512,3 +509,57 @@ paletteEntry *  readImagePcxVgaPalette(FILE * stream) {
 	}
 	return (paletteEntry *)pal;
 }
+
+#if defined(__easy_leaf)
+
+#define _sprite_error_file_not_found -1
+#define _sprite_error_no_data -2
+
+signed char createSprite(sprite * s, const char * filename) {
+	s->fp = fopen(filename,"rb");
+	if(!s->fp) {
+		return _sprite_error_file_not_found;
+	}
+	
+	/*read bitmap*/
+	readImageBitmapHeader(s->fp,s->&b);
+	s->data = readImageBitmapData(s->fp,s->&b);
+	if(s->data == NULL) {
+		return _sprite_error_no_data;
+	}
+	s->palette = readImageBitmapPalette(s->fp,s->&b);
+	
+	/*on no error, return*/
+	return 0;
+}
+
+void drawSprite(leafGame * g, sprite * s, unsigned short x, unsigned short y) {
+	unsigned short i;
+	unsigned short i2;
+	
+	/*Check for errors*/
+	if(s->data == NULL) {
+		return _sprite_error_no_data;
+	}
+	
+	/*Draw the sprite*/
+	for(i = 0; i < s->b.wide; i++) {
+		for(i2 = 0; i2 < s->b.wide; i2++) {
+			plotPixel(g,x,y,s->data[(i2*s->b.wide)+i]);
+		}
+	}
+	
+	return 0;
+}
+
+void destroySprite(sprite * s) {
+	if(s->fp) {
+		fclose(s->fp);
+	}
+	if(s->data != NULL) {
+		free(s->data);
+	}
+	return 0;
+}
+
+#endif
