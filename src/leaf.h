@@ -3,32 +3,24 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <math.h>
 #include <float.h>
+#include <ctype.h>
+#include <limits.h>
 #if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 #include <conio.h>
-#include <dos.h>
+#include <io.h>
+#include <mem.h>
 #endif
 
 #if defined(__TURBOC__) && !defined(__BORLANDC__)
-#define __no_current_dir
-#define __no_ctype_h
-#include <limits.h>
+#include <dos.h>
 #endif
 
-#if defined(__no_ctype_h)
-#include <ctype.h>
-#endif
-
-#ifndef _exit_code
 #define _exit_code 1
-#endif
-
-#ifndef _video_auto
 #define _video_auto 1
-#endif
-
 #define BitmapSucess 0
 #define BitmapErrorSignature -1
 #define BitmapErrorBpp -3
@@ -38,7 +30,6 @@
 #define BitmapErrorWrongPlanes -6
 #define BitmapErrorFileReadSizeOfFile -7
 #define BitmapErrorFileReadReserved -8
-
 #define VideoUsesLinux -1
 #define VideoErrorOnSet -2
 
@@ -67,10 +58,18 @@ typedef struct leafGame {
 	unsigned short vtall; /*height of the screen*/
 }leafGame;
 
+unsigned short * clock = (unsigned short *)0x0000046CL;
+unsigned char * video = (unsigned char * )0xA0000000L;
+
+unsigned char * videoBuffer;
+
+union REGS in,out;
+
 void seedRandom(void);
 signed int generateRandom(void);
 
 signed int leafGameCreate(leafGame * g);
+signed int leafGameEnd(leafGame * g);
 signed int leafSetVideo(leafGame * g);
 
 unsigned int setVideo(unsigned char v);
@@ -80,6 +79,8 @@ unsigned char fetchPixel(register unsigned short x,register unsigned short y);
 void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
 void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
 void setPalette(paletteEntry * p, register unsigned short n);
+void waitRetrace(void);
+void updateScreen(void);
 
 typedef struct _bmpHeader {
 	unsigned char type[3];
@@ -139,14 +140,15 @@ struct mouse {
 	buttonRight:1;
 	buttonMiddle:1;
 	buttons:4;
-	signed short x;
-	signed short y;
+	signed short x; signed short y;
+	signed short mx; signed short my;
 };
 
-char initMouse(struct mouse *m);
+char initMouse(struct mouse * m);
 void setMousePosition(unsigned short x, unsigned short y);
 void showMouse(void);
 void hideMouse(void);
-void getMouseStatus(struct mouse *m);
+void getMouseStatus(struct mouse * m);
+void getMouseMovement(struct mouse * m);
 
 #endif

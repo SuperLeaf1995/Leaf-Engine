@@ -12,7 +12,6 @@
 #endif
 
 void seedRandom(void) {
-	unsigned short *clock = (unsigned short *)0x0000046CL;
 	srand(*clock);
 	return;
 }
@@ -24,12 +23,21 @@ signed int generateRandom(void) {
 signed int leafGameCreate(leafGame * g) {
 	g->videoConf = _video_auto; /*Default*/
 	g->vwide = 320; g->vtall = 200;
+	
+	videoBuffer = (unsigned char *)malloc(64000);
+	if(videoBuffer == NULL) { return -1; }
+	return 0;
+}
+
+signed int leafGameEnd(leafGame * g) {
+	if(videoBuffer != NULL) {
+		free(videoBuffer);
+	}
 	return 0;
 }
 
 signed int leafSetVideo(leafGame * g) {
 	unsigned char video;
-	union REGS in,out;
 	if(g->videoConf == _video_auto) {
 		if(g->vwide == 320) {
 			if(g->vtall == 200) {
@@ -43,7 +51,6 @@ signed int leafSetVideo(leafGame * g) {
 }
 
 unsigned int setVideo(unsigned char v) {
-	union REGS in,out;
 	in.h.al = v;
 	in.h.ah = 0; /*set the video we want*/
 	int86(0x10,&in,&out);
@@ -51,20 +58,18 @@ unsigned int setVideo(unsigned char v) {
 }
 
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c) {
-	unsigned char * video = (unsigned char * )0xA0000000L;
-	video[(y*320)+x] = c;
+	if(y >= 200 || x >= 320) { return; }
+	videoBuffer[(y*320)+x] = c;
 	return;
 }
 
 void plotLinearPixel(register unsigned short p,register unsigned char c) {
-	unsigned char * video = (unsigned char * )0xA0000000L;
-	video[p] = c;
+	videoBuffer[p] = c;
 	return;
 }
 
 unsigned char fetchPixel(register unsigned short x,register unsigned short y) {
-	unsigned char * video = (unsigned char * )0xA0000000L;
-	return video[(y*320)+x];
+	return videoBuffer[(y*320)+x];
 }
 
 void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c) {
@@ -108,6 +113,15 @@ void plotWireSquare(register signed short x1, register signed short y1, register
 	return;
 }
 
+void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c) {
+	unsigned short i;
+	for(i = 0; i < n-1; i++) {
+		plotLine(d[(i<<1)],d[((i<<1)+1)],d[((i<<1)+2)],d[((i<<1)+3)],c);
+	}
+	plotLine(d[0],d[1],d[((i<<1)-2)],d[((i<<1)-1)],c);
+	return;
+}
+
 void setPalette(paletteEntry * p, register unsigned short n) {
 	register unsigned short i;
 	outportb(0x03c8,0); /*send to the vga registers that we are going to send palette data*/
@@ -116,6 +130,19 @@ void setPalette(paletteEntry * p, register unsigned short n) {
 		outportb(0x03c9,(p[i].g>>2));
 		outportb(0x03c9,(p[i].b>>2));
 	}
+	return;
+}
+
+void waitRetrace(void) {
+	while((inportb(0x03DA)&8));
+	while(!(inportb(0x03DA)&8));
+	return;
+}
+
+void updateScreen(void) {
+	waitRetrace(); /* Wait for VGA retrace */
+	memcpy(video,videoBuffer,64000); /* Copy data to VGA */
+	memset(videoBuffer,0,64000); /* Clear our buffer */
 	return;
 }
 
@@ -427,8 +454,7 @@ paletteEntry *  readImagePcxVgaPalette(FILE * stream) {
 	return (paletteEntry *)pal;
 }
 
-char initMouse(struct mouse *m) {
-	union REGS in,out;
+char initMouse(struct mouse * m) {
 	in.x.ax = 0x00;
 	in.x.bx = 0x00;
 	int86(0x33,&in,&out);
@@ -445,7 +471,6 @@ char initMouse(struct mouse *m) {
 }
 
 void setMousePosition(unsigned short x, unsigned short y) {
-	union REGS in,out;
 	in.x.ax = 0x04;
 	in.x.cx = x;
 	in.x.dx = y;
@@ -454,21 +479,18 @@ void setMousePosition(unsigned short x, unsigned short y) {
 }
 
 void showMouse(void) {
-	union REGS in,out;
 	in.x.ax = 0x01;
 	int86(0x33,&in,&out);
 	return;
 }
 
 void hideMouse(void) {
-	union REGS in,out;
 	in.x.ax = 0x02;
 	int86(0x33,&in,&out);
 	return;
 }
 
-void getMouseStatus(struct mouse *m) {
-	union REGS in,out;
+void getMouseStatus(struct mouse * m) {
 	in.x.ax = 0x03;
 	int86(0x33,&in,&out);
 	m->x = out.x.cx;
@@ -476,5 +498,13 @@ void getMouseStatus(struct mouse *m) {
 	m->buttonLeft = (out.x.bx & 1); /*While it is not equal 0, its HOLD/PRESSED, else its RELEASED*/
 	m->buttonRight = (out.x.bx & 2);
 	m->buttonMiddle = (out.x.bx & 4);
+	return;
+}
+
+void getMouseMovement(struct mouse * m) {
+	in.x.ax = 0x0B;
+	int86(0x33,&in,&out);
+	m->mx = out.x.cx;
+	m->my = out.x.dx;
 	return;
 }
