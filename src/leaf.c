@@ -118,7 +118,7 @@ void plotWirePolygon(signed short * d, register unsigned short n, register unsig
 	for(i = 0; i < n-1; i++) {
 		plotLine(d[(i<<1)],d[((i<<1)+1)],d[((i<<1)+2)],d[((i<<1)+3)],c);
 	}
-	plotLine(d[0],d[1],d[((i<<1)-2)],d[((i<<1)-1)],c);
+	plotLine(d[(i<<1)],d[(i<<1)+1],d[0],d[1],c);
 	return;
 }
 

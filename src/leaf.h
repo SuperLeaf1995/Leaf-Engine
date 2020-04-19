@@ -79,6 +79,7 @@ unsigned char fetchPixel(register unsigned short x,register unsigned short y);
 void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
 void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
 void setPalette(paletteEntry * p, register unsigned short n);
+void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
 void waitRetrace(void);
 void updateScreen(void);
 
