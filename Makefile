@@ -1,3 +1,5 @@
+# Builds a Leaf-Engine shared library
+
 OUT_DIR = out
 INC_DIR = src
 SRC_DIR = src

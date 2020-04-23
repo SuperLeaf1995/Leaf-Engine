@@ -1,3 +1,19 @@
+/*
+*   Copyright 2019-2020 Jesus Diaz
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
+*/
+
 #if defined(__TURBOC__) && !defined(__BORLANDC__)
 #define __no_current_dir
 #define __no_ctype_h
@@ -106,10 +122,8 @@ void plotLine(register signed short sx, register signed short sy, register signe
 }
 
 void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c) {
-	plotLine(x1,y1,x2,y1,c);
-	plotLine(x1,y1,x1,y2,c);
-	plotLine(x1,y2,x2,y2,c);
-	plotLine(x2,y2,x2,y1,c);
+	plotLine(x1,y1,x2,y1,c); plotLine(x1,y1,x1,y2,c);
+	plotLine(x1,y2,x2,y2,c); plotLine(x2,y2,x2,y1,c);
 	return;
 }
 
@@ -507,4 +521,35 @@ void getMouseMovement(struct mouse * m) {
 	m->mx = out.x.cx;
 	m->my = out.x.dx;
 	return;
+}
+
+signed char saveLeafDataFile(const char * fileName, void * data, size_t n) {
+	FILE * s; size_t i;
+	if(!s) { return -1; }
+	fwrite((unsigned char *)data,sizeof(unsigned char),n,s);
+	return 0;
+}
+
+signed char loadLeafDataFile(const char * fileName, void * data, size_t n) {
+	FILE * s; size_t i;
+	if(!s) { return -1; }
+	fread((unsigned char *)data,sizeof(unsigned char),n,s);
+	return 0;
+}
+
+signed char openLogFile(FILE * s, const char * name) {
+	s = fopen(name,"a+t");
+	if(!s) { return -1; }
+	return 0;
+}
+
+signed char appendLogFile(FILE * s, const char * entry) {
+	if(!s) { return -1; }
+	fprintf(s,"%s\n",entry);
+	return 0;
+}
+
+signed char closeLogFile(FILE * s) {
+	if(s) { fclose(s); }
+	return 0;
 }

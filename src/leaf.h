@@ -1,3 +1,19 @@
+/*
+*   Copyright 2019-2020 Jesus Diaz
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
+*/
+
 #ifndef LEAF_H
 #define LEAF_H
 
@@ -19,8 +35,23 @@
 #include <dos.h>
 #endif
 
+/*Current engine version*/
+#define LEAF_ENGINE 030L
+
+/*
+Codes for UI (Always check those, In DOS the exit code is produced
+by Ctrl+C)
+*/
 #define _exit_code 1
+
+/*
+Video automatic-modes for leafGame (see leafGameCreate)
+*/
 #define _video_auto 1
+
+/*
+Errors and sucess codes. Useful for displaying what really happened.
+*/
 #define BitmapSucess 0
 #define BitmapErrorSignature -1
 #define BitmapErrorBpp -3
@@ -33,12 +64,30 @@
 #define VideoUsesLinux -1
 #define VideoErrorOnSet -2
 
+/*A simple getchar cross-platform wrapper*/
+#if defined(__linux) || defined(linux)
+#define getch() getchar()
+#elif defined(__APPLE2__)
+#define getch() cgetc()
+#endif
+
+/*
+PaletteEntry is used for storing palette information of pictures, works
+in coordinance with setPalette.
+*/
 typedef struct paletteEntry {
 	unsigned char r;
 	unsigned char g;
 	unsigned char b;
 }paletteEntry;
 
+/*
+LeafEvent is a special structure wich handles all events in a program
+this should be the main structure and there should be generally one per
+program.
+
+The structure aims to provide a simple way to get/set data for input.
+*/
 typedef struct leafEvent {
 	signed int key; /*Key scancode (0-255) or SPECIAL_KEY
 					(used by Leaf-Engine for arrow keys and stuff)*/
@@ -51,6 +100,14 @@ typedef struct leafEvent {
 	signed char ui; /*UI and window events, always 0 in DOS and monotask OSes*/
 }leafEvent;
 
+/*
+LeafGame is another special structure wich is the main structure for
+main operations. This structure should only be in programs wich require
+leafEvent and any of the functions that depends of it.
+
+Provides a simple way for porting DOS, Linux and BSD applications without
+the hassle of setting everything separately
+*/
 typedef struct leafGame {
 	const char * name; /*name of the game*/
 	unsigned char videoConf; /*used for video mode usage*/
@@ -58,20 +115,43 @@ typedef struct leafGame {
 	unsigned short vtall; /*height of the screen*/
 }leafGame;
 
+/*
+x86-specific addresses (As DOS is x86-specific we assume
+that they are present).
+
+This can also be activated when GCC is targeted towards a i386 or i686
+architecture.
+*/
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS) || defined(__i386__) || defined(__i686__)
 unsigned short * clock = (unsigned short *)0x0000046CL;
 unsigned char * video = (unsigned char * )0xA0000000L;
+#endif
 
+/*Emulated/Buffer video buffer for drawing operations*/
 unsigned char * videoBuffer;
 
+/*Global variable for register I/O (DOS-only)*/
+#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
 union REGS in,out;
+#endif
 
+/*
+Time-based random number generator
+*/
 void seedRandom(void);
 signed int generateRandom(void);
 
+/*
+Main, principal Leaf-Engine functions
+*/
 signed int leafGameCreate(leafGame * g);
 signed int leafGameEnd(leafGame * g);
 signed int leafSetVideo(leafGame * g);
 
+/*
+General graphics manipulation functions.
+Comaptible with almost all displays (VGA,EGA,CGA,etc).
+*/
 unsigned int setVideo(unsigned char v);
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c);
 void plotLinearPixel(register unsigned short pos,register unsigned char color);
@@ -83,6 +163,9 @@ void plotWirePolygon(signed short * d, register unsigned short n, register unsig
 void waitRetrace(void);
 void updateScreen(void);
 
+/*
+Bitmap read functions
+*/
 typedef struct _bmpHeader {
 	unsigned char type[3];
 	unsigned long sizeOfFile;
@@ -109,6 +192,9 @@ signed int readImageBitmapHeader(FILE * stream, bmpHeader * e);
 paletteEntry * readImageBitmapPalette(FILE * stream, bmpHeader * b);
 unsigned char * readImageBitmapData(FILE * stream, bmpHeader * b);
 
+/*
+PCX read functions
+*/
 typedef struct pcxHeader {
 	unsigned char type;
 	unsigned char version;
@@ -136,6 +222,10 @@ signed int readImagePcxHeader(FILE * stream, pcxHeader * p);
 unsigned char * readImagePcxData(FILE * stream, pcxHeader * p);
 paletteEntry * readImagePcxVgaPalette(FILE * stream);
 
+/*
+Functions for manipulating the cursor and retrieving data from it.
+Use the mouse structure to create a mouse handler.
+*/
 struct mouse {
 	buttonLeft:1;
 	buttonRight:1;
@@ -151,5 +241,85 @@ void showMouse(void);
 void hideMouse(void);
 void getMouseStatus(struct mouse * m);
 void getMouseMovement(struct mouse * m);
+
+/*
+Functions to save data in (TODO) compressed format. Example: A savefile
+or a array of characters with their respective information.
+*/
+signed char saveDataFile(FILE * s, void * data, size_t n);
+signed char loadDataFile(FILE * s, void * data, size_t n);
+
+/*
+Simple functions to help debugging
+*/
+signed char openLogFile(FILE * s, const char * name);
+signed char appendLogFile(FILE * s, const char * entry);
+signed char closeLogFile(FILE * s);
+
+/*Legacy support (LeafEngine <= 0.3.0)*/
+#if defined(__USE_LEGACY_MODE__) || (LEAF_ENGINE < 030L) || !defined(LEAF_ENGINE)
+
+/*TurboC 2.01 dosen't offers a default stdint.h
+so Leaf-Engine <= 0.3.0 relied on this easy hack*/
+#if defined(__TURBOC__) && !defined(__BORLANDC__)
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned long uint32_t;
+typedef unsigned long long uint64_t;
+typedef signed char int8_t;
+typedef signed short int16_t;
+typedef signed long int32_t;
+typedef signed long long int64_t;
+#endif
+/*Newer Borland Turbo C++ +3.x  and DJGPP offers a default stdint.h to rely on*/
+#if defined(__BORLANDC__) || defined(__GNUC__)
+#include <stdint.h>
+#endif
+
+/*DOS-dependant keystroke keymap (there was a reason this keymap was
+removed, due to the fact that other systems have different keymappings)*/
+#define KEY_F1 0x03b
+#define KEY_F2 0x03c
+#define KEY_F3 0x03d
+#define KEY_F4 0x03e
+#define KEY_F5 0x03f
+#define KEY_F6 0x040
+#define KEY_F7 0x041
+#define KEY_F8 0x042
+#define KEY_F9 0x043
+#define KEY_F10 0x044
+#define KEY_F11 0x0ff85
+#define KEY_F12 0x0ff86
+#define KEY_INS 0x052
+#define KEY_DEL 0x053
+#define KEY_HM 0x047
+#define KEY_END 0x04f
+#define KEY_PGUP 0x049
+#define KEY_PGDWN 0x051
+#define KEY_TAB 0x9
+#define KEY_ENTER 0xd
+#define KEY_ESC 0x1b
+#define KEY_UP 0x048
+#define KEY_DOWN 0x050
+#define KEY_RIGHT 0x04d
+#define KEY_LEFT 0x04b
+
+/*Obsolete-error reporting functions*/
+#ifdef LEAF_ERROR
+#define setLeafError(id) putc(id,stdout)
+#define leafError() getche()
+#endif
+
+/*fskip(s,n) was used instead of the correct fseek*/
+#define fskip(s,n) fseek(s,SEEK_CUR,n)
+
+/*Useless function, return SVGA as default*/
+#define getVideoAdapter() 0
+
+/*Yet another obsolete function. With double-buffer mouse redraw is
+almost unessesary and useless*/
+#define redrawOnMouse(m) 0
+
+#endif
 
 #endif
