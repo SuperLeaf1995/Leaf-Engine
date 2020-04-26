@@ -19,13 +19,7 @@
 #define __no_ctype_h
 #endif
 
-#if !defined(__no_current_dir)
 #include "leaf.h"
-#endif
-
-#if defined(__no_current_dir)
-#include "src/leaf.h"
-#endif
 
 void seedRandom(void) {
 	srand(*clock);
@@ -37,9 +31,14 @@ signed int generateRandom(void) {
 }
 
 signed int leafGameCreate(leafGame * g) {
+#if defined(__DJGPP__)
+	if(__djgpp_nearptr_enable() == 0) {
+		fprintf(stderr,"Cannot enable nearptr\n");
+		exit(-1);
+	}
+#endif
 	g->videoConf = _video_auto; /*Default*/
 	g->vwide = 320; g->vtall = 200;
-	
 	videoBuffer = (unsigned char *)malloc(64000);
 	if(videoBuffer == NULL) { return -1; }
 	return 0;
@@ -49,6 +48,9 @@ signed int leafGameEnd(leafGame * g) {
 	if(videoBuffer != NULL) {
 		free(videoBuffer);
 	}
+#if defined(__DJGPP__)
+	__djgpp_nearptr_disable();
+#endif
 	return 0;
 }
 
@@ -60,16 +62,20 @@ signed int leafSetVideo(leafGame * g) {
 				video = 0x13;
 			}
 		}
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 		in.h.al = video; in.h.ah = 0; /*set the video we want*/
 		int86(0x10,&in,&out);
+#endif
 	}
 	return (signed int)video; /*return casted signed int video*/
 }
 
 unsigned int setVideo(unsigned char v) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.h.al = v;
 	in.h.ah = 0; /*set the video we want*/
 	int86(0x10,&in,&out);
+#endif
 	return (signed int)0x03;
 }
 
@@ -138,25 +144,31 @@ void plotWirePolygon(signed short * d, register unsigned short n, register unsig
 
 void setPalette(paletteEntry * p, register unsigned short n) {
 	register unsigned short i;
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	outportb(0x03c8,0); /*send to the vga registers that we are going to send palette data*/
 	for(i = 0; i < n; i++) {
 		outportb(0x03c9,(p[i].r>>2));
 		outportb(0x03c9,(p[i].g>>2));
 		outportb(0x03c9,(p[i].b>>2));
 	}
+#endif
 	return;
 }
 
 void waitRetrace(void) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	while((inportb(0x03DA)&8));
 	while(!(inportb(0x03DA)&8));
+#endif
 	return;
 }
 
 void updateScreen(void) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	waitRetrace(); /* Wait for VGA retrace */
 	memcpy(video,videoBuffer,64000); /* Copy data to VGA */
 	memset(videoBuffer,0,64000); /* Clear our buffer */
+#endif
 	return;
 }
 
@@ -469,6 +481,7 @@ paletteEntry *  readImagePcxVgaPalette(FILE * stream) {
 }
 
 char initMouse(struct mouse * m) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x00;
 	in.x.bx = 0x00;
 	int86(0x33,&in,&out);
@@ -482,29 +495,37 @@ char initMouse(struct mouse * m) {
         m->buttons = 0;
 	}
 	return (out.x.ax != 0) ? 0 : -1; /*If the mouse was initialized return 0, else return -1*/
+#endif
 }
 
 void setMousePosition(unsigned short x, unsigned short y) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x04;
 	in.x.cx = x;
 	in.x.dx = y;
 	int86(0x33,&in,&out);
+#endif
 	return;
 }
 
 void showMouse(void) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x01;
 	int86(0x33,&in,&out);
+#endif
 	return;
 }
 
 void hideMouse(void) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x02;
 	int86(0x33,&in,&out);
+#endif
 	return;
 }
 
 void getMouseStatus(struct mouse * m) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x03;
 	int86(0x33,&in,&out);
 	m->x = out.x.cx;
@@ -512,14 +533,17 @@ void getMouseStatus(struct mouse * m) {
 	m->buttonLeft = (out.x.bx & 1); /*While it is not equal 0, its HOLD/PRESSED, else its RELEASED*/
 	m->buttonRight = (out.x.bx & 2);
 	m->buttonMiddle = (out.x.bx & 4);
+#endif
 	return;
 }
 
 void getMouseMovement(struct mouse * m) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x0B;
 	int86(0x33,&in,&out);
 	m->mx = out.x.cx;
 	m->my = out.x.dx;
+#endif
 	return;
 }
 

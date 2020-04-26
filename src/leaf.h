@@ -25,7 +25,7 @@
 #include <float.h>
 #include <ctype.h>
 #include <limits.h>
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 #include <conio.h>
 #include <io.h>
 #include <mem.h>
@@ -33,6 +33,10 @@
 
 #if defined(__TURBOC__) && !defined(__BORLANDC__)
 #include <dos.h>
+#endif
+
+#if defined(__DJGPP__)
+#include <sys/nearptr.h>
 #endif
 
 /*Current engine version*/
@@ -122,16 +126,22 @@ that they are present).
 This can also be activated when GCC is targeted towards a i386 or i686
 architecture.
 */
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS) || defined(__i386__) || defined(__i686__)
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
+#if defined(__DJGPP__)
+unsigned short * clock = (unsigned short *)0x046C+__djgpp_conventional_base;
+unsigned char * video = (unsigned char * )0xA0000+__djgpp_conventional_base;
+#endif
+#if defined(__TURBOC__) || defined(__BORLANDC__)
 unsigned short * clock = (unsigned short *)0x0000046CL;
 unsigned char * video = (unsigned char * )0xA0000000L;
+#endif
 #endif
 
 /*Emulated/Buffer video buffer for drawing operations*/
 unsigned char * videoBuffer;
 
 /*Global variable for register I/O (DOS-only)*/
-#if defined(__MSDOS__) || defined(__DOS__) || defined(FREEDOS)
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 union REGS in,out;
 #endif
 
@@ -272,7 +282,7 @@ typedef signed long int32_t;
 typedef signed long long int64_t;
 #endif
 /*Newer Borland Turbo C++ +3.x  and DJGPP offers a default stdint.h to rely on*/
-#if defined(__BORLANDC__) || defined(__GNUC__)
+#if defined(__BORLANDC__) || defined(__DJGPP__)
 #include <stdint.h>
 #endif
 
