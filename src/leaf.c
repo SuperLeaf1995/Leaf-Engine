@@ -82,11 +82,34 @@ signed int leafSetVideo(leafGame * g) {
 	return (signed int)video; /*return casted signed int video*/
 }
 
+void adjustVideo(unsigned char v) {
+	if(v == 0x0D) {
+		vwide = 320; vtall = 200; vvideo = __ega;
+	} else if(v == 0x0E) {
+		vwide = 640; vtall = 200; vvideo = __ega;
+	} else if(v == 0x0F) {
+		vwide = 640; vtall = 350; vvideo = __ega;
+	} else if(v == 0x10) {
+		vwide = 640; vtall = 480; vvideo = __ega;
+	} else if(v == 0x11) {
+		vwide = 640; vtall = 480; vvideo = __mcga;
+	} else if(v == 0x12) {
+		vwide = 640; vtall = 480; vvideo = __vga;
+	} else if(v == 0x13) {
+		vwide = 320; vtall = 200; vvideo = __vga;
+	} else {
+		vwide = 320; vtall = 200; vvideo = __vga;
+	}
+	return;
+}
+
 unsigned int setVideo(unsigned char v) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.h.al = v;
 	in.h.ah = 0; /*set the video we want*/
 	int86(0x10,&in,&out);
+	
+	adjustVideo(v);
 #endif
 	return (signed int)0x03;
 }
@@ -103,7 +126,7 @@ void plotLinearPixel(register unsigned short p,register unsigned char c) {
 }
 
 unsigned char fetchPixel(register unsigned short x,register unsigned short y) {
-	return videoBuffer[(y*320)+x];
+	return videoBuffer[(y*vwide)+x];
 }
 
 void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c) {
@@ -157,11 +180,11 @@ void plotWirePolygon(signed short * d, register unsigned short n, register unsig
 void setPalette(paletteEntry * p, register unsigned short n) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	register unsigned short i;
-	outp(0x03c8,0); /*send to the vga registers that we are going to send palette data*/
+	outp(0x03C8,0); /*send to the vga registers that we are going to send palette data*/
 	for(i = 0; i < n; i++) {
-		outp(0x03c9,(p[i].r>>2));
-		outp(0x03c9,(p[i].g>>2));
-		outp(0x03c9,(p[i].b>>2));
+		outp(0x03C9,(p[i].r>>2));
+		outp(0x03C9,(p[i].g>>2));
+		outp(0x03C9,(p[i].b>>2));
 	}
 #endif
 #if defined(__APPLE2__)
@@ -181,9 +204,32 @@ void waitRetrace(void) {
 
 void updateScreen(void) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
+	size_t i;
+
 	waitRetrace(); /* Wait for VGA retrace */
-	memcpy(video,videoBuffer,(size_t)vwide*vtall); /* Copy data to VGA */
-	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
+	if(vvideo == __vga) {
+		/*in VGA simply copy it to the plain VGA memory*/
+		memcpy(video,videoBuffer,(size_t)vwide*vtall); /* Copy data to VGA */
+	} else if(vvideo == __ega) {
+		/*TODO: Add working EGA code*/
+		for(i = 0; i < (vwide*vtall); i++) {
+			in.x.dx = (i/320);
+			in.x.cx = (i%320);
+			in.h.ah = 0x0C;
+			in.h.al = videoBuffer[i];
+			int86(0x10,&in,&out);
+		}
+	} else if(vvideo == __cga) {
+		/*TODO: Add working CGA code*/
+		for(i = 0; i < (vwide*vtall); i++) {
+			in.x.dx = (i/320);
+			in.x.cx = (i%320);
+			in.h.ah = 0x0C;
+			in.h.al = videoBuffer[i];
+			int86(0x10,&in,&out);
+		}
+	}
+	memset(videoBuffer,1,(size_t)vwide*vtall); /* Clear our buffer */
 #endif
 	return;
 }
@@ -320,6 +366,7 @@ unsigned char * readImageBitmapData(FILE *stream, bmpHeader * b) {
 	unsigned long i,i2;
 	unsigned char hold;
 	unsigned char *data;
+	unsigned long saveStor;
 	if((signed long)b->tall <= 0 || (signed long)b->wide <= 0) {
 		return NULL;
 	}

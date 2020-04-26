@@ -86,6 +86,13 @@ to avoid further confusions, inp() and outp() are used*/
 #define outp(x,y) outportb(x,y)
 #endif
 
+/*allows easy-detection and on-demand video switching without
+using multiple versions*/
+#define __cga	0x01
+#define __vga	0x03
+#define __ega	0x07
+#define __mcga	0x0F
+
 /*
 PaletteEntry is used for storing palette information of pictures, works
 in coordinance with setPalette.
@@ -154,8 +161,9 @@ unsigned char * videoBuffer;
 union REGS in,out;
 #endif
 
-static unsigned short vwide;
-static unsigned short vtall;
+unsigned short vwide;
+unsigned short vtall;
+unsigned char vvideo;
 
 /*
 Time-based random number generator
