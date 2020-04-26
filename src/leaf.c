@@ -37,10 +37,22 @@ signed int leafGameCreate(leafGame * g) {
 		exit(-1);
 	}
 #endif
-	g->videoConf = _video_auto; /*Default*/
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
+	/*Default 0x13 mode*/
 	g->vwide = 320; g->vtall = 200;
-	videoBuffer = (unsigned char *)malloc(64000);
+#elif defined(__APPLE2__)
+	/*In Leaf-Engine HighResolution mode is used in Apple II,IIgs and II+*/
+	g->vwide = 140; g->vtall = 192;
+#endif
+	g->videoConf = _video_auto;
+	vwide = g->vwide; vtall = g->vtall;
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
+	videoBuffer = (unsigned char *)malloc(vwide*vtall);
 	if(videoBuffer == NULL) { return -1; }
+#elif defined(__APPLE2__)
+	/*In Apple II the second video buffer points to PAGE2 of the HIRES memory*/
+	videoBuffer = (unsigned char *)0x4000;
+#endif
 	return 0;
 }
 
@@ -80,8 +92,8 @@ unsigned int setVideo(unsigned char v) {
 }
 
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c) {
-	if(y >= 200 || x >= 320) { return; }
-	videoBuffer[(y*320)+x] = c;
+	if(y >= vtall || x >= vwide) { return; }
+	videoBuffer[(y*vwide)+x] = c;
 	return;
 }
 
@@ -143,22 +155,26 @@ void plotWirePolygon(signed short * d, register unsigned short n, register unsig
 }
 
 void setPalette(paletteEntry * p, register unsigned short n) {
-	register unsigned short i;
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
-	outportb(0x03c8,0); /*send to the vga registers that we are going to send palette data*/
+	register unsigned short i;
+	outp(0x03c8,0); /*send to the vga registers that we are going to send palette data*/
 	for(i = 0; i < n; i++) {
-		outportb(0x03c9,(p[i].r>>2));
-		outportb(0x03c9,(p[i].g>>2));
-		outportb(0x03c9,(p[i].b>>2));
+		outp(0x03c9,(p[i].r>>2));
+		outp(0x03c9,(p[i].g>>2));
+		outp(0x03c9,(p[i].b>>2));
 	}
+#endif
+#if defined(__APPLE2__)
+	/*In Apple II series there is no such thing as a palette, so we write dummy code*/
+	n = n; p = p;
 #endif
 	return;
 }
 
 void waitRetrace(void) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
-	while((inportb(0x03DA)&8));
-	while(!(inportb(0x03DA)&8));
+	while((inp(0x03DA)&8));
+	while(!(inp(0x03DA)&8));
 #endif
 	return;
 }
@@ -166,8 +182,8 @@ void waitRetrace(void) {
 void updateScreen(void) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	waitRetrace(); /* Wait for VGA retrace */
-	memcpy(video,videoBuffer,64000); /* Copy data to VGA */
-	memset(videoBuffer,0,64000); /* Clear our buffer */
+	memcpy(video,videoBuffer,(size_t)vwide*vtall); /* Copy data to VGA */
+	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
 #endif
 	return;
 }

@@ -21,14 +21,18 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <math.h>
-#include <float.h>
 #include <ctype.h>
 #include <limits.h>
+/*APPLE2 dosen't supports float and math functions*/
+#if !defined(__APPLE2__)
+#include <math.h>
+#include <float.h>
+#include <mem.h>
+#endif
+/*DOS specific functions*/
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 #include <conio.h>
 #include <io.h>
-#include <mem.h>
 #endif
 
 #if defined(__TURBOC__) && !defined(__BORLANDC__)
@@ -73,6 +77,13 @@ Errors and sucess codes. Useful for displaying what really happened.
 #define getch() getchar()
 #elif defined(__APPLE2__)
 #define getch() cgetc()
+#endif
+
+/*The Borland compilers uses inportb()
+to avoid further confusions, inp() and outp() are used*/
+#if defined(__TURBOC__) || defined(__BORLANDC__)
+#define inp(x) inportb(x)
+#define outp(x,y) outportb(x,y)
 #endif
 
 /*
@@ -122,19 +133,17 @@ typedef struct leafGame {
 /*
 x86-specific addresses (As DOS is x86-specific we assume
 that they are present).
-
-This can also be activated when GCC is targeted towards a i386 or i686
-architecture.
 */
-#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
-#if defined(__DJGPP__)
+#if defined(__DJGPP__) /*DOS*/
 unsigned short * clock = (unsigned short *)0x046C+__djgpp_conventional_base;
 unsigned char * video = (unsigned char * )0xA0000+__djgpp_conventional_base;
 #endif
-#if defined(__TURBOC__) || defined(__BORLANDC__)
+#if defined(__TURBOC__) || defined(__BORLANDC__) /*DOS*/
 unsigned short * clock = (unsigned short *)0x0000046CL;
 unsigned char * video = (unsigned char * )0xA0000000L;
 #endif
+#if defined(__APPLE2__) /*APPLE2*/
+unsigned char * video = (unsigned char * )0x2000;
 #endif
 
 /*Emulated/Buffer video buffer for drawing operations*/
@@ -144,6 +153,9 @@ unsigned char * videoBuffer;
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 union REGS in,out;
 #endif
+
+static unsigned short vwide;
+static unsigned short vtall;
 
 /*
 Time-based random number generator
@@ -237,10 +249,17 @@ Functions for manipulating the cursor and retrieving data from it.
 Use the mouse structure to create a mouse handler.
 */
 struct mouse {
+#if !defined(__APPLE2__)
 	buttonLeft:1;
 	buttonRight:1;
 	buttonMiddle:1;
 	buttons:4;
+#else
+	unsigned char buttonLeft;
+	unsigned char buttonRight;
+	unsigned char buttonMiddle;
+	unsigned char buttons;
+#endif
 	signed short x; signed short y;
 	signed short mx; signed short my;
 };
