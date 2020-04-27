@@ -129,6 +129,10 @@ unsigned char fetchPixel(register unsigned short x,register unsigned short y) {
 	return videoBuffer[(y*vwide)+x];
 }
 
+unsigned char fetchLinearPixel(register unsigned short p) {
+	return videoBuffer[p];
+}
+
 void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c) {
 	signed short i,dx,dy,sdx,sdy,dxabs,dyabs,px,py,x,y;
 	dx = ex-sx; dy = ey-sy;
@@ -180,11 +184,20 @@ void plotWirePolygon(signed short * d, register unsigned short n, register unsig
 void setPalette(paletteEntry * p, register unsigned short n) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	register unsigned short i;
-	outp(0x03C8,0); /*send to the vga registers that we are going to send palette data*/
-	for(i = 0; i < n; i++) {
-		outp(0x03C9,(p[i].r>>2));
-		outp(0x03C9,(p[i].g>>2));
-		outp(0x03C9,(p[i].b>>2));
+	if(vvideo == __vga) {
+		outp(0x03C8,0); /*send to the vga registers that we are going to send palette data*/
+		for(i = 0; i < n; i++) {
+			outp(0x03C9,(p[i].r>>2));
+			outp(0x03C9,(p[i].g>>2));
+			outp(0x03C9,(p[i].b>>2));
+		}
+	} else if(vvideo == __ega) {
+		outp(0x03C8,0); /*send to the vga registers that we are going to send palette data*/
+		for(i = 0; i < n; i++) {
+			outp(0x03C9,(p[i].r));
+			outp(0x03C9,(p[i].g));
+			outp(0x03C9,(p[i].b));
+		}
 	}
 #endif
 #if defined(__APPLE2__)
@@ -221,6 +234,15 @@ void updateScreen(void) {
 		}
 	} else if(vvideo == __cga) {
 		/*TODO: Add working CGA code*/
+		for(i = 0; i < (vwide*vtall); i++) {
+			in.x.dx = (i/320);
+			in.x.cx = (i%320);
+			in.h.ah = 0x0C;
+			in.h.al = videoBuffer[i];
+			int86(0x10,&in,&out);
+		}
+	} else {
+		/*TODO: Add working UNKNOWN_VIDEO code*/
 		for(i = 0; i < (vwide*vtall); i++) {
 			in.x.dx = (i/320);
 			in.x.cx = (i%320);
