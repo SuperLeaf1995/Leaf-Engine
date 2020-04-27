@@ -218,7 +218,6 @@ void waitRetrace(void) {
 void updateScreen(void) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	size_t i;
-
 	waitRetrace(); /* Wait for VGA retrace */
 	if(vvideo == __vga) {
 		/*in VGA simply copy it to the plain VGA memory*/
