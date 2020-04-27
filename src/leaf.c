@@ -60,6 +60,7 @@ signed int leafGameEnd(leafGame * g) {
 	if(videoBuffer != NULL) {
 		free(videoBuffer);
 	}
+	g->vwide = 0; g->vtall = 0;
 #if defined(__DJGPP__)
 	__djgpp_nearptr_disable();
 #endif
@@ -82,7 +83,7 @@ signed int leafSetVideo(leafGame * g) {
 	return (signed int)video; /*return casted signed int video*/
 }
 
-void adjustVideo(unsigned char v) {
+void adjustVideo(register unsigned char v) {
 	if(v == 0x0D) {
 		vwide = 320; vtall = 200; vvideo = __ega;
 	} else if(v == 0x0E) {
@@ -240,17 +241,8 @@ void updateScreen(void) {
 			in.h.al = videoBuffer[i];
 			int86(0x10,&in,&out);
 		}
-	} else {
-		/*TODO: Add working UNKNOWN_VIDEO code*/
-		for(i = 0; i < (vwide*vtall); i++) {
-			in.x.dx = (i/320);
-			in.x.cx = (i%320);
-			in.h.ah = 0x0C;
-			in.h.al = videoBuffer[i];
-			int86(0x10,&in,&out);
-		}
 	}
-	memset(videoBuffer,1,(size_t)vwide*vtall); /* Clear our buffer */
+	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
 #endif
 	return;
 }
@@ -369,7 +361,7 @@ paletteEntry * readImageBitmapPalette(FILE *stream, bmpHeader * b) {
 		b->paletteEntries = (1<<(b->bitsPerPixel)); /*number of palette entries to read*/
 		pal = (paletteEntry *)malloc((sizeof(paletteEntry)*b->paletteEntries));
 		if(pal == NULL) { return NULL; }
-		for(i = 0; i < b->paletteEntries; i++) { /*read the palette thing*/
+		for(i = 0; i < b->paletteEntries-3; i++) { /*read the palette thing*/
 			pal[i].b = fgetc(stream); /*bitmap has reverse RGB order for each entry*/
 			pal[i].g = fgetc(stream);
 			pal[i].r = fgetc(stream);
@@ -582,7 +574,7 @@ char initMouse(struct mouse * m) {
 #endif
 }
 
-void setMousePosition(unsigned short x, unsigned short y) {
+void setMousePosition(register unsigned short x, register unsigned short y) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x04;
 	in.x.cx = x;
@@ -633,15 +625,19 @@ void getMouseMovement(struct mouse * m) {
 
 signed char saveLeafDataFile(const char * fileName, void * data, size_t n) {
 	FILE * s; size_t i;
+	s = fopen(fileName,"wb");
 	if(!s) { return -1; }
 	fwrite((unsigned char *)data,sizeof(unsigned char),n,s);
+	fclose(s);
 	return 0;
 }
 
 signed char loadLeafDataFile(const char * fileName, void * data, size_t n) {
 	FILE * s; size_t i;
+	s = fopen(fileName,"rb");
 	if(!s) { return -1; }
 	fread((unsigned char *)data,sizeof(unsigned char),n,s);
+	fclose(s);
 	return 0;
 }
 
