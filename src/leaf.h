@@ -18,9 +18,12 @@
  * MA 02110-1301, USA.
  * 
  */
-
 #ifndef LEAF_H
 #define LEAF_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,12 +35,12 @@
 #if !defined(__APPLE2__)
 #include <math.h>
 #include <float.h>
-#include <mem.h>
 #endif
 /*DOS specific functions*/
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 #include <conio.h>
 #include <io.h>
+#include <mem.h>
 #endif
 
 #if defined(__TURBOC__) && !defined(__BORLANDC__)
@@ -262,12 +265,17 @@ Functions for manipulating the cursor and retrieving data from it.
 Use the mouse structure to create a mouse handler.
 */
 struct mouse {
-#if !defined(__APPLE2__)
+#if !defined(__APPLE2__) && !defined(__GNUC__)
 	buttonLeft:1;
 	buttonRight:1;
 	buttonMiddle:1;
 	buttons:4;
-#else
+#endif
+/*
+Apple II compilers and GNU C compiler dosen't really
+behave well with bit-composed structures
+*/
+#if defined(__APPLE2__) || defined(__GNUC__)
 	unsigned char buttonLeft;
 	unsigned char buttonRight;
 	unsigned char buttonMiddle;
@@ -362,6 +370,10 @@ removed, due to the fact that other systems have different keymappings)*/
 almost unessesary and useless*/
 #define redrawOnMouse(m) 0
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

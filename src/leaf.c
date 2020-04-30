@@ -19,6 +19,10 @@
  * 
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(__TURBOC__) && !defined(__BORLANDC__)
 #define __no_current_dir
 #define __no_ctype_h
@@ -27,7 +31,12 @@
 #include "leaf.h"
 
 void seedRandom(void) {
+#if defined(__GNUC__)
+	srand();
+#endif
+#if !defined(__GNUC__)
 	srand(*clock);
+#endif
 	return;
 }
 
@@ -662,3 +671,7 @@ signed char closeLogFile(FILE * s) {
 	if(s) { fclose(s); }
 	return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
