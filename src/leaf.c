@@ -264,14 +264,22 @@ void updateScreen(void) {
 	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
 #endif
 #if defined(__APPLE2__)
+	/* Switch pages, set inactive page as the one for VIDEO_BUFFER
+	and the active one for the VIDEO */
 	pageSelection = ((pageSelection == 0) ? 0 : 1);
-	
 	if(pageSelection == 0) {
+		(*hiresPage2) = 0;
 		(*hiresPage1) = 1;
+		videoBuffer = hiresPage2Addr;
+		video = hiresPage1Addr;
 	} else {
+		(*hiresPage1) = 0;
 		(*hiresPage2) = 1;
+		videoBuffer = hiresPage1Addr;
+		video = hiresPage2Addr;
 	}
 	
+	memcpy(video,videoBuffer,(size_t)vwide*vtall); /* Copy data to video */
 	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
 #endif
 	return;
