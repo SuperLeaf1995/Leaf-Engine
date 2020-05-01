@@ -110,18 +110,20 @@ unsigned int setVideo(unsigned char v) {
 	adjustVideo(v);
 	
 	return (signed int)0x03;
-#elif defined(__APPLE2__) /*In APPLE2 there is only one mode used and it's HIGHRES*/
+#endif
+/*uncomment for experimental Apple II support*/
+/*#elif defined(__APPLE2__) /*In APPLE2 there is only one mode used and it's HIGHRES/
 	unsigned char * switchPtr;
-	/* Enter graphical mode */
+	/* Enter graphical mode /
 	switchPtr = (unsigned char *)0xC050; (*switchPtr) = 1;
-	/* Fullscreen mode */
+	/* Fullscreen mode /
 	switchPtr = (unsigned char *)0xC052; (*switchPtr) = 1;
-	/* Enter HIRES mode */
+	/* Enter HIRES mode /
 	switchPtr = (unsigned char *)0xC057; (*switchPtr) = 1;
-	/* Select page 1 */
+	/* Select page 1 /
 	switchPtr = (unsigned char *)0xC054; (*switchPtr) = 1;
 	return v;
-#endif
+#endif*/
 }
 
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c) {
@@ -210,10 +212,11 @@ void setPalette(paletteEntry * p, register unsigned short n) {
 		}
 	}
 #endif
-#if defined(__APPLE2__)
-	/*In Apple II series there is no such thing as a palette, so we write dummy code*/
+/*uncomment for experimental Apple II support*/
+/*#if defined(__APPLE2__)
+	/*In Apple II series there is no such thing as a palette, so we write dummy code/
 	n = n; p = p;
-#endif
+#endif*/
 	return;
 }
 
@@ -253,9 +256,10 @@ void updateScreen(void) {
 	}
 	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
 #endif
-#if defined(__APPLE2__)
+/*uncomment for experimental Apple II support*/
+/*#if defined(__APPLE2__)
 	/* Switch pages, set inactive page as the one for VIDEO_BUFFER
-	and the active one for the VIDEO */
+	and the active one for the VIDEO /
 	pageSelection = ((pageSelection == 0) ? 0 : 1);
 	if(pageSelection == 0) {
 		(*hiresPage2) = 0;
@@ -269,9 +273,9 @@ void updateScreen(void) {
 		video = hiresPage2Addr;
 	}
 	
-	memcpy(video,videoBuffer,(size_t)vwide*vtall); /* Copy data to video */
-	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
-#endif
+	memcpy(video,videoBuffer,(size_t)vwide*vtall); /* Copy data to video /
+	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer /
+#endif*/
 	return;
 }
 
