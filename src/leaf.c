@@ -110,25 +110,22 @@ unsigned int setVideo(unsigned char v) {
 	adjustVideo(v);
 	
 	return (signed int)0x03;
-#endif
-/*uncomment for experimental Apple II support*/
-/*#elif defined(__APPLE2__) /*In APPLE2 there is only one mode used and it's HIGHRES/
-	unsigned char * switchPtr;
-	/* Enter graphical mode /
-	switchPtr = (unsigned char *)0xC050; (*switchPtr) = 1;
-	/* Fullscreen mode /
-	switchPtr = (unsigned char *)0xC052; (*switchPtr) = 1;
-	/* Enter HIRES mode /
-	switchPtr = (unsigned char *)0xC057; (*switchPtr) = 1;
-	/* Select page 1 /
-	switchPtr = (unsigned char *)0xC054; (*switchPtr) = 1;
+#elif defined(__APPLE2__) /*In APPLE2 there is only one mode used and it's HIGHRES*/
+	poke(0xC050,0); /*Enter graphics mode*/
+	poke(0xC052,0); /*Enter fullscreen*/
+	poke(0xC057,0); /*Enter highres mode*/
+	poke(0xC054,0); /*Select PAGE1*/
 	return v;
-#endif*/
+#endif
 }
 
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c) {
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	if(y >= vtall || x >= vwide) { return; }
 	videoBuffer[(y*vwide)+x] = c;
+#elif defined(__APPLE2__)
+	video[((y*1024)+x)] = c;
+#endif
 	return;
 }
 
@@ -256,26 +253,6 @@ void updateScreen(void) {
 	}
 	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
 #endif
-/*uncomment for experimental Apple II support*/
-/*#if defined(__APPLE2__)
-	/* Switch pages, set inactive page as the one for VIDEO_BUFFER
-	and the active one for the VIDEO /
-	pageSelection = ((pageSelection == 0) ? 0 : 1);
-	if(pageSelection == 0) {
-		(*hiresPage2) = 0;
-		(*hiresPage1) = 1;
-		videoBuffer = hiresPage2Addr;
-		video = hiresPage1Addr;
-	} else {
-		(*hiresPage1) = 0;
-		(*hiresPage2) = 1;
-		videoBuffer = hiresPage1Addr;
-		video = hiresPage2Addr;
-	}
-	
-	memcpy(video,videoBuffer,(size_t)vwide*vtall); /* Copy data to video /
-	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer /
-#endif*/
 	return;
 }
 

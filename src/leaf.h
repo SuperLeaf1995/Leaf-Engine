@@ -161,12 +161,7 @@ unsigned short * clock = (unsigned short *)0x0000046CL;
 unsigned char * video = (unsigned char * )0xA0000000L;
 #endif
 #if defined(__APPLE2__) /*APPLE2*/
-unsigned char pageSelection; /*This variable is used for switching betwen PAGE1 and PAGE2*/
 unsigned char * video = (unsigned char * )0x2000;
-unsigned char * hiresPage1 = (unsigned char *)0xC054;
-unsigned char * hiresPage2 = (unsigned char *)0xC055;
-unsigned char * hiresPage1Addr = (unsigned char *)0x2000;
-unsigned char * hiresPage2Addr = (unsigned char *)0x4000;
 #endif
 
 /*Emulated/Buffer video buffer for drawing operations*/
