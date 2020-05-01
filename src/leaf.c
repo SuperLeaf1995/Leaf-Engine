@@ -34,7 +34,7 @@ void seedRandom(void) {
 #if defined(__GNUC__)
 	srand();
 #endif
-#if !defined(__GNUC__)
+#if defined(__TURBOC__) && !defined(__BORLANDC__)
 	srand(*clock);
 #endif
 	return;
@@ -58,8 +58,10 @@ signed int leafGameCreate(leafGame * g) {
 	/*In Leaf-Engine HighResolution mode is used in Apple II,IIgs and II+*/
 	g->vwide = 140; g->vtall = 192;
 #endif
+
 	g->videoConf = _video_auto;
 	vwide = g->vwide; vtall = g->vtall;
+
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	videoBuffer = (unsigned char *)malloc(vwide*vtall);
 	if(videoBuffer == NULL) { return -1; }
@@ -125,8 +127,11 @@ unsigned int setVideo(unsigned char v) {
 	int86(0x10,&in,&out);
 	
 	adjustVideo(v);
-#endif
+	
 	return (signed int)0x03;
+#elif defined(__APPLE2__) /*In APPLE2 there is only one mode used and it's HIGHRES*/
+	return v;
+#endif
 }
 
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c) {
@@ -393,7 +398,6 @@ unsigned char * readImageBitmapData(FILE *stream, bmpHeader * b) {
 	unsigned long i,i2;
 	unsigned char hold;
 	unsigned char *data;
-	unsigned long saveStor;
 	if((signed long)b->tall <= 0 || (signed long)b->wide <= 0) {
 		return NULL;
 	}
@@ -638,7 +642,7 @@ void getMouseMovement(struct mouse * m) {
 }
 
 signed char saveLeafDataFile(const char * fileName, void * data, size_t n) {
-	FILE * s; size_t i;
+	FILE * s;
 	s = fopen(fileName,"wb");
 	if(!s) { return -1; }
 	fwrite((unsigned char *)data,sizeof(unsigned char),n,s);
@@ -647,7 +651,7 @@ signed char saveLeafDataFile(const char * fileName, void * data, size_t n) {
 }
 
 signed char loadLeafDataFile(const char * fileName, void * data, size_t n) {
-	FILE * s; size_t i;
+	FILE * s;
 	s = fopen(fileName,"rb");
 	if(!s) { return -1; }
 	fread((unsigned char *)data,sizeof(unsigned char),n,s);

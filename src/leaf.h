@@ -35,6 +35,9 @@ extern "C" {
 #if !defined(__APPLE2__)
 #include <math.h>
 #include <float.h>
+#else
+/*Use CONIO.H of APPLE2*/
+#include <conio.h>
 #endif
 /*DOS specific functions*/
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
