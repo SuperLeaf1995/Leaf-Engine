@@ -245,8 +245,8 @@ void updateScreen(void) {
 	} else if(vvideo == __ega) {
 		/*TODO: Add working EGA code*/
 		for(i = 0; i < (vwide*vtall); i++) {
-			in.x.dx = (i/320);
-			in.x.cx = (i%320);
+			in.x.dx = (i/vwide);
+			in.x.cx = (i%vwide);
 			in.h.ah = 0x0C;
 			in.h.al = videoBuffer[i];
 			int86(0x10,&in,&out);
@@ -254,13 +254,24 @@ void updateScreen(void) {
 	} else if(vvideo == __cga) {
 		/*TODO: Add working CGA code*/
 		for(i = 0; i < (vwide*vtall); i++) {
-			in.x.dx = (i/320);
-			in.x.cx = (i%320);
+			in.x.dx = (i/vwide);
+			in.x.cx = (i%vwide);
 			in.h.ah = 0x0C;
 			in.h.al = videoBuffer[i];
 			int86(0x10,&in,&out);
 		}
 	}
+	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
+#endif
+#if defined(__APPLE2__)
+	pageSelection = ((pageSelection == 0) ? 0 : 1);
+	
+	if(pageSelection == 0) {
+		(*hiresPage1) = 1;
+	} else {
+		(*hiresPage2) = 1;
+	}
+	
 	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
 #endif
 	return;

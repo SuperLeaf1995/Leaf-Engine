@@ -162,6 +162,9 @@ unsigned char * video = (unsigned char * )0xA0000000L;
 #endif
 #if defined(__APPLE2__) /*APPLE2*/
 unsigned char * video = (unsigned char * )0x2000;
+static unsigned char pageSelection;
+static volatile unsigned char * hiresPage1;
+static volatile unsigned char * hiresPage2;
 #endif
 
 /*Emulated/Buffer video buffer for drawing operations*/
