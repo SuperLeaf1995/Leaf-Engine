@@ -58,16 +58,11 @@ signed int leafGameCreate(leafGame * g) {
 	/*In Leaf-Engine HighResolution mode is used in Apple II,IIgs and II+*/
 	g->vwide = 140; g->vtall = 192;
 #endif
-
 	g->videoConf = _video_auto;
 	vwide = g->vwide; vtall = g->vtall;
-
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	videoBuffer = (unsigned char *)malloc(vwide*vtall);
 	if(videoBuffer == NULL) { return -1; }
-#elif defined(__APPLE2__)
-	/*In Apple II the second video buffer points to PAGE2 of the HIRES memory*/
-	videoBuffer = (unsigned char *)0x4000;
 #endif
 	return 0;
 }
@@ -100,23 +95,9 @@ signed int leafSetVideo(leafGame * g) {
 }
 
 void adjustVideo(register unsigned char v) {
-	if(v == 0x0D) {
-		vwide = 320; vtall = 200; vvideo = __ega;
-	} else if(v == 0x0E) {
-		vwide = 640; vtall = 200; vvideo = __ega;
-	} else if(v == 0x0F) {
-		vwide = 640; vtall = 350; vvideo = __ega;
-	} else if(v == 0x10) {
-		vwide = 640; vtall = 480; vvideo = __ega;
-	} else if(v == 0x11) {
-		vwide = 640; vtall = 480; vvideo = __mcga;
-	} else if(v == 0x12) {
-		vwide = 640; vtall = 480; vvideo = __vga;
-	} else if(v == 0x13) {
-		vwide = 320; vtall = 200; vvideo = __vga;
-	} else {
-		vwide = 320; vtall = 200; vvideo = __vga;
-	}
+	vwide = vtable[v][0];
+	vtall = vtable[v][1];
+	vvideo = vtable[v][2];
 	return;
 }
 
@@ -130,6 +111,15 @@ unsigned int setVideo(unsigned char v) {
 	
 	return (signed int)0x03;
 #elif defined(__APPLE2__) /*In APPLE2 there is only one mode used and it's HIGHRES*/
+	unsigned char * switchPtr;
+	/* Enter graphical mode */
+	switchPtr = (unsigned char *)0xC050; (*switchPtr) = 1;
+	/* Fullscreen mode */
+	switchPtr = (unsigned char *)0xC052; (*switchPtr) = 1;
+	/* Enter HIRES mode */
+	switchPtr = (unsigned char *)0xC057; (*switchPtr) = 1;
+	/* Select page 1 */
+	switchPtr = (unsigned char *)0xC054; (*switchPtr) = 1;
 	return v;
 #endif
 }
