@@ -1,145 +1,45 @@
 LEAF-ENGINE Documentation
 
-Leaf-Engine Easy Functions
-
-Easy functions are non-vanilla Leaf-Engine functions that serve
-as a "wrap by" function, it makes the process of making a MS-DOS
-game relatively easier, but at the cost of speed and size of the
-program, this is not an issue for Linux builds.
-
+MACROS
 ========================================================================
-signed char createSprite(sprite * s, const char * filename)
-Opens file with the name of "filename" and creates a sprite entity out of
-it.
 
-------------------------------------------------------------------------
-void drawSprite(leafGame * g, sprite * s, unsigned short x, unsigned short y)
-Draws a sprite in screen at X,Y. Entity sprite is drawn.
+Macros helps shape the game the way you like, you define a macro with the
+#define keyword in C.
 
-------------------------------------------------------------------------
-void destroySprite(sprite * s)
-The entity of sprite is destroyed, this must be done for each unused
-sprite (i.e a monster sprite that no longer appears in the rest of the
-entire game should be destroyed).
+Here is a list of comphrensible macros and what they do:
 
-------------------------------------------------------------------------
+LEAF_ERROR
+	If defined, will make a custom error handler, Function dropped on
+	version 0.2
 
-Leaf-Engine Vanilla Functions
+__USE_LEGACY_MODE__
+	If defined, Leaf-Engine will make use of legacy functions
 
-Vanilla Leaf-Engine functions are functions that dosen't requires any
-special macro to be defined to appear, this functions are commonly
-used for advanced game developing and not recommended for newbies
-
+PRE-DEFINED MACROS
 ========================================================================
-void seedRandom(void);
-Seeds the random generator
 
-+ See also generateRandom()
+These macros facilitate the usage of Leaf-Engine
 
-------------------------------------------------------------------------
-signed int generateRandom(void);
-Generates a random number from the random number generator
+LEAF_ENGINE
+	Contains version number:
+		030L	-	v0.3.0
 
-+ See also seedRandom()
+_exit_code
+	Used incase of a UI click on a X (Linux,BSD,Windows,Mac) or a SIGKILL
+	(Linux,BSD,Mac)
 
-------------------------------------------------------------------------
-signed int leafGameCreate(leafGame * g);
-Initializes all needed stuff for the game
+_video_auto
+	Uses auto mode for leafSetVideo()
 
-+ See also leafGameDestroy()
+__cga
+	Code for vvideo if using CGA
 
-------------------------------------------------------------------------
-signed int leafEventUpdate(leafGame * g, leafEvent * e);
-Gets event updates
+__vga
+	Code for vvideo if using VGA
 
-+ See also leafGameCreate()
-+ See also leafGameDestroy()
+__ega
+	Code for vvideo if using EGA
 
-------------------------------------------------------------------------
-signed int leafGameDestroy(leafGame * g);
-Destroys the game, use in the end!
+__mcga
+	Code for vvideo if using MCGA
 
-+ See also leafGameCreate()
-
-------------------------------------------------------------------------
-signed int leafSetVideo(leafGame * g);
-Sets video, setting the video member (see leafGame)
-
-+ See also plotPixel()
-+ See also plotLinearPixel()
-
-------------------------------------------------------------------------
-void plotPixel(leafGame * g, register unsigned short x, register unsigned short y, register unsigned char c);
-Plots a pixel in X,Y of color C
-
-* In Linux builds, a emulated palette is created with leafGameCreate()
-* Sometimes the emulated palette will not display correctly. This is due to the inproper
-coding of Leaf-Engine (TODO: Add correct XColorMap)
-
-+ See also plotLinearPixel()
-
-------------------------------------------------------------------------
-void plotLinearPixel(leafGame * g, register unsigned short pos,register unsigned char color);
-Plots a pixel manually (dosen't plots in a X,Y mode, but rather in a linear
-plane mode)
-
-+ See also plotPixel()
-
-------------------------------------------------------------------------
-unsigned char fetchPixel(leafGame * g, register unsigned short x,register unsigned short y);
-Gets pixel from X,Y, returns color
-
-+ See also plotLinearPixel()
-+ See also plotPixel()
-
-------------------------------------------------------------------------
-signed int setPalette(leafGame * g, paletteEntry * p, register unsigned short n);
-Sets palette for the VGA/EGA/CGA (see Leaf-Engine Macros)
-
-* In linux builds, the palette is directly applied to X11 window
-
-------------------------------------------------------------------------
-signed int readImageBitmapHeader(FILE * stream, bmpHeader * e);
-Reads bitmap, saves header info in structure (see bmpHeader)
-
-------------------------------------------------------------------------
-paletteEntry * readImageBitmapPalette(FILE * stream, bmpHeader * b);
-Reads bitmap palette, saves palette in returned structure (see paletteEntry)
-
-------------------------------------------------------------------------
-unsigned char * readImageBitmapData(FILE * stream, bmpHeader * b);
-Reads image data from bitmap, (see bmpHeader)
-
-------------------------------------------------------------------------
-signed int readImagePcxHeader(FILE * stream, pcxHeader * p);
-Reads paintbrush header (see pcxHeader)
-
-------------------------------------------------------------------------
-unsigned char * readImagePcxData(FILE * stream, pcxHeader * p);
-Reads paintbrush data (see pcxHeader)
-
-------------------------------------------------------------------------
-paletteEntry * readImagePcxVgaPalette(FILE * stream);
-Reads palette of paintbrush, (see paletteEntry)
-
-------------------------------------------------------------------------
-
-Leaf-Engine Macros
-========================================================================
-__no_current_dir
-Assumes compiler dosen't look up subdirectories, and that leaf-engine is
-in a folder named leaf. Useful for compilers like Turbo C 2.01 and
-earlier.
-
-------------------------------------------------------------------------
-__no_ctype_h
-Assumes no ctype.h is present and typedefs a custom uint and int as
-a replacement for ctype.h, useful for compilers like Turbo C 2.01 and
-earlier.
-
-------------------------------------------------------------------------
-__easy_leaf
-Provides a user-friendly API for game developers at the cost of
-speed and size. But makes the code more readable overall
-
-------------------------------------------------------------------------

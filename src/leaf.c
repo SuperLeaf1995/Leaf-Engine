@@ -649,21 +649,66 @@ signed char loadLeafDataFile(const char * fileName, void * data, size_t n) {
 	return 0;
 }
 
-signed char openLogFile(FILE * s, const char * name) {
-	s = fopen(name,"a+t");
-	if(!s) { return -1; }
+/**
+@brief Opens log file
+
+@param stream Stream/File to open
+@param name Filename of the file to open
+*/
+signed char openLogFile(FILE * stream, const char * name) {
+	stream = fopen(name,"a+t");
+	if(!stream) { return -1; }
 	return 0;
 }
 
-signed char appendLogFile(FILE * s, const char * entry) {
-	if(!s) { return -1; }
-	fprintf(s,"%s\n",entry);
+/**
+@brief Appends a log entry into the log file
+
+@param stream Stream/File to close
+@param entry Contents of the logging entry
+*/
+signed char appendLogFile(FILE * stream, const char * entry) {
+	if(!stream) { return -1; }
+	fprintf(stream,"%s\n",entry);
 	return 0;
 }
 
-signed char closeLogFile(FILE * s) {
-	if(s) { fclose(s); }
+/**
+@brief Closes log file
+
+@param stream Stream/File to close
+*/
+signed char closeLogFile(FILE * stream) {
+	if(stream) { fclose(stream); }
 	return 0;
+}
+
+/**
+@brief Plays a sound with the given freq
+
+@param freq Is the frequency for the sound
+*/
+void playSound(unsigned long freq) {
+	register unsigned long cot; /*countdown value*/
+	register unsigned char tmp; /*temporal value stuff*/
+	cot = (unsigned long)(1193180/freq);
+	outportb(0x43,0xb6); /*say to the speaker we are going to send data*/
+	outportb(0x42,(unsigned char)cot); /*output low byte of countdown*/
+	outportb(0x42,(unsigned char)cot>>8); /*and then the high byte*/
+	tmp = inportb(0x61); /*set pit2 timer*/
+	if(tmp != (tmp|3)) {
+		outportb(0x61,tmp|3);
+	}
+	return;
+}
+
+/**
+@brief Stops all playing sounds
+*/
+void stopSound(void) {
+	register unsigned char tmp = inportb(0x61)&0xfc; /*shutdown speaker command*/
+	outportb(0x61,tmp);
+	return;
 }
 
 #ifdef __cplusplus

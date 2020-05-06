@@ -94,8 +94,11 @@ PaletteEntry is used for storing palette information of pictures, works
 in coordinance with setPalette.
 */
 typedef struct paletteEntry {
+	/** Red component of the palette */
 	unsigned char r;
+	/** Green component of the palette */
 	unsigned char g;
+	/** Blue component of the palette */
 	unsigned char b;
 }paletteEntry;
 
@@ -107,15 +110,15 @@ program.
 The structure aims to provide a simple way to get/set data for input.
 */
 typedef struct leafEvent {
-	signed int key; /*Key scancode (0-255) or SPECIAL_KEY
-					(used by Leaf-Engine for arrow keys and stuff)*/
-	signed short cx; /*Change of X movement of mouse*/
-	signed short cy; /*Change of Y movement of mouse*/
-	signed char eventStatus; /*Bit 1, if set, means keypress
-							Bit 2, if set means mouse-left button press
-							Bit 3, if set means mouse-right button press
-							Bit 4, if set means mouse-middle button press*/
-	signed char ui; /*UI and window events, always 0 in DOS and monotask OSes*/
+	signed int key;
+	/** Change of the mouse X */
+	signed short cx;
+	/** Change of the mouse Y */
+	signed short cy;
+	signed char eventStatus;
+	/** UI code, can be used in UI-based/capable operating systems
+	Always zero on DOS */
+	signed char ui;
 }leafEvent;
 
 /*
@@ -317,6 +320,12 @@ Simple functions to help debugging
 signed char openLogFile(FILE * s, const char * name);
 signed char appendLogFile(FILE * s, const char * entry);
 signed char closeLogFile(FILE * s);
+
+/*
+Sound functions
+*/
+void playSound(unsigned long freq);
+void stopSound(void);
 
 /*Legacy support (LeafEngine <= 0.3.0)*/
 #if defined(__USE_LEGACY_MODE__) || (LEAF_ENGINE < 030L) || !defined(LEAF_ENGINE)

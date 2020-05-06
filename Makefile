@@ -6,7 +6,7 @@ SRC_DIR = src
 
 LD = ld
 CC = gcc
-CFLAGS = -fpic -Wall -Wextra -ansi -pedantic -lX11 -I$(INC_DIR)
+CFLAGS = -fpic -Wall -Wextra -ansi -pedantic -I$(INC_DIR)
 
 all: $(OUT_DIR)/libleaf.so
 
