@@ -18,6 +18,7 @@
  * MA 02110-1301, USA.
  * 
  */
+
 #ifndef LEAF_H
 #define LEAF_H
 
@@ -215,6 +216,8 @@ void setPalette(paletteEntry * p, register unsigned short n);
 void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
 void waitRetrace(void);
 void updateScreen(void);
+void drawSprite(unsigned char * data);
+void drawTiledSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy);
 
 /*
 Bitmap read functions

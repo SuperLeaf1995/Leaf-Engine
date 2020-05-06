@@ -23,11 +23,6 @@
 extern "C" {
 #endif
 
-#if defined(__TURBOC__) && !defined(__BORLANDC__)
-#define __no_current_dir
-#define __no_ctype_h
-#endif
-
 #include "leaf.h"
 
 void seedRandom(void) {
@@ -253,6 +248,31 @@ void updateScreen(void) {
 	}
 	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
 #endif
+	return;
+}
+
+void drawSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy) {
+	unsigned short i;
+	unsigned short i2;
+	for(i = 0; i < sx; i++) {
+		for(i2 = 0; i2 < sy; i2++) {
+			plotPixel(x+i,y+i2,data[(i2*sx)+i]);
+		}
+	}
+	return;
+}
+
+void drawTiledSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy) {
+	unsigned short i;
+	unsigned short i2;
+	unsigned short i3;
+	unsigned short i4;
+	for(i = 0; i < sx; i++) {
+		for(i2 = 0; i2 < sy; i2++) {
+			i4 = iy; i3 = ix;
+			plotPixel((x+i),(y+i2),d[(((i4*sx)+i2)*sy)+((i3)*sx)+i]);
+		}
+	}
 	return;
 }
 
