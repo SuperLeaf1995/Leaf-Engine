@@ -24,7 +24,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif /* __cplusplus */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,7 +56,7 @@ extern "C" {
 #endif
 
 /*Current engine version*/
-#define LEAF_ENGINE 030L
+#define LEAF_ENGINE 034L
 
 /*
 Codes for UI (Always check those, In DOS the exit code is produced
@@ -131,35 +131,42 @@ Provides a simple way for porting DOS, Linux and BSD applications without
 the hassle of setting everything separately
 */
 typedef struct leafGame {
-	const char * name; /*name of the game*/
-	unsigned char videoConf; /*used for video mode usage*/
-	unsigned short vwide; /*wide of heritage screen*/
-	unsigned short vtall; /*height of the screen*/
+	/** Name of the game, only displays on UI systems */
+	const char * name;
+	/** Video mode usage */
+	unsigned char videoConf;
+	/** Wide of the current video mode/window */
+	unsigned short vwide;
+	/** Height of the current video mode/window */
+	unsigned short vtall;
 }leafGame;
 
 /*
 x86-specific addresses (As DOS is x86-specific we assume
 that they are present).
 */
-#if defined(__DJGPP__) /*DOS*/
+#if defined(__DJGPP__) /*(DOS) DJGPP*/
 unsigned short * clock = (unsigned short *)0x046C+__djgpp_conventional_base;
 unsigned char * video = (unsigned char * )0xA0000+__djgpp_conventional_base;
-#endif
-#if defined(__TURBOC__) || defined(__BORLANDC__) /*DOS*/
+#elif defined(__TURBOC__) || defined(__BORLANDC__) /*(DOS) Borland Turbo C/C++*/
+#if defined(__TINY__) || defined(__SMALL__) || defined(__MEDIUM__)
+unsigned short far * clock = (unsigned short far *)0x0000046CL;
+unsigned char far * video = (unsigned char far * )0xA0000000L;
+#else
 unsigned short * clock = (unsigned short *)0x0000046CL;
 unsigned char * video = (unsigned char * )0xA0000000L;
 #endif
-#if defined(__APPLE2__) /*APPLE2*/
+#elif defined(__APPLE2__) /*APPLE2*/
 unsigned char * video = (unsigned char * )0x2000;
 #endif
-
-/*Emulated/Buffer video buffer for drawing operations*/
-unsigned char * videoBuffer;
 
 /*Global variable for register I/O (DOS-only)*/
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 union REGS in,out;
 #endif
+
+/*Emulated/Buffer video buffer for drawing operations*/
+unsigned char * videoBuffer;
 
 unsigned char videoTable[32][2] = {
 	{0,0,0}, /* 0x00 */
@@ -185,8 +192,11 @@ unsigned char videoTable[32][2] = {
 	{0,0,0} /* 0x14 */
 };
 
+/** Current video wide */
 unsigned short vwide;
+/** Current video tall */
 unsigned short vtall;
+/** Current video mode (Always VGA on UI systems) */
 unsigned char vvideo;
 
 /*
@@ -210,11 +220,17 @@ unsigned int setVideo(unsigned char v);
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c);
 void plotLinearPixel(register unsigned short pos,register unsigned char color);
 unsigned char fetchPixel(register unsigned short x,register unsigned short y);
+void setPalette(paletteEntry * p, register unsigned short n);
+void waitRetrace(void);
+
+/*
+Graphics manipulation routines
+This routines does not directly modify video, but they rely on the
+principal graphics functions
+*/
 void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
 void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
-void setPalette(paletteEntry * p, register unsigned short n);
 void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
-void waitRetrace(void);
 void updateScreen(void);
 void drawSprite(unsigned char * data);
 void drawTiledSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy);
@@ -398,6 +414,6 @@ almost unessesary and useless*/
 
 #ifdef __cplusplus
 }
-#endif
+#endif /* __cplusplus */
 
 #endif

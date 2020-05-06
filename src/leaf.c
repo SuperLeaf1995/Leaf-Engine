@@ -188,6 +188,7 @@ void plotWirePolygon(signed short * d, register unsigned short n, register unsig
 void setPalette(paletteEntry * p, register unsigned short n) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	register unsigned short i;
+	unsigned char * lastValue = (unsigned char *)0x00400066L;
 	if(vvideo == __vga) {
 		outp(0x03C8,0); /*send to the vga registers that we are going to send palette data*/
 		for(i = 0; i < n; i++) {
@@ -202,13 +203,11 @@ void setPalette(paletteEntry * p, register unsigned short n) {
 			outp(0x03C9,(p[i].g));
 			outp(0x03C9,(p[i].b));
 		}
-	}
+	} /*else if(vvideo == __cga) {
+		lastValue &= 0EFh;
+		outp(03D9h,lastValue);
+	}*/
 #endif /*__MSDOS__*/
-/*uncomment for experimental Apple II support*/
-/*#if defined(__APPLE2__)
-	/*In Apple II series there is no such thing as a palette, so we write dummy code/
-	n = n; p = p;
-#endif*/
 	return;
 }
 
@@ -233,7 +232,7 @@ void updateScreen(void) {
 			in.x.dx = (i/vwide);
 			in.x.cx = (i%vwide);
 			in.h.ah = 0x0C;
-			in.h.al = videoBuffer[i];
+			in.h.al = videoBuffer[i]>>4;
 			int86(0x10,&in,&out);
 		}
 	} else if(vvideo == __cga) {
@@ -242,7 +241,7 @@ void updateScreen(void) {
 			in.x.dx = (i/vwide);
 			in.x.cx = (i%vwide);
 			in.h.ah = 0x0C;
-			in.h.al = videoBuffer[i];
+			in.h.al = videoBuffer[i]>>4;
 			int86(0x10,&in,&out);
 		}
 	}
