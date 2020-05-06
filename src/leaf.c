@@ -208,7 +208,7 @@ void setPalette(paletteEntry * p, register unsigned short n) {
 			outp(0x03C9,(p[i].b));
 		}
 	}
-#endif
+#endif /*__MSDOS__*/
 /*uncomment for experimental Apple II support*/
 /*#if defined(__APPLE2__)
 	/*In Apple II series there is no such thing as a palette, so we write dummy code/
@@ -273,20 +273,20 @@ signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
 	unsigned long importantColors;
 	unsigned long mask[4];
 	if(!stream) { /*check if file is open*/
-		return BitmapErrorFile; /*nope, bail out!*/
+		return -1; /*nope, bail out!*/
 	}
 	fread(e->type,sizeof(unsigned short),1,stream); /*read file header*/
 	/*check that it is a actual bitmap*/
 	if(strncmp((const char *)e->type,"BM",2) != 0 && strncmp((const char *)e->type,"BA",2) != 0
 	&& strncmp((const char *)e->type,"IC",2) != 0 && strncmp((const char *)e->type,"PT",2) != 0
 	&& strncmp((const char *)e->type,"CI",2) != 0 && strncmp((const char *)e->type,"CP",2) != 0) {
-		return BitmapErrorSignature; /*invalid bitmap!*/
+		return -2; /*invalid bitmap!*/
 	}
 	if(fread(&sizeOfFile,sizeof(unsigned long),1,stream) != 1) {
-		return BitmapErrorFileReadSizeOfFile;
+		return -3;
 	}
 	if(fread(&reserved,sizeof(unsigned long),1,stream) != 1) { /*reserved has an actual mean in OS/2*/
-		return BitmapErrorFileReadReserved;
+		return -4;
 	}
 	fread(&offset,sizeof(unsigned long),1,stream);
 	fread(&headerSize,sizeof(unsigned long),1,stream);
@@ -327,7 +327,7 @@ signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
 		e->mask[2] = mask[2];
 		e->mask[3] = mask[3];
 	} else {
-		return BitmapErrorInvalidHeader;
+		return -5;
 	}
 	/*check if bit's are valid*/
 	if((bitsPerPixel != 1)
@@ -337,13 +337,13 @@ signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
 	&& (bitsPerPixel != 16)
 	&& (bitsPerPixel != 24)
 	&& (bitsPerPixel != 32)) {
-		return BitmapErrorBpp;
+		return -6;
 	}
 	if(planes != 1) { /*we did something wrong!*/
-		return BitmapErrorWrongPlanes;
+		return -7;
 	}
 	if(numberOfColors > 256) {
-		return BitmapErrorInvalidColorsOutOfRange;
+		return -8;
 	}
 	e->planes = planes; /*save everything in the struct pointer thing*/
 	e->bitsPerPixel = bitsPerPixel;
@@ -359,7 +359,7 @@ signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
 	e->reserved = reserved;
 	e->offset = offset;
 	e->headerSize = headerSize;
-	return BitmapSucess;
+	return 0;
 }
 
 paletteEntry * readImageBitmapPalette(FILE *stream, bmpHeader * b) {

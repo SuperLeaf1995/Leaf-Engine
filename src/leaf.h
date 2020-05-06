@@ -68,21 +68,6 @@ Video automatic-modes for leafGame (see leafGameCreate)
 */
 #define _video_auto 1
 
-/*
-Errors and sucess codes. Useful for displaying what really happened.
-*/
-#define BitmapSucess 0
-#define BitmapErrorSignature -1
-#define BitmapErrorBpp -3
-#define BitmapErrorInvalidHeader -2
-#define BitmapErrorFile -4
-#define BitmapErrorInvalidColorsOutOfRange -5
-#define BitmapErrorWrongPlanes -6
-#define BitmapErrorFileReadSizeOfFile -7
-#define BitmapErrorFileReadReserved -8
-#define VideoUsesLinux -1
-#define VideoErrorOnSet -2
-
 /*A simple getchar cross-platform wrapper*/
 #if defined(__linux) || defined(linux)
 #define getch() getchar()
