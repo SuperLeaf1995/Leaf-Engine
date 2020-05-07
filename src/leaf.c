@@ -768,6 +768,7 @@ void playSound(unsigned long freq) {
 void stopSound(void) {
 #if defined(OPENAL) || defined(ALAPI)
 
+
 #endif
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	register unsigned char tmp = inp(0x61)&0xfc; /*shutdown speaker command*/
