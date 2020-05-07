@@ -54,6 +54,9 @@ signed int leafContextCreate(leafContext * g) {
 	}
 	g->name = NULL;
 #endif
+#if defined(OPENAL)
+	alGetError(); /*Do dummy call to reset error stack*/
+#endif
 	return 0;
 }
 
@@ -675,7 +678,9 @@ void getMouseMovement(struct mouse * m) {
 signed char saveLeafDataFile(const char * fileName, void * data, size_t n) {
 	FILE * s;
 	s = fopen(fileName,"wb");
-	if(!s) { return -1; }
+	if(!s) {
+		return -1;
+	}
 	fwrite((unsigned char *)data,sizeof(unsigned char),n,s);
 	fclose(s);
 	return 0;
@@ -691,7 +696,9 @@ signed char saveLeafDataFile(const char * fileName, void * data, size_t n) {
 signed char loadLeafDataFile(const char * fileName, void * data, size_t n) {
 	FILE * s;
 	s = fopen(fileName,"rb");
-	if(!s) { return -1; }
+	if(!s) {
+		return -1;
+	}
 	fread((unsigned char *)data,sizeof(unsigned char),n,s);
 	fclose(s);
 	return 0;
@@ -705,7 +712,9 @@ signed char loadLeafDataFile(const char * fileName, void * data, size_t n) {
 */
 signed char openLogFile(FILE * stream, const char * name) {
 	stream = fopen(name,"a+t");
-	if(!stream) { return -1; }
+	if(!stream) {
+		return -1;
+	}
 	return 0;
 }
 
@@ -716,7 +725,9 @@ signed char openLogFile(FILE * stream, const char * name) {
 @param entry Contents of the logging entry
 */
 signed char appendLogFile(FILE * stream, const char * entry) {
-	if(!stream) { return -1; }
+	if(!stream) {
+		return -1;
+	}
 	fprintf(stream,"%s\n",entry);
 	return 0;
 }
@@ -727,15 +738,36 @@ signed char appendLogFile(FILE * stream, const char * entry) {
 @param stream Stream/File to close
 */
 signed char closeLogFile(FILE * stream) {
-	if(stream) { fclose(stream); }
+	if(stream) {
+		fclose(stream);
+	}
 	return 0;
 }
 
 /**
 @brief Initializes everything needed for sound-support
 */
-void initSound(void) {
-	return;
+signed char initSound(void) {
+#if defined(OPENAL)
+	/*Open default AL device*/
+	leafCurrentCtx->alDev = alcOpenDevice(NULL); /*Choose default device (NULL) for playback*/
+	if(!leafCurrentCtx->alDev) {
+		return -1;
+	}
+	/*Create a OpenAL context*/
+	leafCurrentCtx->alCtx = alcCreateContext(leafCurrentCtx->alDev,NULL);
+	if(!alcMakeContextCurrent(leafCurrentCtx->alCtx)) {
+		return -2;
+	}
+	/*Create a main audio object*/
+	alGenSources((ALuint)1,&leafCurrentCtx->alSoundSrc);
+	alSourcef(leafCurrentCtx->alSoundSrc,AL_PITCH,1);
+	alSourcef(leafCurrentCtx->alSoundSrc,AL_GAIN,1);
+	alSource3f(leafCurrentCtx->alSoundSrc,AL_POSITION,0,0,0);
+	alSource3f(leafCurrentCtx->alSoundSrc,AL_VELOCITY,0,0,0);
+	alSourcei(leafCurrentCtx->alSoundSrc,AL_LOOPING,AL_FALSE);
+#endif
+	return 0;
 }
 
 /**
@@ -744,8 +776,8 @@ void initSound(void) {
 @param freq Is the frequency for the sound
 */
 void playSound(unsigned long freq) {
-#if defined(OPENAL) || defined(ALAPI)
-
+#if defined(OPENAL)
+	
 #endif
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	register unsigned long cot; /*countdown value*/
@@ -766,8 +798,7 @@ void playSound(unsigned long freq) {
 @brief Stops all playing sounds
 */
 void stopSound(void) {
-#if defined(OPENAL) || defined(ALAPI)
-
+#if defined(OPENAL)
 
 #endif
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)

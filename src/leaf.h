@@ -137,6 +137,11 @@ Provides a simple way for porting DOS, Linux and BSD applications without
 the hassle of setting everything separately
 */
 typedef struct leafContext {
+#if defined(OPENAL)
+	ALCdevice * alDev;
+	ALCcontext * alCtx;
+	ALuint alSoundSrc;
+#endif
 	/** Name of the game, only displays on UI systems */
 	const char * name;
 	/** Video mode usage */
@@ -335,6 +340,7 @@ signed char closeLogFile(FILE * s);
 /*
 Sound functions
 */
+signed char initSound(void);
 void playSound(unsigned long freq);
 void stopSound(void);
 
