@@ -27,7 +27,7 @@ extern "C" {
 
 void seedRandom(void) {
 #if defined(__GNUC__)
-	srand();
+	srand(time(NULL));
 #elif defined(__TURBOC__) && !defined(__BORLANDC__)
 	srand(*clock);
 #endif
@@ -38,7 +38,7 @@ signed int generateRandom(void) {
 	return rand();
 }
 
-signed int leafGameCreate(leafGame * g) {
+signed int leafContextCreate(leafContext * g) {
 #if defined(__DJGPP__)
 	if(__djgpp_nearptr_enable() == 0) {
 		fprintf(stderr,"Cannot enable nearptr\n");
@@ -46,8 +46,9 @@ signed int leafGameCreate(leafGame * g) {
 	}
 #endif
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
-	vwide = 320; vtall = 200;
-	videoBuffer = (unsigned char *)malloc(vwide*vtall);
+	leafCurrentCtx = g;
+	g->vwide = 320; g->vtall = 200;
+	videoBuffer = (unsigned char *)malloc(g->vwide*g->vtall);
 	if(videoBuffer == NULL) {
 		return -1;
 	}
@@ -56,10 +57,11 @@ signed int leafGameCreate(leafGame * g) {
 	return 0;
 }
 
-signed int leafGameEnd(leafGame * g) {
+signed int leafContextDestroy(leafContext * g) {
 	if(videoBuffer != NULL) {
 		free(videoBuffer);
 	}
+	leafCurrentCtx = NULL; /*Destroy Context*/
 #if defined(__DJGPP__)
 	__djgpp_nearptr_disable();
 #endif
@@ -72,9 +74,9 @@ unsigned int setVideo(unsigned char v) {
 	in.h.ah = 0; /*set the video we want*/
 	int86(0x10,&in,&out);
 	
-	vwide = vtable[v][0];
-	vtall = vtable[v][1];
-	vvideo = vtable[v][2];
+	leafCurrentCtx->vwide = vtable[v][0];
+	leafCurrentCtx->vtall = vtable[v][1];
+	leafCurrentCtx->vvideo = vtable[v][2];
 	
 	return (unsigned int)v;
 #elif defined(__APPLE2__) /*In APPLE2 there is only one mode used and it's HIGHRES*/
@@ -87,14 +89,8 @@ unsigned int setVideo(unsigned char v) {
 }
 
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c) {
-#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
-	if(y >= vtall || x >= vwide) {
-		return;
-	}
-	videoBuffer[(y*vwide)+x] = c;
-#elif defined(__APPLE2__)
-	video[((y*1024)+x)] = c;
-#endif
+	if(y >= leafCurrentCtx->vtall || x >= leafCurrentCtx->vwide) { return; }
+	videoBuffer[(y*leafCurrentCtx->vwide)+x] = c;
 	return;
 }
 
@@ -104,7 +100,7 @@ void plotLinearPixel(register unsigned short p,register unsigned char c) {
 }
 
 unsigned char fetchPixel(register unsigned short x,register unsigned short y) {
-	return videoBuffer[(y*vwide)+x];
+	return videoBuffer[(y*leafCurrentCtx->vwide)+x];
 }
 
 unsigned char fetchLinearPixel(register unsigned short p) {
@@ -162,20 +158,22 @@ void plotWirePolygon(signed short * d, register unsigned short n, register unsig
 void setPalette(paletteEntry * p, register unsigned short n) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	register unsigned short i;
-	if(vvideo == __vga) {
+	if(leafCurrentCtx->vvideo == __vga) {
 		outp(0x03C8,0); /*send to the vga registers that we are going to send palette data*/
 		for(i = 0; i < n; i++) {
 			outp(0x03C9,(p[i].r>>2));
 			outp(0x03C9,(p[i].g>>2));
 			outp(0x03C9,(p[i].b>>2));
 		}
-	} else if(vvideo == __ega) {
+	} else if(leafCurrentCtx->vvideo == __ega) {
 		outp(0x03C8,0); /*send to the vga registers that we are going to send palette data*/
 		for(i = 0; i < n; i++) {
 			outp(0x03C9,(p[i].r));
 			outp(0x03C9,(p[i].g));
 			outp(0x03C9,(p[i].b));
 		}
+	} else if(leafCurrentCtx->vvideo == __cga) {
+		outp(0x03D9,0x20);
 	}
 #endif /*__MSDOS__*/
 	return;
@@ -193,29 +191,29 @@ void updateScreen(void) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	register size_t i;
 	waitRetrace(); /* Wait for VGA retrace */
-	if(vvideo == __vga) {
+	if(leafCurrentCtx->vvideo == __vga) {
 		/*in VGA simply copy it to the plain VGA memory*/
-		memcpy(video,videoBuffer,(size_t)vwide*vtall); /* Copy data to VGA */
-	} else if(vvideo == __ega) {
+		memcpy(video,videoBuffer,(size_t)leafCurrentCtx->vwide*leafCurrentCtx->vtall); /* Copy data to VGA */
+	} else if(leafCurrentCtx->vvideo == __ega) {
 		/*TODO: Add working EGA code*/
 		in.h.ah = 0x0C;
-		for(i = 0; i < (vwide*vtall); i++) {
-			in.x.dx = (i/vwide);
-			in.x.cx = (i%vwide);
+		for(i = 0; i < (leafCurrentCtx->vwide*leafCurrentCtx->vtall); i++) {
+			in.x.dx = (i/leafCurrentCtx->vwide);
+			in.x.cx = (i%leafCurrentCtx->vwide);
 			in.h.al = videoBuffer[i];
 			int86(0x10,&in,&out);
 		}
-	} else if(vvideo == __cga) {
+	} else if(leafCurrentCtx->vvideo == __cga) {
 		/*TODO: Add working CGA code*/
 		in.h.ah = 0x0C;
-		for(i = 0; i < (vwide*vtall); i++) {
-			in.x.dx = (i/vwide);
-			in.x.cx = (i%vwide);
+		for(i = 0; i < (leafCurrentCtx->vwide*leafCurrentCtx->vtall); i++) {
+			in.x.dx = (i/leafCurrentCtx->vwide);
+			in.x.cx = (i%leafCurrentCtx->vwide);
 			in.h.al = videoBuffer[i];
 			int86(0x10,&in,&out);
 		}
 	}
-	memset(videoBuffer,0,(size_t)vwide*vtall); /* Clear our buffer */
+	memset(videoBuffer,0,(size_t)leafCurrentCtx->vwide*leafCurrentCtx->vtall); /* Clear our buffer */
 #endif
 	return;
 }
@@ -266,9 +264,12 @@ signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
 	}
 	fread(e->type,sizeof(unsigned short),1,stream); /*read file header*/
 	/*check that it is a actual bitmap*/
-	if(strncmp((const char *)e->type,"BM",2) != 0 && strncmp((const char *)e->type,"BA",2) != 0
-	&& strncmp((const char *)e->type,"IC",2) != 0 && strncmp((const char *)e->type,"PT",2) != 0
-	&& strncmp((const char *)e->type,"CI",2) != 0 && strncmp((const char *)e->type,"CP",2) != 0) {
+	if(strncmp((const char *)e->type,"BM",2) != 0
+	&& strncmp((const char *)e->type,"BA",2) != 0
+	&& strncmp((const char *)e->type,"IC",2) != 0
+	&& strncmp((const char *)e->type,"PT",2) != 0
+	&& strncmp((const char *)e->type,"CI",2) != 0
+	&& strncmp((const char *)e->type,"CP",2) != 0) {
 		return -2; /*invalid bitmap!*/
 	}
 	if(fread(&sizeOfFile,sizeof(unsigned long),1,stream) != 1) {
@@ -451,6 +452,12 @@ unsigned char * readImageBitmapData(FILE *stream, bmpHeader * b) {
 	return (unsigned char * )data;
 }
 
+/**
+@brief Reads header of the PCX
+
+@param stream File stream of the PCX file
+@param p PCXHeader used to store metadata
+*/
 signed int  readImagePcxHeader(FILE * stream, pcxHeader * p) {
 	unsigned char type,version,compression,bitsPerPixel,reserved,planes;
 	unsigned char paletteType,horizontalScreenSize,verticalScreenSize;
@@ -513,6 +520,12 @@ signed int  readImagePcxHeader(FILE * stream, pcxHeader * p) {
 	return 0;
 }
 
+/**
+@brief Reads data of the PCX
+
+@param stream File stream of the PCX file
+@param p Used for getting correct data
+*/
 unsigned char *  readImagePcxData(FILE * stream, pcxHeader * p) {
 	register unsigned char rLen,tmp,val;
 	register unsigned long index,dataSize,total;
@@ -536,6 +549,11 @@ unsigned char *  readImagePcxData(FILE * stream, pcxHeader * p) {
 }
 
 /*TODO: Fix this function*/
+/**
+@brief Reads the VGA palette of the PCX
+
+@param stream File stream of the PCX file
+*/
 paletteEntry *  readImagePcxVgaPalette(FILE * stream) {
 	register signed short vgaPaletteChecker;
 	register unsigned short i;
@@ -553,6 +571,11 @@ paletteEntry *  readImagePcxVgaPalette(FILE * stream) {
 	return (paletteEntry *)pal;
 }
 
+/**
+@brief Initializes mouse driver/cursor
+
+@param m Mouse structure
+*/
 char initMouse(struct mouse * m) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x00;
@@ -571,6 +594,12 @@ char initMouse(struct mouse * m) {
 #endif
 }
 
+/**
+@brief Sets position of the mouse to given parameters
+
+@param x X Coordinates
+@param y Y Coordinates
+*/
 void setMousePosition(register unsigned short x, register unsigned short y) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x04;
@@ -581,6 +610,9 @@ void setMousePosition(register unsigned short x, register unsigned short y) {
 	return;
 }
 
+/**
+@brief Shows mouse
+*/
 void showMouse(void) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x01;
@@ -589,6 +621,9 @@ void showMouse(void) {
 	return;
 }
 
+/**
+@brief Hides mouse
+*/
 void hideMouse(void) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x02;
@@ -597,6 +632,11 @@ void hideMouse(void) {
 	return;
 }
 
+/**
+@brief Gets status of buttons and current position
+
+@param m Mouse structure
+*/
 void getMouseStatus(struct mouse * m) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x03;
@@ -610,6 +650,11 @@ void getMouseStatus(struct mouse * m) {
 	return;
 }
 
+/**
+@brief Gets mouse movement
+
+@param m Mouse structure
+*/
 void getMouseMovement(struct mouse * m) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	in.x.ax = 0x0B;
@@ -620,6 +665,13 @@ void getMouseMovement(struct mouse * m) {
 	return;
 }
 
+/**
+@brief Saves data to file
+
+@param fileName Name of the file
+@param data Pointer to the place of data to put on file
+@param n Size of data to write
+*/
 signed char saveLeafDataFile(const char * fileName, void * data, size_t n) {
 	FILE * s;
 	s = fopen(fileName,"wb");
@@ -629,6 +681,13 @@ signed char saveLeafDataFile(const char * fileName, void * data, size_t n) {
 	return 0;
 }
 
+/**
+@brief Loads data from file
+
+@param fileName Name of the file
+@param data Pointer to the place to put data on
+@param n Size of data to read
+*/
 signed char loadLeafDataFile(const char * fileName, void * data, size_t n) {
 	FILE * s;
 	s = fopen(fileName,"rb");
@@ -673,21 +732,33 @@ signed char closeLogFile(FILE * stream) {
 }
 
 /**
+@brief Initializes everything needed for sound-support
+*/
+void initSound(void) {
+	return;
+}
+
+/**
 @brief Plays a sound with the given freq
 
 @param freq Is the frequency for the sound
 */
 void playSound(unsigned long freq) {
+#if defined(OPENAL) || defined(ALAPI)
+
+#endif
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	register unsigned long cot; /*countdown value*/
 	register unsigned char tmp; /*temporal value stuff*/
 	cot = (unsigned long)(1193180/freq);
-	outportb(0x43,0xb6); /*say to the speaker we are going to send data*/
-	outportb(0x42,(unsigned char)cot); /*output low byte of countdown*/
-	outportb(0x42,(unsigned char)cot>>8); /*and then the high byte*/
-	tmp = inportb(0x61); /*set pit2 timer*/
+	outp(0x43,0xb6); /*say to the speaker we are going to send data*/
+	outp(0x42,(unsigned char)cot); /*output low byte of countdown*/
+	outp(0x42,(unsigned char)cot>>8); /*and then the high byte*/
+	tmp = inp(0x61); /*set PIT2 timer*/
 	if(tmp != (tmp|3)) {
-		outportb(0x61,tmp|3);
+		outp(0x61,tmp|3);
 	}
+#endif
 	return;
 }
 
@@ -695,8 +766,13 @@ void playSound(unsigned long freq) {
 @brief Stops all playing sounds
 */
 void stopSound(void) {
-	register unsigned char tmp = inportb(0x61)&0xfc; /*shutdown speaker command*/
-	outportb(0x61,tmp);
+#if defined(OPENAL) || defined(ALAPI)
+
+#endif
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
+	register unsigned char tmp = inp(0x61)&0xfc; /*shutdown speaker command*/
+	outp(0x61,tmp);
+#endif
 	return;
 }
 

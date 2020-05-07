@@ -26,12 +26,14 @@
 extern "C" {
 #endif /* __cplusplus */
 
+/*These should be supported on all targets*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
+#include <time.h>
 /*APPLE2 dosen't supports float and math functions*/
 #if !defined(__APPLE2__)
 #include <math.h>
@@ -45,18 +47,24 @@ extern "C" {
 #include <conio.h>
 #include <io.h>
 #include <mem.h>
-#endif
-
 #if defined(__TURBOC__) && !defined(__BORLANDC__)
-#include <dos.h>
+#include <dos.h> /*Borland compilers use this*/
+#elif defined(__DJGPP__)
+#include <sys/nearptr.h>
+#endif /* __DJGPP__ */
 #endif
 
-#if defined(__DJGPP__)
-#include <sys/nearptr.h>
+#if defined(__GNUC__)
+#include <AL/al.h>
+#include <AL/alc.h>
 #endif
+
+#define FREEDOS
 
 /*Current engine version*/
-#define LEAF_ENGINE 034L
+#if !defined(LEAF_ENGINE)
+#define LEAF_ENGINE 035L
+#endif
 
 /*
 Codes for UI (Always check those, In DOS the exit code is produced
@@ -130,12 +138,80 @@ leafEvent and any of the functions that depends of it.
 Provides a simple way for porting DOS, Linux and BSD applications without
 the hassle of setting everything separately
 */
-typedef struct leafGame {
+typedef struct leafContext {
 	/** Name of the game, only displays on UI systems */
 	const char * name;
 	/** Video mode usage */
 	unsigned char videoConf;
-}leafGame;
+	/** Current video wide */
+	unsigned short vwide;
+	/** Current video tall */
+	unsigned short vtall;
+	/** Current video mode (Always VGA on UI systems) */
+	unsigned char vvideo;
+}leafContext;
+
+/* BitmapHeader structure */
+typedef struct _bmpHeader {
+	unsigned char type[3];
+	unsigned long sizeOfFile;
+	unsigned long reserved;
+	unsigned long offset;
+	unsigned long headerSize;
+	signed long wide;
+	signed long tall;
+	unsigned short planes;
+	unsigned short bitsPerPixel;
+	unsigned long compression;
+	unsigned long sizeOfImage;
+	unsigned long xPixelsPerMeter;
+	unsigned long yPixelsPerMeter;
+	unsigned long numberOfColors;
+	unsigned long importantColors;
+	unsigned long mask[4];
+	unsigned long paletteEntries;
+	
+	paletteEntry * palette;
+}bmpHeader;
+
+/* PcxHeader structure */
+typedef struct pcxHeader {
+	unsigned char type;
+	unsigned char version;
+	unsigned char compression;
+	unsigned char bitsPerPixel;
+	unsigned short xStart;
+	unsigned short yStart;
+	unsigned short xEnd;
+	unsigned short yEnd;
+	unsigned short horizontalResolution;
+	unsigned short verticalResolution;
+	unsigned char reserved;
+	unsigned char planes;
+	unsigned short bytesPerLine;
+	unsigned short paletteType;
+	unsigned short horizontalScreenSize;
+	unsigned short verticalScreenSize;
+	unsigned char * reserved2;
+	
+	paletteEntry * egaPalette;
+	paletteEntry * vgaPalette;
+}pcxHeader;
+
+/* Mouse handler structure */
+struct mouse {
+	unsigned char buttonLeft;
+	unsigned char buttonRight;
+	unsigned char buttonMiddle;
+	unsigned char buttons;
+	signed short x; signed short y;
+	signed short mx; signed short my;
+};
+
+/*
+The main game context we are working on
+*/
+leafContext * leafCurrentCtx;
 
 /*
 x86-specific addresses (As DOS is x86-specific we assume
@@ -151,8 +227,8 @@ unsigned char * video = (unsigned char * )0xA0000000L;
 unsigned char * video = (unsigned char * )0x2000;
 #endif
 
-/*Global variable for register I/O (DOS-only)*/
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
+/*Global variable for register I/O (DOS-only)*/
 union REGS in,out;
 #endif
 
@@ -183,13 +259,6 @@ unsigned short vtable[32][3] = {
 	{0,0,0} /* 0x14 */
 };
 
-/** Current video wide */
-unsigned short vwide;
-/** Current video tall */
-unsigned short vtall;
-/** Current video mode (Always VGA on UI systems) */
-unsigned char vvideo;
-
 /*
 Time-based random number generator
 */
@@ -199,9 +268,9 @@ signed int generateRandom(void);
 /*
 Main, principal Leaf-Engine functions
 */
-signed int leafGameCreate(leafGame * g);
-signed int leafGameEnd(leafGame * g);
-signed int leafSetVideo(leafGame * g);
+signed int leafContextCreate(leafContext * g);
+signed int leafContextDestroy(leafContext * g);
+signed int leafSetVideo(leafContext * g);
 
 /*
 General graphics manipulation functions.
@@ -229,28 +298,6 @@ void drawTiledSprite(unsigned char * data, register unsigned short x, register u
 /*
 Bitmap read functions
 */
-typedef struct _bmpHeader {
-	unsigned char type[3];
-	unsigned long sizeOfFile;
-	unsigned long reserved;
-	unsigned long offset;
-	unsigned long headerSize;
-	signed long wide;
-	signed long tall;
-	unsigned short planes;
-	unsigned short bitsPerPixel;
-	unsigned long compression;
-	unsigned long sizeOfImage;
-	unsigned long xPixelsPerMeter;
-	unsigned long yPixelsPerMeter;
-	unsigned long numberOfColors;
-	unsigned long importantColors;
-	unsigned long mask[4];
-	unsigned long paletteEntries;
-	
-	paletteEntry * palette;
-}bmpHeader;
-
 signed int readImageBitmapHeader(FILE * stream, bmpHeader * e);
 paletteEntry * readImageBitmapPalette(FILE * stream, bmpHeader * b);
 unsigned char * readImageBitmapData(FILE * stream, bmpHeader * b);
@@ -258,58 +305,14 @@ unsigned char * readImageBitmapData(FILE * stream, bmpHeader * b);
 /*
 PCX read functions
 */
-typedef struct pcxHeader {
-	unsigned char type;
-	unsigned char version;
-	unsigned char compression;
-	unsigned char bitsPerPixel;
-	unsigned short xStart;
-	unsigned short yStart;
-	unsigned short xEnd;
-	unsigned short yEnd;
-	unsigned short horizontalResolution;
-	unsigned short verticalResolution;
-	unsigned char reserved;
-	unsigned char planes;
-	unsigned short bytesPerLine;
-	unsigned short paletteType;
-	unsigned short horizontalScreenSize;
-	unsigned short verticalScreenSize;
-	unsigned char * reserved2;
-	
-	paletteEntry * egaPalette;
-	paletteEntry * vgaPalette;
-}pcxHeader;
-
 signed int readImagePcxHeader(FILE * stream, pcxHeader * p);
 unsigned char * readImagePcxData(FILE * stream, pcxHeader * p);
 paletteEntry * readImagePcxVgaPalette(FILE * stream);
 
 /*
 Functions for manipulating the cursor and retrieving data from it.
-Use the mouse structure to create a mouse handler.
+Using the mouse structure to create a mouse handler.
 */
-struct mouse {
-#if !defined(__APPLE2__) && !defined(__GNUC__)
-	buttonLeft:1;
-	buttonRight:1;
-	buttonMiddle:1;
-	buttons:4;
-#endif
-/*
-Apple II compilers and GNU C compiler dosen't really
-behave well with bit-composed structures
-*/
-#if defined(__APPLE2__) || defined(__GNUC__)
-	unsigned char buttonLeft;
-	unsigned char buttonRight;
-	unsigned char buttonMiddle;
-	unsigned char buttons;
-#endif
-	signed short x; signed short y;
-	signed short mx; signed short my;
-};
-
 char initMouse(struct mouse * m);
 void setMousePosition(unsigned short x, unsigned short y);
 void showMouse(void);
@@ -336,6 +339,13 @@ Sound functions
 */
 void playSound(unsigned long freq);
 void stopSound(void);
+
+/*Legacy support (LeafEngine <= 0.3.4)*/
+#if (LEAF_ENGINE <= 034L)
+#define leafGameCreate(x) leafContextCreate(x)
+#define leafGameEnd(x) leafContextDestroy(x)
+typedef leafContext leafGame;
+#endif
 
 /*Legacy support (LeafEngine <= 0.3.0)*/
 #if defined(__USE_LEGACY_MODE__) || (LEAF_ENGINE < 030L) || !defined(LEAF_ENGINE)
