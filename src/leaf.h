@@ -135,10 +135,6 @@ typedef struct leafGame {
 	const char * name;
 	/** Video mode usage */
 	unsigned char videoConf;
-	/** Wide of the current video mode/window */
-	unsigned short vwide;
-	/** Height of the current video mode/window */
-	unsigned short vtall;
 }leafGame;
 
 /*
@@ -149,13 +145,8 @@ that they are present).
 unsigned short * clock = (unsigned short *)0x046C+__djgpp_conventional_base;
 unsigned char * video = (unsigned char * )0xA0000+__djgpp_conventional_base;
 #elif defined(__TURBOC__) || defined(__BORLANDC__) /*(DOS) Borland Turbo C/C++*/
-#if defined(__TINY__) || defined(__SMALL__) || defined(__MEDIUM__)
-unsigned short far * clock = (unsigned short far *)0x0000046CL;
-unsigned char far * video = (unsigned char far * )0xA0000000L;
-#else
 unsigned short * clock = (unsigned short *)0x0000046CL;
 unsigned char * video = (unsigned char * )0xA0000000L;
-#endif
 #elif defined(__APPLE2__) /*APPLE2*/
 unsigned char * video = (unsigned char * )0x2000;
 #endif
@@ -168,7 +159,7 @@ union REGS in,out;
 /*Emulated/Buffer video buffer for drawing operations*/
 unsigned char * videoBuffer;
 
-unsigned char videoTable[32][2] = {
+unsigned short vtable[32][3] = {
 	{0,0,0}, /* 0x00 */
 	{0,0,0}, /* 0x01 */
 	{0,0,0}, /* 0x02 */
@@ -232,7 +223,7 @@ void plotLine(register signed short sx, register signed short sy, register signe
 void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
 void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
 void updateScreen(void);
-void drawSprite(unsigned char * data);
+void drawSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy);
 void drawTiledSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy);
 
 /*
