@@ -59,8 +59,6 @@ extern "C" {
 #include <AL/alc.h>
 #endif
 
-#define FREEDOS
-
 /*Current engine version*/
 #if !defined(LEAF_ENGINE)
 #define LEAF_ENGINE 035L
