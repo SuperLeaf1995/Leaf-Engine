@@ -29,7 +29,7 @@ void seedRandom(void) {
 #if defined(__GNUC__)
 	srand(time(NULL));
 #elif defined(__TURBOC__) && !defined(__BORLANDC__)
-	srand(*clock);
+	srand(*biosClock);
 #endif
 	return;
 }
@@ -44,8 +44,7 @@ signed int leafContextCreate(leafContext * g) {
 		fprintf(stderr,"Cannot enable nearptr\n");
 		exit(-1);
 	}
-#endif
-#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
+#endif /* __DJGPP__ */
 	leafCurrentCtx = g;
 	g->vwide = 320; g->vtall = 200;
 	videoBuffer = (unsigned char *)malloc(g->vwide*g->vtall);
@@ -53,16 +52,18 @@ signed int leafContextCreate(leafContext * g) {
 		return -1;
 	}
 	g->name = NULL;
-#endif
 #if defined(OPENAL)
 	alGetError(); /*Do dummy call to reset error stack*/
-#endif
+#endif /* OPENAL */
 	return 0;
 }
 
 signed int leafContextDestroy(leafContext * g) {
 	if(videoBuffer != NULL) {
 		free(videoBuffer);
+	}
+	if(g->name != NULL) {
+		free(g->name);
 	}
 	leafCurrentCtx = NULL; /*Destroy Context*/
 #if defined(__DJGPP__)
@@ -80,15 +81,19 @@ unsigned int setVideo(unsigned char v) {
 	leafCurrentCtx->vwide = vtable[v][0];
 	leafCurrentCtx->vtall = vtable[v][1];
 	leafCurrentCtx->vvideo = vtable[v][2];
-	
-	return (unsigned int)v;
+	if(leafCurrentCtx->vvideo == __ega || leafCurrentCtx->vvideo == __vga) {
+		video = (unsigned char *)0xA0000000L;
+	} else if(leafCurrentCtx->vvideo == __cga) {
+		video = (unsigned char *)0xB8000000L;
+	}
 #elif defined(__APPLE2__) /*In APPLE2 there is only one mode used and it's HIGHRES*/
 	poke(0xC050,0); /*Enter graphics mode*/
 	poke(0xC052,0); /*Enter fullscreen*/
 	poke(0xC057,0); /*Enter highres mode*/
 	poke(0xC054,0); /*Select PAGE1*/
-	return (unsigned int)v;
+#elif defined(__linux__)
 #endif
+	return (unsigned int)v;
 }
 
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c) {
@@ -162,21 +167,16 @@ void setPalette(paletteEntry * p, register unsigned short n) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	register unsigned short i;
 	if(leafCurrentCtx->vvideo == __vga) {
-		outp(0x03C8,0); /*send to the vga registers that we are going to send palette data*/
+		outp(0x03C8,(unsigned char)0); /*send to the vga registers that we are going to send palette data*/
 		for(i = 0; i < n; i++) {
-			outp(0x03C9,(p[i].r>>2));
-			outp(0x03C9,(p[i].g>>2));
-			outp(0x03C9,(p[i].b>>2));
+			outp(0x03C9,(unsigned char)(p[i].r>>2));
+			outp(0x03C9,(unsigned char)(p[i].g>>2));
+			outp(0x03C9,(unsigned char)(p[i].b>>2));
 		}
 	} else if(leafCurrentCtx->vvideo == __ega) {
-		outp(0x03C8,0); /*send to the vga registers that we are going to send palette data*/
-		for(i = 0; i < n; i++) {
-			outp(0x03C9,(p[i].r));
-			outp(0x03C9,(p[i].g));
-			outp(0x03C9,(p[i].b));
-		}
+
 	} else if(leafCurrentCtx->vvideo == __cga) {
-		outp(0x03D9,0x20);
+
 	}
 #endif /*__MSDOS__*/
 	return;
@@ -192,7 +192,13 @@ void waitRetrace(void) {
 
 void updateScreen(void) {
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
-	register size_t i;
+	unsigned long i;
+	size_t x; size_t y; size_t offs;
+	unsigned char * cgaSelect[2] = {
+		(unsigned char *)0xB8000000L,
+		(unsigned char *)0xBA000000L
+	};
+	unsigned char bitMask; 
 	waitRetrace(); /* Wait for VGA retrace */
 	if(leafCurrentCtx->vvideo == __vga) {
 		/*in VGA simply copy it to the plain VGA memory*/
@@ -207,13 +213,12 @@ void updateScreen(void) {
 			int86(0x10,&in,&out);
 		}
 	} else if(leafCurrentCtx->vvideo == __cga) {
-		/*TODO: Add working CGA code*/
-		in.h.ah = 0x0C;
 		for(i = 0; i < (leafCurrentCtx->vwide*leafCurrentCtx->vtall); i++) {
-			in.x.dx = (i/leafCurrentCtx->vwide);
-			in.x.cx = (i%leafCurrentCtx->vwide);
-			in.h.al = videoBuffer[i];
-			int86(0x10,&in,&out);
+			x = (i%320); y = (i/320);
+			bitMask = 0x80>>(x%8);
+			offs = ((y>>1)*((leafCurrentCtx->vwide<<1)>>3)+(x>>3));
+			if(videoBuffer[i]) { *(cgaSelect[y%2]+offs) |= bitMask; }
+			else { *(cgaSelect[y%2]+offs) &= ~bitMask; }
 		}
 	}
 	memset(videoBuffer,0,(size_t)leafCurrentCtx->vwide*leafCurrentCtx->vtall); /* Clear our buffer */
@@ -232,15 +237,15 @@ void drawSprite(unsigned char * data, unsigned short x, register unsigned short 
 	return;
 }
 
-void drawTiledSprite(unsigned char * data, unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy) {
+void drawTiledSprite(unsigned char * data, unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy, register unsigned short tx, register unsigned short ty) {
 	unsigned short i;
 	unsigned short i2;
 	unsigned short i3;
 	unsigned short i4;
-	for(i = 0; i < 16; i++) {
-		for(i2 = 0; i2 < 16; i2++) {
+	for(i = 0; i < tx; i++) {
+		for(i2 = 0; i2 < ty; i2++) {
 			i4 = iy; i3 = ix;
-			plotPixel((x+i),(y+i2),data[(((i4*16)+i2)*sy)+((i3)*16)+i]);
+			plotPixel((x+i),(y+i2),data[(((i4*tx)+i2)*sy)+((i3)*ty)+i]);
 		}
 	}
 	return;

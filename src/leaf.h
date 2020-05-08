@@ -143,7 +143,7 @@ typedef struct leafContext {
 	ALuint alSoundSrc;
 #endif
 	/** Name of the game, only displays on UI systems */
-	const char * name;
+	char * name;
 	/** Video mode usage */
 	unsigned char videoConf;
 	/** Current video wide */
@@ -220,13 +220,13 @@ leafContext * leafCurrentCtx;
 x86-specific addresses (As DOS is x86-specific we assume
 that they are present).
 */
-#if defined(__DJGPP__) /*(DOS) DJGPP*/
-unsigned short * clock = (unsigned short *)0x046C+__djgpp_conventional_base;
+#if defined(__DJGPP__)
+volatile unsigned short * biosClock = (volatile unsigned short *)0x046C+__djgpp_conventional_base;
 unsigned char * video = (unsigned char * )0xA0000+__djgpp_conventional_base;
-#elif defined(__TURBOC__) || defined(__BORLANDC__) /*(DOS) Borland Turbo C/C++*/
-unsigned short * clock = (unsigned short *)0x0000046CL;
+#elif defined(__TURBOC__) || defined(__BORLANDC__)
+unsigned short * biosClock = (unsigned short *)0x0000046CL;
 unsigned char * video = (unsigned char * )0xA0000000L;
-#elif defined(__APPLE2__) /*APPLE2*/
+#elif defined(__APPLE2__)
 unsigned char * video = (unsigned char * )0x2000;
 #endif
 
@@ -243,9 +243,9 @@ unsigned short vtable[32][3] = {
 	{0,0,0}, /* 0x01 */
 	{0,0,0}, /* 0x02 */
 	{0,0,0}, /* 0x03 */
-	{0,0,0}, /* 0x04 */
+	{320,200,__cga}, /* 0x04 */
 	{0,0,0}, /* 0x05 */
-	{0,0,0}, /* 0x06 */
+	{640,400,__cga}, /* 0x06 */
 	{0,0,0}, /* 0x07 */
 	{0,0,0}, /* 0x08 */
 	{0,0,0}, /* 0x09 */
@@ -296,7 +296,7 @@ void plotWireSquare(register signed short x1, register signed short y1, register
 void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
 void updateScreen(void);
 void drawSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy);
-void drawTiledSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy);
+void drawTiledSprite(unsigned char * data, unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy, register unsigned short tx, register unsigned short ty);
 
 /*
 Bitmap read functions
@@ -348,7 +348,6 @@ void stopSound(void);
 #if (LEAF_ENGINE <= 034L)
 #define leafGameCreate(x) leafContextCreate(x)
 #define leafGameEnd(x) leafContextDestroy(x)
-typedef leafContext leafGame;
 #endif
 
 /*Legacy support (LeafEngine <= 0.3.0)*/
