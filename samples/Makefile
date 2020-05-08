@@ -1,0 +1,23 @@
+#makefile for making the samples
+
+all: out out/gba-test.gba
+
+out:
+	mkdir -p out
+
+clean:
+	rm -f out/*.gba
+	rm -f out/*.elf
+	rm -f out/*.obj
+
+out/gba-test.elf: out/gba-test-entry.obj out/gba-test.obj
+	~/opt/gcc-arm-none-eabi/bin/arm-none-eabi-ld -nostdlib $^ -o $@
+
+out/gba-test-entry.obj: gba-test.s
+	~/opt/gcc-arm-none-eabi/bin/arm-none-eabi-as $< -o $@
+
+out/gba-test.obj: gba-test.c
+	~/opt/gcc-arm-none-eabi/bin/arm-none-eabi-gcc -D__GBA__ -I../src -L../out/gba -lleaf -Wall -Wextra -ansi -pedantic -c $^ -o $@
+	
+out/gba-test.gba: out/gba-test.elf
+	~/opt/gcc-arm-none-eabi/bin/arm-none-eabi-objcopy -O binary $< $@

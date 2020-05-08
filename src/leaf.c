@@ -26,7 +26,7 @@ extern "C" {
 #include "leaf.h"
 
 void seedRandom(void) {
-#if defined(__GNUC__)
+#if defined(__linux) || defined(linux)
 	srand(time(NULL));
 #elif defined(__TURBOC__) && !defined(__BORLANDC__)
 	srand(*biosClock);
@@ -35,7 +35,11 @@ void seedRandom(void) {
 }
 
 signed int generateRandom(void) {
+#if defined(__GBA__)
+
+#else
 	return rand();
+#endif
 }
 
 signed int leafContextCreate(leafContext * g) {
@@ -45,16 +49,19 @@ signed int leafContextCreate(leafContext * g) {
 		exit(-1);
 	}
 #endif /* __DJGPP__ */
-	leafCurrentCtx = g;
+#if defined(__GBA__)
+	g->vwide = 240; g->vtall = 160;
+#else
 	g->vwide = 320; g->vtall = 200;
+#endif
 	videoBuffer = (unsigned char *)malloc(g->vwide*g->vtall);
 	if(videoBuffer == NULL) {
 		return -1;
 	}
-	g->name = NULL;
 #if defined(OPENAL)
 	alGetError(); /*Do dummy call to reset error stack*/
 #endif /* OPENAL */
+	leafCurrentCtx = g;
 	return 0;
 }
 
@@ -65,7 +72,6 @@ signed int leafContextDestroy(leafContext * g) {
 	if(g->name != NULL) {
 		free(g->name);
 	}
-	leafCurrentCtx = NULL; /*Destroy Context*/
 #if defined(__DJGPP__)
 	__djgpp_nearptr_disable();
 #endif
@@ -91,7 +97,8 @@ unsigned int setVideo(unsigned char v) {
 	poke(0xC052,0); /*Enter fullscreen*/
 	poke(0xC057,0); /*Enter highres mode*/
 	poke(0xC054,0); /*Select PAGE1*/
-#elif defined(__linux__)
+#elif defined(__GBA__)
+	*(unsigned long*)0x4000000 = 0x403; /*Set mode 3*/
 #endif
 	return (unsigned int)v;
 }
@@ -114,6 +121,10 @@ unsigned char fetchPixel(register unsigned short x,register unsigned short y) {
 unsigned char fetchLinearPixel(register unsigned short p) {
 	return videoBuffer[p];
 }
+
+#if defined(__GBA__)
+#define abs(x) ((unsigned)x)
+#endif
 
 void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c) {
 	signed short i,dx,dy,sdx,sdy,dxabs,dyabs,px,py,x,y;
@@ -178,7 +189,13 @@ void setPalette(paletteEntry * p, register unsigned short n) {
 	} else if(leafCurrentCtx->vvideo == __cga) {
 
 	}
-#endif /*__MSDOS__*/
+#elif defined(__GBA__) /*__MSDOS__*/
+	register unsigned short i;
+	for(i = 0; i < n; i++) {
+		leafCurrentCtx->rgbPalette[i] = p[i];
+	}
+#endif
+#endif
 	return;
 }
 
@@ -222,6 +239,18 @@ void updateScreen(void) {
 		}
 	}
 	memset(videoBuffer,0,(size_t)leafCurrentCtx->vwide*leafCurrentCtx->vtall); /* Clear our buffer */
+#elif defined(__GBA__)
+	size_t i;
+	for(i = 0; i < (160*240); i++) {
+		/*Why does this work?*/
+		*(unsigned short *)(0x6000000+(i*sizeof(unsigned short))) = rgb16(leafCurrentCtx->rgbPalette[videoBuffer[i]].r,
+																		leafCurrentCtx->rgbPalette[videoBuffer[i]].g,
+																		leafCurrentCtx->rgbPalette[videoBuffer[i]].b
+																		);
+	}
+	for(i = 0; i < (160*240); i++) {
+		videoBuffer[i] = 0;
+	}
 #endif
 	return;
 }
@@ -578,6 +607,7 @@ paletteEntry *  readImagePcxVgaPalette(FILE * stream) {
 	}
 	return (paletteEntry *)pal;
 }
+#endif
 
 /**
 @brief Initializes mouse driver/cursor

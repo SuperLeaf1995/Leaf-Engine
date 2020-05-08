@@ -34,14 +34,8 @@ extern "C" {
 #include <ctype.h>
 #include <limits.h>
 #include <time.h>
-/*APPLE2 dosen't supports float and math functions*/
-#if !defined(__APPLE2__)
 #include <math.h>
 #include <float.h>
-#else
-/*Use CONIO.H of APPLE2*/
-#include <conio.h>
-#endif
 /*DOS specific functions*/
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 #include <conio.h>
@@ -54,7 +48,7 @@ extern "C" {
 #endif /* __DJGPP__ */
 #endif
 
-#if defined(__GNUC__)
+#if defined(__linux) || defined(linux)
 #include <AL/al.h>
 #include <AL/alc.h>
 #endif
@@ -87,6 +81,10 @@ to avoid further confusions, inp() and outp() are used*/
 #if defined(__TURBOC__) || defined(__BORLANDC__)
 #define inp(x) inportb(x)
 #define outp(x,y) outportb(x,y)
+#endif
+
+#if defined(__GBA__)
+#define rgb16(r,g,b) ((r)+(g<<5)+(b<<10))
 #endif
 
 /*allows easy-detection and on-demand video switching without
@@ -141,6 +139,9 @@ typedef struct leafContext {
 	ALCdevice * alDev;
 	ALCcontext * alCtx;
 	ALuint alSoundSrc;
+#endif
+#if defined(__GBA__)
+	paletteEntry rgbPalette[256];
 #endif
 	/** Name of the game, only displays on UI systems */
 	char * name;
@@ -228,6 +229,8 @@ unsigned short * biosClock = (unsigned short *)0x0000046CL;
 unsigned char * video = (unsigned char * )0xA0000000L;
 #elif defined(__APPLE2__)
 unsigned char * video = (unsigned char * )0x2000;
+#elif defined(__GBA__)
+unsigned short * video = (unsigned short *)0x6000000;
 #endif
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
@@ -238,6 +241,7 @@ union REGS in,out;
 /*Emulated/Buffer video buffer for drawing operations*/
 unsigned char * videoBuffer;
 
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 unsigned short vtable[32][3] = {
 	{0,0,0}, /* 0x00 */
 	{0,0,0}, /* 0x01 */
@@ -261,6 +265,7 @@ unsigned short vtable[32][3] = {
 	{320,200,__vga}, /* 0x13 */
 	{0,0,0} /* 0x14 */
 };
+#endif
 
 /*
 Time-based random number generator
