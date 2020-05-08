@@ -1,4 +1,4 @@
-# Builds a Leaf-Engine shared library
+# Makefile for GCC Leaf-Engine builds
 
 OUT_DIR = out
 INC_DIR = src
@@ -19,6 +19,6 @@ clean:
 
 $(OUT_DIR)/libleaf.so: $(OUT_DIR)/leaf.o
 	$(LD) -shared $^ -o $@
-	
+
 $(OUT_DIR)/%.o: $(SRC_DIR)/%.c $(INC_DIR)/%.h
 	$(CC) $(CFLAGS) -I$(INC_DIR) -c $< -o $@

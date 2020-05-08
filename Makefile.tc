@@ -1,0 +1,19 @@
+# Makefile for TurboC Leaf-Engine builds
+
+CC = tcc
+CFLAGS = -mh -j10 -g8 -IC:\TC\INCLUDE -Isrc
+CLIB = tlib
+
+all: out\leaf.lib
+	@echo "--- LIBRARY BUILDING DONE ---"
+	
+clean:
+	del out\*.*
+
+out\leaf.lib: out\leaf.obj
+	@echo "--- BUILDING $< ---"
+	$(CLIB) $< + out\leaf.obj
+
+out\leaf.obj: src\leaf.c src\leaf.h
+	@echo "--- BUILDING $< ---"
+	$(CC) -c $(CFLAGS) -D__MSDOS__ -o$< src\leaf.c
