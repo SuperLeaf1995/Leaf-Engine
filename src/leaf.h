@@ -19,8 +19,8 @@
  * 
  */
 
-#ifndef LEAF_H
-#define LEAF_H
+#ifndef __LEAF_LEAF_H__
+#define __LEAF_LEAF_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,6 +52,8 @@ extern "C" {
 #include <AL/al.h>
 #include <AL/alc.h>
 #endif
+
+#include "context.h"
 
 /*Current engine version*/
 #if !defined(LEAF_ENGINE)
@@ -95,19 +97,6 @@ using multiple versions*/
 #define __mcga	0x0F
 
 /*
-PaletteEntry is used for storing palette information of pictures, works
-in coordinance with setPalette.
-*/
-typedef struct paletteEntry {
-	/** Red component of the palette */
-	unsigned char r;
-	/** Green component of the palette */
-	unsigned char g;
-	/** Blue component of the palette */
-	unsigned char b;
-}paletteEntry;
-
-/*
 LeafEvent is a special structure wich handles all events in a program
 this should be the main structure and there should be generally one per
 program.
@@ -126,82 +115,6 @@ typedef struct leafEvent {
 	signed char ui;
 }leafEvent;
 
-/*
-LeafGame is another special structure wich is the main structure for
-main operations. This structure should only be in programs wich require
-leafEvent and any of the functions that depends of it.
-
-Provides a simple way for porting DOS, Linux and BSD applications without
-the hassle of setting everything separately
-*/
-typedef struct leafContext {
-#if defined(OPENAL)
-	ALCdevice * alDev;
-	ALCcontext * alCtx;
-	ALuint alSoundSrc;
-#endif
-#if defined(__GBA__)
-	paletteEntry rgbPalette[256];
-#endif
-	/** Name of the game, only displays on UI systems */
-	char * name;
-	/** Video mode usage */
-	unsigned char videoConf;
-	/** Current video wide */
-	unsigned short vwide;
-	/** Current video tall */
-	unsigned short vtall;
-	/** Current video mode (Always VGA on UI systems) */
-	unsigned char vvideo;
-}leafContext;
-
-/* BitmapHeader structure */
-typedef struct _bmpHeader {
-	unsigned char type[3];
-	unsigned long sizeOfFile;
-	unsigned long reserved;
-	unsigned long offset;
-	unsigned long headerSize;
-	signed long wide;
-	signed long tall;
-	unsigned short planes;
-	unsigned short bitsPerPixel;
-	unsigned long compression;
-	unsigned long sizeOfImage;
-	unsigned long xPixelsPerMeter;
-	unsigned long yPixelsPerMeter;
-	unsigned long numberOfColors;
-	unsigned long importantColors;
-	unsigned long mask[4];
-	unsigned long paletteEntries;
-	
-	paletteEntry * palette;
-}bmpHeader;
-
-/* PcxHeader structure */
-typedef struct pcxHeader {
-	unsigned char type;
-	unsigned char version;
-	unsigned char compression;
-	unsigned char bitsPerPixel;
-	unsigned short xStart;
-	unsigned short yStart;
-	unsigned short xEnd;
-	unsigned short yEnd;
-	unsigned short horizontalResolution;
-	unsigned short verticalResolution;
-	unsigned char reserved;
-	unsigned char planes;
-	unsigned short bytesPerLine;
-	unsigned short paletteType;
-	unsigned short horizontalScreenSize;
-	unsigned short verticalScreenSize;
-	unsigned char * reserved2;
-	
-	paletteEntry * egaPalette;
-	paletteEntry * vgaPalette;
-}pcxHeader;
-
 /* Mouse handler structure */
 struct mouse {
 	unsigned char buttonLeft;
@@ -217,55 +130,12 @@ The main game context we are working on
 */
 leafContext * leafCurrentCtx;
 
-/*
-x86-specific addresses (As DOS is x86-specific we assume
-that they are present).
-*/
-#if defined(__DJGPP__)
-volatile unsigned short * biosClock = (volatile unsigned short *)0x046C+__djgpp_conventional_base;
-unsigned char * video = (unsigned char * )0xA0000+__djgpp_conventional_base;
-#elif defined(__TURBOC__) || defined(__BORLANDC__)
-unsigned short * biosClock = (unsigned short *)0x0000046CL;
-unsigned char * video = (unsigned char * )0xA0000000L;
-#elif defined(__APPLE2__)
-unsigned char * video = (unsigned char * )0x2000;
-#elif defined(__GBA__)
-unsigned short * video = (unsigned short *)0x6000000;
-#endif
-
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 /*Global variable for register I/O (DOS-only)*/
 union REGS in,out;
 #endif
 
-/*Emulated/Buffer video buffer for drawing operations*/
-unsigned char * videoBuffer;
-
-#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
-unsigned short vtable[32][3] = {
-	{0,0,0}, /* 0x00 */
-	{0,0,0}, /* 0x01 */
-	{0,0,0}, /* 0x02 */
-	{0,0,0}, /* 0x03 */
-	{320,200,__cga}, /* 0x04 */
-	{0,0,0}, /* 0x05 */
-	{640,400,__cga}, /* 0x06 */
-	{0,0,0}, /* 0x07 */
-	{0,0,0}, /* 0x08 */
-	{0,0,0}, /* 0x09 */
-	{0,0,0}, /* 0x0A */
-	{0,0,0}, /* 0x0B */
-	{0,0,0}, /* 0x0C */
-	{320,200,__ega}, /* 0x0D */
-	{640,200,__ega}, /* 0x0E */
-	{640,350,__ega}, /* 0x0F */
-	{640,400,__ega}, /* 0x10 */
-	{640,480,__mcga}, /* 0x11 */
-	{640,480,__vga}, /* 0x12 */
-	{320,200,__vga}, /* 0x13 */
-	{0,0,0} /* 0x14 */
-};
-#endif
+extern unsigned char * videoBuffer;
 
 /*
 Time-based random number generator
@@ -279,43 +149,6 @@ Main, principal Leaf-Engine functions
 signed int leafContextCreate(leafContext * g);
 signed int leafContextDestroy(leafContext * g);
 signed int leafSetVideo(leafContext * g);
-
-/*
-General graphics manipulation functions.
-Comaptible with almost all displays (VGA,EGA,CGA,etc).
-*/
-unsigned int setVideo(unsigned char v);
-void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c);
-void plotLinearPixel(register unsigned short pos,register unsigned char color);
-unsigned char fetchPixel(register unsigned short x,register unsigned short y);
-void setPalette(paletteEntry * p, register unsigned short n);
-void waitRetrace(void);
-
-/*
-Graphics manipulation routines
-This routines does not directly modify video, but they rely on the
-principal graphics functions
-*/
-void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
-void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
-void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
-void updateScreen(void);
-void drawSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy);
-void drawTiledSprite(unsigned char * data, unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy, register unsigned short tx, register unsigned short ty);
-
-/*
-Bitmap read functions
-*/
-signed int readImageBitmapHeader(FILE * stream, bmpHeader * e);
-paletteEntry * readImageBitmapPalette(FILE * stream, bmpHeader * b);
-unsigned char * readImageBitmapData(FILE * stream, bmpHeader * b);
-
-/*
-PCX read functions
-*/
-signed int readImagePcxHeader(FILE * stream, pcxHeader * p);
-unsigned char * readImagePcxData(FILE * stream, pcxHeader * p);
-paletteEntry * readImagePcxVgaPalette(FILE * stream);
 
 /*
 Functions for manipulating the cursor and retrieving data from it.

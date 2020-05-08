@@ -10,14 +10,12 @@ clean:
 	rm -f out/*.elf
 	rm -f out/*.obj
 
+# gba-test
 out/gba-test.elf: out/gba-test-entry.obj out/gba-test.obj
-	~/opt/gcc-arm-none-eabi/bin/arm-none-eabi-ld -nostdlib $^ -o $@
-
+	~/opt/gcc-arm-none-eabi/bin/arm-none-eabi-ld $^ -o $@
 out/gba-test-entry.obj: gba-test.s
 	~/opt/gcc-arm-none-eabi/bin/arm-none-eabi-as $< -o $@
-
 out/gba-test.obj: gba-test.c
 	~/opt/gcc-arm-none-eabi/bin/arm-none-eabi-gcc -D__GBA__ -I../src -L../out/gba -lleaf -Wall -Wextra -ansi -pedantic -c $^ -o $@
-	
 out/gba-test.gba: out/gba-test.elf
 	~/opt/gcc-arm-none-eabi/bin/arm-none-eabi-objcopy -O binary $< $@

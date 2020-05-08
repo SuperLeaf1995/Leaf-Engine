@@ -1,19 +1,32 @@
 # Makefile for TurboC Leaf-Engine builds
 
 CC = tcc
-CFLAGS = -mh -j10 -g8 -IC:\TC\INCLUDE -Isrc
+CFLAGS = -mh -j5 -g8 -IC:\TC\INCLUDE -Isrc
 CLIB = tlib
 
 all: out\leaf.lib
 	@echo "--- LIBRARY BUILDING DONE ---"
 	
 clean:
-	del out\*.*
+	del out\dos\*.*
 
-out\leaf.lib: out\leaf.obj
+out\dos\leaf.lib: out\dos\leaf.obj out\dos\fbmp.obj out\dos\fpcx.obj out\dos\graphic.obj
 	@echo "--- BUILDING $< ---"
-	$(CLIB) $< + out\leaf.obj
+	$(CLIB) $< + out\dos\leaf.obj + out\dos\fbmp.obj + out\dos\fpcx.obj
+	$(CLIB) $< + out\dos\graphic.obj
 
-out\leaf.obj: src\leaf.c src\leaf.h
+out\dos\leaf.obj: src\leaf.c src\leaf.h
 	@echo "--- BUILDING $< ---"
-	$(CC) -c $(CFLAGS) -D__MSDOS__ -o$< src\leaf.c
+	$(CC) -c $(CFLAGS) -o$< src\leaf.c
+
+out\dos\fbmp.obj: src\fbmp.c src\fbmp.h
+	@echo "--- BUILDING $< ---"
+	$(CC) -c $(CFLAGS) -o$< src\fbmp.c
+
+out\dos\fpcx.obj: src\fpcx.c src\fpcx.h
+	@echo "--- BUILDING $< ---"
+	$(CC) -c $(CFLAGS) -o$< src\fpcx.c
+
+out\dos\graphic.obj: src\graphic.c src\graphic.h
+	@echo "--- BUILDING $< ---"
+	$(CC) -c $(CFLAGS) -o$< src\graphic.c

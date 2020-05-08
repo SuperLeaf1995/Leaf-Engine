@@ -24,7 +24,8 @@ install:
 	cp $(SRC_DIR)/leaf.h /usr/include
 
 clean:
-	rm out/linux/*.*
+	rm -f out/linux/*.*
+	rm -f out/gba/*.*
 
 # Directories
 $(OUT_DIR)/linux: $(OUT_DIR)
@@ -34,21 +35,21 @@ $(OUT_DIR)/gba: $(OUT_DIR)
 	mkdir -p $@
 
 # Linux (Static)
-$(OUT_DIR)/linux/libleaf.a: $(OUT_DIR)/linux/leaf.obj
+$(OUT_DIR)/linux/libleaf.a: $(OUT_DIR)/linux/leaf.obj $(OUT_DIR)/linux/fpcx.obj $(OUT_DIR)/linux/fbmp.obj $(OUT_DIR)/linux/graphic.obj
 	$(AR) rcs $@ $^
 
 $(OUT_DIR)/linux/%.obj: $(SRC_DIR)/%.c $(INC_DIR)/%.h
 	$(CC) $(CFLAGS) -c $< -o $@
 	
 # Linux (Shared)
-$(OUT_DIR)/linux/libleaf.so: $(OUT_DIR)/linux/leaf.o
+$(OUT_DIR)/linux/libleaf.so: $(OUT_DIR)/linux/leaf.o $(OUT_DIR)/linux/fpcx.o $(OUT_DIR)/linux/fbmp.o $(OUT_DIR)/linux/graphic.o
 	$(CC) -shared $^ -o $@
 
 $(OUT_DIR)/linux/%.o: $(SRC_DIR)/%.c $(INC_DIR)/%.h
 	$(CC) $(CFLAGS) -fpic -c $< -o $@
 
 # GBA
-$(OUT_DIR)/gba/libleaf.a: $(OUT_DIR)/gba/leaf.obj
+$(OUT_DIR)/gba/libleaf.a: $(OUT_DIR)/gba/leaf.obj $(OUT_DIR)/gba/fpcx.obj
 	$(GBA_AR) rcs $@ $^
 
 $(OUT_DIR)/gba/%.obj: $(SRC_DIR)/%.c $(INC_DIR)/%.h
