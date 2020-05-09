@@ -4,11 +4,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
+#include <dos.h>
+#endif
+#if defined(__DJGPP__)
+#include <sys/nearptr.h>
+#endif /* __DJGPP__ */
 #include "palette.h"
 #include "context.h"
 #include "image.h"
 
 extern leafContext * leafCurrentCtx;
+
+/*allows easy-detection and on-demand video switching without
+using multiple versions*/
+#define __cga	0x01
+#define __vga	0x03
+#define __ega	0x07
+#define __mcga	0x0F
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 unsigned short vtable[32][3] = {
@@ -40,15 +53,18 @@ unsigned short vtable[32][3] = {
 unsigned char * videoBuffer;
 
 #if defined(__DJGPP__)
-volatile unsigned short * biosClock = (volatile unsigned short *)0x046C+__djgpp_conventional_base;
 unsigned char * video = (unsigned char * )0xA0000+__djgpp_conventional_base;
 #elif defined(__TURBOC__) || defined(__BORLANDC__)
-unsigned short * biosClock = (unsigned short *)0x0000046CL;
 unsigned char * video = (unsigned char * )0xA0000000L;
 #elif defined(__APPLE2__)
 unsigned char * video = (unsigned char * )0x2000;
 #elif defined(__GBA__)
 unsigned short * video = (unsigned short *)0x6000000;
+#endif
+
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
+/*Global variable for register I/O (DOS-only)*/
+static union REGS in,out;
 #endif
 
 /*

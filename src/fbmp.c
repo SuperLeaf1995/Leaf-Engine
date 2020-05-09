@@ -1,176 +1,204 @@
 #include "fbmp.h"
 
-signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
-	unsigned long sizeOfFile;
-	unsigned long reserved;
-	unsigned long offset;
-	unsigned long headerSize;
-	signed long wide;
-	signed long tall;
-	unsigned short planes;
-	unsigned short bitsPerPixel;
+signed int imageBitmap(const char * filename, Image * img) {
+	unsigned short sHold;
+	DDBheader db_DDBheader;
+	WinBmpFileHeader db_WinBmpFileHeader;
+	Win3xBmpHeader db_Win3xBmpHeader;
+	WinNTBmpHeader db_WinNTBmpHeader;
+	WinNTBmpMasks db_WinNTBmpMasks;
+	Win95BmpHeader db_Win95BmpHeader;
+	Win2xBmpFileHeader db_Win2xBmpFileHeader;
+	Win3xBmpFileHeader db_Win3xBmpFileHeader;
+	size_t i; size_t i2;
+	unsigned short paletteEntries;
+	
+	unsigned char hold;
+	
 	unsigned long compression;
-	unsigned long sizeOfImage;
-	unsigned long xPixelsPerMeter;
-	unsigned long yPixelsPerMeter;
-	unsigned long numberOfColors;
-	unsigned long importantColors;
-	unsigned long mask[4];
-	if(!stream) { return -1; }
-	if(fread(e->type,sizeof(unsigned short),1,stream) != 1) { return -1; }
-	/*check that it is a actual bitmap*/
-	if(strncmp((const char *)e->type,"BM",2) != 0 && strncmp((const char *)e->type,"BA",2) != 0
-	&& strncmp((const char *)e->type,"IC",2) != 0 && strncmp((const char *)e->type,"PT",2) != 0
-	&& strncmp((const char *)e->type,"CI",2) != 0 && strncmp((const char *)e->type,"CP",2) != 0)
-	{ return -2; }
-	if(fread(&sizeOfFile,sizeof(unsigned long),1,stream) != 1) { return -3; }
-	if(fread(&reserved,sizeof(unsigned long),1,stream) != 1) { return -4; }
-	fread(&offset,sizeof(unsigned long),1,stream);
-	fread(&headerSize,sizeof(unsigned long),1,stream);
-	/*check the header size*/
-	if(headerSize == 40) { /*Windows 3.x bitmap*/
-		fread(&wide,sizeof(signed long),1,stream);
-		fread(&tall,sizeof(signed long),1,stream);
-		fread(&planes,sizeof(unsigned short),1,stream);
-		fread(&bitsPerPixel,sizeof(unsigned short),1,stream);
-		fread(&compression,sizeof(unsigned long),1,stream);
-		fread(&sizeOfImage,sizeof(unsigned long),1,stream);
-		fread(&xPixelsPerMeter,sizeof(unsigned long),1,stream);
-		fread(&yPixelsPerMeter,sizeof(unsigned long),1,stream);
-		fread(&numberOfColors,sizeof(unsigned long),1,stream);
-		fread(&importantColors,sizeof(unsigned long),1,stream);
-	} else if(headerSize == 12) { /*OS/2 1.x bitmap*/
-		fread(&wide,sizeof(unsigned short),1,stream);
-		fread(&tall,sizeof(unsigned short),1,stream);
-		fread(&planes,sizeof(unsigned short),1,stream);
-		fread(&bitsPerPixel,sizeof(unsigned short),1,stream);
-	} else {
-		return -5;
+	unsigned long bitsPerPixel;
+	signed long wide; signed long tall;
+	
+	FILE * fp;
+	
+	fp = fopen(filename,"rb");
+	if(!fp) {
+		return -1;
 	}
-	/*check if bit's are valid*/
-	if((bitsPerPixel != 1) && (bitsPerPixel != 2)
-	&& (bitsPerPixel != 4) && (bitsPerPixel != 8)
-	&& (bitsPerPixel != 16) && (bitsPerPixel != 24)
-	&& (bitsPerPixel != 32)) { return -6; }
-	if(planes != 1) { /*we did something wrong!*/
-		return -7;
-	}
-	if(numberOfColors > 256) {
-		return -8;
-	}
-	e->planes = planes; /*save everything in the struct pointer thing*/
-	e->bitsPerPixel = bitsPerPixel;
-	e->compression = compression;
-	e->sizeOfImage = sizeOfImage;
-	e->xPixelsPerMeter = xPixelsPerMeter;
-	e->yPixelsPerMeter = yPixelsPerMeter;
-	e->numberOfColors = numberOfColors;
-	e->importantColors = importantColors;
-	e->wide = wide;
-	e->tall = tall;
-	e->sizeOfFile = sizeOfFile;
-	e->reserved = reserved;
-	e->offset = offset;
-	e->headerSize = headerSize;
-	return 0;
-}
+	
+	/*Read the bitmap header*/
 
-paletteEntry * readImageBitmapPalette(FILE *stream, bmpHeader * b) {
-	unsigned short i;
-	paletteEntry * pal;
-	if(b->bitsPerPixel == 8 || b->bitsPerPixel == 4 || b->bitsPerPixel == 2
-	|| b->bitsPerPixel == 1) { /*check if it really has palette...*/
-		b->paletteEntries = (1<<(b->bitsPerPixel)); /*number of palette entries to read*/
-		pal = (paletteEntry *)malloc((sizeof(paletteEntry)*b->paletteEntries));
-		if(pal == NULL) { return NULL; }
-		for(i = 0; i < b->paletteEntries-3; i++) { /*read the palette thing*/
-			pal[i].b = fgetc(stream); /*bitmap has reverse RGB order for each entry*/
-			pal[i].g = fgetc(stream);
-			pal[i].r = fgetc(stream);
-			if(b->headerSize >= 40) { /*later versions require 4 byte palette elements*/
-				fgetc(stream); /*padding*/
+	/*Get signature*/
+	if(fread(&sHold,sizeof(unsigned short),1,fp) != 1) {
+		return -2;
+	}
+	
+	/*Read bitmap header*/
+	/*DDB File*/
+	if(sHold == 0) {
+		if(fread(&db_DDBheader,sizeof(DDBheader),1,fp) < 1) {
+			return -3;
+		}
+		printf("WINDOWS 1.X\n");
+	}
+	/*Windows Bitmap File*/
+	else if(sHold == 0x4D42) {
+		/*File Info Header*/
+		
+		if(fread(&db_WinBmpFileHeader,sizeof(WinBmpFileHeader),1,fp) < 1) {
+			return -4;
+		}
+		
+		/*Windows 2.x uses short for sizes*/
+		if(db_WinBmpFileHeader.headerSize == 12) {
+			if(fread(&db_Win2xBmpFileHeader,sizeof(Win2xBmpFileHeader),1,fp) < 1) {
+				return -4;
+			}
+			bitsPerPixel = db_Win2xBmpFileHeader.bitsPerPixel;
+			wide = db_Win2xBmpFileHeader.wide;
+			tall = db_Win2xBmpFileHeader.tall;
+		/*Windows 3.x+ uses long for sizes*/
+		} else if(db_WinBmpFileHeader.headerSize > 40) {
+			if(fread(&db_Win3xBmpFileHeader,sizeof(Win3xBmpFileHeader),1,fp) < 1) {
+				return -4;
+			}
+			bitsPerPixel = db_Win3xBmpFileHeader.bitsPerPixel;
+			wide = db_Win3xBmpFileHeader.wide;
+			tall = db_Win3xBmpFileHeader.tall;
+		}
+		
+		/*Bitmap Info Header*/
+		
+		/*Windows 3.x Bitmap*/
+		if(db_WinBmpFileHeader.headerSize == 40) {
+			if(fread(&db_Win3xBmpHeader,sizeof(Win3xBmpHeader),1,fp) < 1) {
+				return -5;
+			}
+			compression = db_Win3xBmpHeader.compression;
+			printf("WINDOWS 3.X\n");
+		}
+		/*Windows NT Bitmap*/
+		else if(db_WinBmpFileHeader.headerSize == 40) {
+			if(fread(&db_WinNTBmpHeader,sizeof(WinNTBmpHeader),1,fp) < 1) {
+				return -5;
+			}
+			if(db_WinNTBmpHeader.compression == 3) {
+				if(fread(&db_WinNTBmpMasks,sizeof(WinNTBmpMasks),1,fp) < 1) {
+					return -5;
+				}
+			}
+			compression = db_WinNTBmpHeader.compression;
+			printf("WINDOWS NT\n");
+		}
+		/*Windows 95/98 Bitmap*/
+		else if(db_WinBmpFileHeader.headerSize == 108) {
+			if(fread(&db_Win95BmpHeader,sizeof(Win95BmpHeader),1,fp) < 1) {
+				return -5;
+			}
+			compression = db_Win95BmpHeader.compression;
+			printf("fsize: %lu\n",db_WinBmpFileHeader.fileSize);
+			printf("hsize: %lu\n",db_WinBmpFileHeader.headerSize);
+			printf("offset: %lu\n",db_WinBmpFileHeader.offset);
+			printf("resolution: %lux%lu\n",db_Win3xBmpFileHeader.wide,db_Win3xBmpFileHeader.tall);
+			printf("bpp: %u\n",db_Win3xBmpFileHeader.bitsPerPixel);
+			printf("WINDOWS 95/98\n");
+		}
+	} else {
+		printf("UNKNOWN\n");
+		return -6;
+	}
+	
+	/*Only use palette for 8-bit images*/
+	if(bitsPerPixel < 8) {
+		paletteEntries = (1<<(bitsPerPixel));
+		img->palette = (paletteEntry *)malloc(sizeof(paletteEntry)*paletteEntries);
+		if(img->palette == NULL) {
+			return -7;
+		}
+		for(i = 0; i < paletteEntries; i++) { /*Read the palette*/
+			img->palette[i].b = fgetc(fp); /*Bitmap has reverse RGB order for each entry*/
+			img->palette[i].g = fgetc(fp);
+			img->palette[i].r = fgetc(fp);
+			if(db_WinBmpFileHeader.headerSize >= 40) { /*Later versions require 4-byte aligned palette*/
+				fgetc(fp);
 			}
 		}
-		return (paletteEntry *)pal; /*return the allocated palette*/
-	} else {
-		return NULL; /*16 and 24 bit bitmaps dosent has palette*/
 	}
-}
-
-unsigned char * readImageBitmapData(FILE *stream, bmpHeader * b) {
-	unsigned long i,i2;
-	unsigned char hold;
-	unsigned char *data;
-	if((signed long)b->tall <= 0 || (signed long)b->wide <= 0) {
-		return NULL;
+	
+	img->data = (unsigned char *)malloc(wide*tall);
+	if(img->data == NULL) {
+		return -8;
 	}
-	data = (unsigned char *)malloc((b->wide*b->tall)); /*allocate data for bitmap*/
-	if(data == NULL) {
-		return NULL;
-	}
-	switch(b->compression) {
-		case 0: /*no compression*/
-			switch(b->bitsPerPixel) {
+	
+	switch(compression) {
+		case 0:
+			switch(bitsPerPixel) {
 				case 8: /*256 colors*/
-					for(i = 1; (signed long)i < b->tall+1; i++) { /*reverse read wide, but not tall*/
-						for(i2 = 0; (signed long)i2 < b->wide; i2++) {
-							fread(&hold,sizeof(unsigned char),1,stream);
-							data[(i2+((b->tall-i)*b->wide))] = hold;
+					for(i = 1; (signed long)i < tall+1; i++) { /*reverse read wide, but not tall*/
+						for(i2 = 0; (signed long)i2 < wide; i2++) {
+							fread(&hold,sizeof(unsigned char),1,fp);
+							img->data[(i2+((tall-i)*wide))] = hold;
 						}
-						if(((((b->wide*8)+7)>>3)&3)) { /*skip padding (dword)*/
-							fseek(stream,SEEK_CUR,3-((((b->wide*8)+7)>>3)&3));
+						if(((((wide*8)+7)>>3)&3)) { /*skip padding (dword)*/
+							fseek(fp,SEEK_CUR,3-((((wide*8)+7)>>3)&3));
 						}
 					}
 					break;
 				case 4: /*16 colors*/
-					for(i = 1; (signed long)i < b->tall+1; i++) { /*reverse read wide, but not tall*/
-						for(i2 = 0; (signed long)i2 < b->wide; i2++) {
-							fread(&hold,sizeof(unsigned char),1,stream);
-							data[(i2+((b->tall-i)*b->wide))] = (hold>>4)&0x0F;
+					for(i = 1; (signed long)i < tall+1; i++) { /*reverse read wide, but not tall*/
+						for(i2 = 0; (signed long)i2 < wide; i2++) {
+							fread(&hold,sizeof(unsigned char),1,fp);
+							img->data[(i2+((tall-i)*wide))] = (hold>>4)&0x0F;
 							i2++;
-							data[(i2+((b->tall-i)*b->wide))] = hold&0x0F;
+							img->data[(i2+((tall-i)*wide))] = hold&0x0F;
 						}
-						if(((((b->wide*4)+7)>>3)&3)) {
-							fseek(stream,SEEK_CUR,3-((((b->wide*4)+7)>>3)&3));
+						if(((((wide*4)+7)>>3)&3)) {
+							fseek(fp,SEEK_CUR,3-((((wide*4)+7)>>3)&3));
 						}
 					}
 					break;
 				case 2: /*4 colors*/
-					for(i = 1; (signed long)i < b->tall+1; i++) { /*reverse read wide, but not tall*/
-						for(i2 = 0; (signed long)i2 < b->wide; i2++) {
+					for(i = 1; (signed long)i < tall+1; i++) { /*reverse read wide, but not tall*/
+						for(i2 = 0; (signed long)i2 < wide; i2++) {
 							if(!(i2&3)) {
-								fread(&hold,sizeof(unsigned char),1,stream);
+								fread(&hold,sizeof(unsigned char),1,fp);
 							}
-							data[(i2+((b->tall-i)*b->wide))] = (hold>>6)&3;
+							img->data[(i2+((tall-i)*wide))] = (hold>>6)&3;
 							hold = hold<<2;
 						}
-						if(((((b->wide*2)+7)>>3)&3)) {
-							fseek(stream,SEEK_CUR,3-((((b->wide*2)+7)>>3)&3));
+						if(((((wide*2)+7)>>3)&3)) {
+							fseek(fp,SEEK_CUR,3-((((wide*2)+7)>>3)&3));
 						}
 					}
 					break;
 				case 1: /*2 colors*/
-					for(i = 1; (signed long)i < b->tall+1; i++) { /*reverse read wide, but not tall*/
-						for(i2 = 0; (signed long)i2 < b->wide; i2++) {
+					for(i = 1; (signed long)i < tall+1; i++) { /*reverse read wide, but not tall*/
+						for(i2 = 0; (signed long)i2 < wide; i2++) {
 							if(!(i2&7)) {
-								fread(&hold,sizeof(unsigned char),1,stream);
+								fread(&hold,sizeof(unsigned char),1,fp);
 							}
-							data[(i2+((b->tall-i)*b->wide))] = ((hold>>7)&1);
+							img->data[(i2+((tall-i)*wide))] = ((hold>>7)&1);
 							hold <<= 1;
 						}
-						if(((((b->wide*1)+7)>>3)&3)) {
-							fseek(stream,SEEK_CUR,3-((((b->wide*1)+7)>>3)&3));
+						if(((((wide*1)+7)>>3)&3)) {
+							fseek(fp,SEEK_CUR,3-((((wide*1)+7)>>3)&3));
 						}
 					}
 					break;
 				default:
-					free(data); /*de allocate data if we have invalid setup*/
-					return NULL;
+					if(img->data != NULL) {
+						free(img->data);
+					}
+					return -9;
 			}
 			break;
 		default:
-			free(data);
-			return NULL;
+			if(img->data != NULL) {
+				free(img->data);
+			}
+			return -10;
 	}
-	return (unsigned char * )data;
+	
+	fclose(fp);
+	return 0;
 }

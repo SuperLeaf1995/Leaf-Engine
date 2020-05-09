@@ -11,6 +11,8 @@ typedef struct _Image {
 	unsigned long tall;
 	unsigned char bitsPerPixel;
 	unsigned char * data;
+	
+	paletteEntry * palette;
 }Image;
 
 #endif

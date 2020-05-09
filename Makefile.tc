@@ -1,12 +1,18 @@
 # Makefile for TurboC Leaf-Engine builds
 
-CC = tcc
+CC = c:\tc\tcc
 CFLAGS = -mh -j5 -g8 -IC:\TC\INCLUDE -Isrc
-CLIB = tlib
+CLIB = c:\tc\tlib
 
-all: out\leaf.lib
+all: out\dos\leaf.lib
 	@echo "--- LIBRARY BUILDING DONE ---"
-	
+
+install: out\dos\leaf.lib
+	@echo "--- INSTALLING LIBRARY ---"
+	copy out\dos\leaf.lib c:\tc\lib
+	copy src\include\* c:\tc\include
+	@echo "--- INSTALLING DONE ---"
+
 clean:
 	del out\dos\*.*
 
