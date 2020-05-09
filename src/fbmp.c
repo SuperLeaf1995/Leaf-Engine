@@ -16,25 +16,15 @@ signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
 	unsigned long numberOfColors;
 	unsigned long importantColors;
 	unsigned long mask[4];
-	if(!stream) { /*check if file is open*/
-		return -1; /*nope, bail out!*/
-	}
-	fread(e->type,sizeof(unsigned short),1,stream); /*read file header*/
+	if(!stream) { return -1; }
+	if(fread(e->type,sizeof(unsigned short),1,stream) != 1) { return -1; }
 	/*check that it is a actual bitmap*/
-	if(strncmp((const char *)e->type,"BM",2) != 0
-	&& strncmp((const char *)e->type,"BA",2) != 0
-	&& strncmp((const char *)e->type,"IC",2) != 0
-	&& strncmp((const char *)e->type,"PT",2) != 0
-	&& strncmp((const char *)e->type,"CI",2) != 0
-	&& strncmp((const char *)e->type,"CP",2) != 0) {
-		return -2; /*invalid bitmap!*/
-	}
-	if(fread(&sizeOfFile,sizeof(unsigned long),1,stream) != 1) {
-		return -3;
-	}
-	if(fread(&reserved,sizeof(unsigned long),1,stream) != 1) { /*reserved has an actual mean in OS/2*/
-		return -4;
-	}
+	if(strncmp((const char *)e->type,"BM",2) != 0 && strncmp((const char *)e->type,"BA",2) != 0
+	&& strncmp((const char *)e->type,"IC",2) != 0 && strncmp((const char *)e->type,"PT",2) != 0
+	&& strncmp((const char *)e->type,"CI",2) != 0 && strncmp((const char *)e->type,"CP",2) != 0)
+	{ return -2; }
+	if(fread(&sizeOfFile,sizeof(unsigned long),1,stream) != 1) { return -3; }
+	if(fread(&reserved,sizeof(unsigned long),1,stream) != 1) { return -4; }
 	fread(&offset,sizeof(unsigned long),1,stream);
 	fread(&headerSize,sizeof(unsigned long),1,stream);
 	/*check the header size*/
@@ -54,38 +44,14 @@ signed int readImageBitmapHeader(FILE * stream, bmpHeader * e) {
 		fread(&tall,sizeof(unsigned short),1,stream);
 		fread(&planes,sizeof(unsigned short),1,stream);
 		fread(&bitsPerPixel,sizeof(unsigned short),1,stream);
-	} else if(headerSize >= 56 && headerSize <= 64) { /*Windows 95 bitmap*/
-		fread(&wide,sizeof(signed long),1,stream);
-		fread(&tall,sizeof(signed long),1,stream);
-		fread(&planes,sizeof(unsigned short),1,stream);
-		fread(&bitsPerPixel,sizeof(unsigned short),1,stream);
-		fread(&compression,sizeof(unsigned long),1,stream);
-		fread(&sizeOfImage,sizeof(unsigned long),1,stream);
-		fread(&xPixelsPerMeter,sizeof(unsigned long),1,stream);
-		fread(&yPixelsPerMeter,sizeof(unsigned long),1,stream);
-		fread(&numberOfColors,sizeof(unsigned long),1,stream);
-		fread(&importantColors,sizeof(unsigned long),1,stream);
-		fread(&mask[0],sizeof(unsigned long),1,stream);
-		fread(&mask[1],sizeof(unsigned long),1,stream);
-		fread(&mask[2],sizeof(unsigned long),1,stream);
-		fread(&mask[3],sizeof(unsigned long),1,stream);
-		e->mask[0] = mask[0]; /*inmediately place masks, on the struct*/
-		e->mask[1] = mask[1];
-		e->mask[2] = mask[2];
-		e->mask[3] = mask[3];
 	} else {
 		return -5;
 	}
 	/*check if bit's are valid*/
-	if((bitsPerPixel != 1)
-	&& (bitsPerPixel != 2)
-	&& (bitsPerPixel != 4)
-	&& (bitsPerPixel != 8)
-	&& (bitsPerPixel != 16)
-	&& (bitsPerPixel != 24)
-	&& (bitsPerPixel != 32)) {
-		return -6;
-	}
+	if((bitsPerPixel != 1) && (bitsPerPixel != 2)
+	&& (bitsPerPixel != 4) && (bitsPerPixel != 8)
+	&& (bitsPerPixel != 16) && (bitsPerPixel != 24)
+	&& (bitsPerPixel != 32)) { return -6; }
 	if(planes != 1) { /*we did something wrong!*/
 		return -7;
 	}

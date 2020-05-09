@@ -6,6 +6,7 @@
 #include <string.h>
 #include "palette.h"
 #include "context.h"
+#include "image.h"
 
 extern leafContext * leafCurrentCtx;
 

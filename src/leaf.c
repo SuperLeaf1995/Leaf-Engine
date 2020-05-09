@@ -254,6 +254,10 @@ signed char closeLogFile(FILE * stream) {
 	return 0;
 }
 
+#if defined(OPENAL)
+ALuint b;
+#endif
+
 /**
 @brief Initializes everything needed for sound-support
 */
@@ -276,6 +280,8 @@ signed char initSound(void) {
 	alSource3f(leafCurrentCtx->alSoundSrc,AL_POSITION,0,0,0);
 	alSource3f(leafCurrentCtx->alSoundSrc,AL_VELOCITY,0,0,0);
 	alSourcei(leafCurrentCtx->alSoundSrc,AL_LOOPING,AL_FALSE);
+	
+	alGenBuffers(1,&b);
 #endif
 	return 0;
 }
@@ -287,7 +293,14 @@ signed char initSound(void) {
 */
 void playSound(unsigned long freq) {
 #if defined(OPENAL)
+	unsigned rate = 80000; float sec = 0.5;
+	size_t i; size_t bsize = (sec*rate);
+	signed short * s[4000];
 	
+	for(i = 0; i < bsize; i++) {
+		s[i] = (signed short)(32760*sin((3.14*freq)/rate*i));
+	}
+	alBufferData(b,AL_FORMAT_MONO8,s,bsize,rate);
 #endif
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	register unsigned long cot; /*countdown value*/
@@ -301,6 +314,7 @@ void playSound(unsigned long freq) {
 		outp(0x61,tmp|3);
 	}
 #endif
+	alSourcePlay(freq);
 	return;
 }
 

@@ -6,7 +6,8 @@
 @param stream File stream of the PCX file
 @param p PCXHeader used to store metadata
 */
-signed int  readImagePcxHeader(FILE * stream, pcxHeader * p) {
+signed int  readImagePcxHeader(FILE * stream, pcxHeader * p)
+{
 	unsigned char type,version,compression,bitsPerPixel,reserved,planes;
 	unsigned char paletteType,horizontalScreenSize,verticalScreenSize;
 	unsigned short xStart,yStart,xEnd,yEnd,horizontalResolution,verticalResolution,bytesPerLine;
@@ -19,7 +20,8 @@ signed int  readImagePcxHeader(FILE * stream, pcxHeader * p) {
 	fread(&compression,sizeof(unsigned char),1,stream);
 	if(compression != 1) { return -3; } /*pcx is rle-only file*/
 	fread(&bitsPerPixel,sizeof(unsigned char),1,stream);
-	switch(bitsPerPixel) {
+	switch(bitsPerPixel)
+	{
 		case 1:
 		case 2:
 		case 4:
@@ -35,7 +37,8 @@ signed int  readImagePcxHeader(FILE * stream, pcxHeader * p) {
 	fread(&horizontalResolution,sizeof(unsigned short),1,stream);
 	fread(&verticalResolution,sizeof(unsigned short),1,stream);
 	/*read the EGA palette for once*/
-	for(i = 0; i < 16; i++) {
+	for(i = 0; i < 16; i++)
+	{
 		p->egaPalette[i].r = fgetc(stream);
 		p->egaPalette[i].g = fgetc(stream);
 		p->egaPalette[i].b = fgetc(stream);
@@ -48,7 +51,10 @@ signed int  readImagePcxHeader(FILE * stream, pcxHeader * p) {
 	fread(&horizontalScreenSize,sizeof(unsigned short),1,stream);
 	fread(&verticalScreenSize,sizeof(unsigned short),1,stream);
 	reserved2 = (unsigned char *)malloc(54);
-	if(reserved2 == NULL) { return -7; }
+	if(reserved2 == NULL)
+	{
+		return -7;
+	}
 	fread((unsigned char *)reserved2,sizeof(unsigned char),54,stream);
 	/*save the stuff in the struct if all went ok*/
 	p->type = type;
