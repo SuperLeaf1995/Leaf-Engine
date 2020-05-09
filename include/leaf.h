@@ -12,6 +12,55 @@ using multiple versions*/
 extern unsigned short vtable[32][3];
 #endif
 
+typedef struct paletteEntry {
+	/** Red component of the palette */
+	unsigned char r;
+	/** Green component of the palette */
+	unsigned char g;
+	/** Blue component of the palette */
+	unsigned char b;
+}paletteEntry;
+
+typedef struct _Image {
+	unsigned long wide;
+	unsigned long tall;
+	unsigned char bitsPerPixel;
+	unsigned char * data;
+	
+	paletteEntry * palette;
+}Image;
+
+typedef struct leafContext {
+#if defined(OPENAL)
+	ALCdevice * alDev;
+	ALCcontext * alCtx;
+	ALuint alSoundSrc;
+#endif
+#if defined(__GBA__) || defined(__linux) || defined(linux)
+	/** Emulate a VGA palette for newer systems */
+	paletteEntry * rgbPalette; /*Emulate a VGA palette*/
+#endif
+	/** Name of the game, only displays on UI systems */
+	char * name;
+	/** Video mode usage */
+	unsigned char videoConf;
+	/** Current video wide */
+	unsigned short vwide;
+	/** Current video tall */
+	unsigned short vtall;
+	/** Current video mode (Always VGA on UI systems) */
+	unsigned char vvideo;
+}leafContext;
+
+struct mouse {
+	unsigned char buttonLeft;
+	unsigned char buttonRight;
+	unsigned char buttonMiddle;
+	unsigned char buttons;
+	signed short x; signed short y;
+	signed short mx; signed short my;
+};
+
 extern unsigned char * videoBuffer;
 extern unsigned char * video;
 

@@ -1,6 +1,10 @@
 #ifndef __LEAF_GRAPHIC_H__
 #define __LEAF_GRAPHIC_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,7 +80,9 @@ void plotPixel(register unsigned short x, register unsigned short y, register un
 void plotLinearPixel(register unsigned short pos,register unsigned char color);
 unsigned char fetchPixel(register unsigned short x,register unsigned short y);
 void setPalette(paletteEntry * p, register unsigned short n);
-void waitRetrace(void);
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
+static void waitRetrace(void);
+#endif
 
 /*
 Graphics manipulation routines

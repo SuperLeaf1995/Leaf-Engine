@@ -139,13 +139,6 @@ void seedRandom(void);
 signed int generateRandom(void);
 
 /*
-Main, principal Leaf-Engine functions
-*/
-signed int leafContextCreate(leafContext * g);
-signed int leafContextDestroy(leafContext * g);
-signed int leafSetVideo(leafContext * g);
-
-/*
 Functions for manipulating the cursor and retrieving data from it.
 Using the mouse structure to create a mouse handler.
 */

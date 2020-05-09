@@ -1,25 +1,34 @@
 # Makefile for TurboC Leaf-Engine builds
 
+# Change accordingly
 CC = c:\tc\tcc
-CFLAGS = -mh -j5 -g8 -IC:\TC\INCLUDE -Isrc
+CFLAGS = -O -r -Z -mh -j5 -g8 -Isrc
 CLIB = c:\tc\tlib
 
 all: out\dos\leaf.lib
-	@echo "--- LIBRARY BUILDING DONE ---"
+	@echo "--- BUILDING DONE ---"
 
 install: out\dos\leaf.lib
-	@echo "--- INSTALLING LIBRARY ---"
+	@echo "--- INSTALLING ---"
 	copy out\dos\leaf.lib c:\tc\lib
-	copy src\include\* c:\tc\include
+	copy include c:\tc\include
+	$(CLIB) c:\tc\lib\cs.lib +out\dos\leaf.lib
 	@echo "--- INSTALLING DONE ---"
+	
+uninstall: out\dos\leaf.lib
+	@echo "--- UNINSTALLING ---"
+	$(CLIB) c:\tc\lib\cs.lib -out\dos\leaf.lib
+	$(CLIB) c:\tc\lib\cs.lib -out\dos\leaf.obj-out\dos\fbmp.obj-out\dos\fpcx.obj-out\dos\graphic.obj
+	del c:\tc\include\leaf.h
+	del c:\tc\lib\leaf.lib
+	@echo "--- UNINSTALLING DONE ---"
 
 clean:
 	del out\dos\*.*
 
 out\dos\leaf.lib: out\dos\leaf.obj out\dos\fbmp.obj out\dos\fpcx.obj out\dos\graphic.obj
 	@echo "--- BUILDING $< ---"
-	$(CLIB) $< + out\dos\leaf.obj + out\dos\fbmp.obj + out\dos\fpcx.obj
-	$(CLIB) $< + out\dos\graphic.obj
+	$(CLIB) /C $< +out\dos\leaf.obj+out\dos\fbmp.obj+out\dos\fpcx.obj+out\dos\graphic.obj
 
 out\dos\leaf.obj: src\leaf.c src\leaf.h
 	@echo "--- BUILDING $< ---"

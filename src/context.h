@@ -8,6 +8,10 @@
 
 #include "palette.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /*
 LeafGame is another special structure wich is the main structure for
 main operations. This structure should only be in programs wich require
@@ -37,5 +41,13 @@ typedef struct leafContext {
 	/** Current video mode (Always VGA on UI systems) */
 	unsigned char vvideo;
 }leafContext;
+
+signed int leafContextCreate(leafContext * g);
+signed int leafContextDestroy(leafContext * g);
+signed int leafSetVideo(leafContext * g);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif

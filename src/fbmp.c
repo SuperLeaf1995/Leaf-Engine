@@ -39,7 +39,6 @@ signed int imageBitmap(const char * filename, Image * img) {
 		if(fread(&db_DDBheader,sizeof(DDBheader),1,fp) < 1) {
 			return -3;
 		}
-		printf("WINDOWS 1.X\n");
 	}
 	/*Windows Bitmap File*/
 	else if(sHold == 0x4D42) {
@@ -75,7 +74,6 @@ signed int imageBitmap(const char * filename, Image * img) {
 				return -5;
 			}
 			compression = db_Win3xBmpHeader.compression;
-			printf("WINDOWS 3.X\n");
 		}
 		/*Windows NT Bitmap*/
 		else if(db_WinBmpFileHeader.headerSize == 40) {
@@ -88,7 +86,6 @@ signed int imageBitmap(const char * filename, Image * img) {
 				}
 			}
 			compression = db_WinNTBmpHeader.compression;
-			printf("WINDOWS NT\n");
 		}
 		/*Windows 95/98 Bitmap*/
 		else if(db_WinBmpFileHeader.headerSize == 108) {
@@ -96,15 +93,8 @@ signed int imageBitmap(const char * filename, Image * img) {
 				return -5;
 			}
 			compression = db_Win95BmpHeader.compression;
-			printf("fsize: %lu\n",db_WinBmpFileHeader.fileSize);
-			printf("hsize: %lu\n",db_WinBmpFileHeader.headerSize);
-			printf("offset: %lu\n",db_WinBmpFileHeader.offset);
-			printf("resolution: %lux%lu\n",db_Win3xBmpFileHeader.wide,db_Win3xBmpFileHeader.tall);
-			printf("bpp: %u\n",db_Win3xBmpFileHeader.bitsPerPixel);
-			printf("WINDOWS 95/98\n");
 		}
 	} else {
-		printf("UNKNOWN\n");
 		return -6;
 	}
 	
@@ -137,10 +127,10 @@ signed int imageBitmap(const char * filename, Image * img) {
 					for(i = 1; (signed long)i < tall+1; i++) { /*reverse read wide, but not tall*/
 						for(i2 = 0; (signed long)i2 < wide; i2++) {
 							fread(&hold,sizeof(unsigned char),1,fp);
-							img->data[(i2+((tall-i)*wide))] = hold;
+							img->data[(i2+((tall-i)*wide))] = (hold);
 						}
 						if(((((wide*8)+7)>>3)&3)) { /*skip padding (dword)*/
-							fseek(fp,SEEK_CUR,3-((((wide*8)+7)>>3)&3));
+							fseek(fp,SEEK_CUR,(int)(3-((((wide*8)+7)>>3)&3)));
 						}
 					}
 					break;
@@ -148,12 +138,12 @@ signed int imageBitmap(const char * filename, Image * img) {
 					for(i = 1; (signed long)i < tall+1; i++) { /*reverse read wide, but not tall*/
 						for(i2 = 0; (signed long)i2 < wide; i2++) {
 							fread(&hold,sizeof(unsigned char),1,fp);
-							img->data[(i2+((tall-i)*wide))] = (hold>>4)&0x0F;
+							img->data[(i2+((tall-i)*wide))] = ((hold>>4)&0x0F);
 							i2++;
-							img->data[(i2+((tall-i)*wide))] = hold&0x0F;
+							img->data[(i2+((tall-i)*wide))] = (hold&0x0F);
 						}
 						if(((((wide*4)+7)>>3)&3)) {
-							fseek(fp,SEEK_CUR,3-((((wide*4)+7)>>3)&3));
+							fseek(fp,SEEK_CUR,(int)(3-((((wide*4)+7)>>3)&3)));
 						}
 					}
 					break;
@@ -164,10 +154,10 @@ signed int imageBitmap(const char * filename, Image * img) {
 								fread(&hold,sizeof(unsigned char),1,fp);
 							}
 							img->data[(i2+((tall-i)*wide))] = (hold>>6)&3;
-							hold = hold<<2;
+							hold = (hold<<2);
 						}
 						if(((((wide*2)+7)>>3)&3)) {
-							fseek(fp,SEEK_CUR,3-((((wide*2)+7)>>3)&3));
+							fseek(fp,SEEK_CUR,(int)(3-((((wide*2)+7)>>3)&3)));
 						}
 					}
 					break;
@@ -178,10 +168,10 @@ signed int imageBitmap(const char * filename, Image * img) {
 								fread(&hold,sizeof(unsigned char),1,fp);
 							}
 							img->data[(i2+((tall-i)*wide))] = ((hold>>7)&1);
-							hold <<= 1;
+							hold = (hold<<1);
 						}
 						if(((((wide*1)+7)>>3)&3)) {
-							fseek(fp,SEEK_CUR,3-((((wide*1)+7)>>3)&3));
+							fseek(fp,SEEK_CUR,(int)(3-((((wide*1)+7)>>3)&3)));
 						}
 					}
 					break;

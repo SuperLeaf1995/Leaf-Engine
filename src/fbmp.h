@@ -7,6 +7,10 @@
 #include "palette.h"
 #include "image.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /** Device-Dependant bitmap file for Windows 1.x*/
 typedef struct _DDBheader {
 	unsigned short wide;
@@ -95,5 +99,9 @@ typedef struct _Win95BmpHeader {
 }Win95BmpHeader;
 
 signed int imageBitmap(const char * filename, Image * img);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif
