@@ -75,12 +75,12 @@ void plotWirePolygon(signed short * d, register unsigned short n, register unsig
 	return;
 }
 
-void drawSprite(unsigned char * data, unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy) {
+void drawImage(Image * img, register unsigned short x, register unsigned short y) {
 	unsigned short i;
 	unsigned short i2;
-	for(i = 0; i < sx; i++) {
-		for(i2 = 0; i2 < sy; i2++) {
-			plotPixel(x+i,y+i2,data[(i2*sx)+i]);
+	for(i = 0; i < img->wide; i++) {
+		for(i2 = 0; i2 < img->tall; i2++) {
+			plotPixel(x+i,y+i2,img->data[(i2*img->wide)+i]);
 		}
 	}
 	return;

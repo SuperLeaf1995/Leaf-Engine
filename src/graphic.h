@@ -82,6 +82,7 @@ void plotLine(register signed short sx, register signed short sy, register signe
 void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
 void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
 void updateScreen(void);
+void drawImage(Image * img, register unsigned short x, register unsigned short y);
 void drawSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy);
 void drawTiledSprite(unsigned char * data, unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy, register unsigned short tx, register unsigned short ty);
 

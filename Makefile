@@ -1,5 +1,4 @@
 # Makefile for TurboC Leaf-Engine builds
-
 # Change accordingly
 CC = c:\tc\tcc
 CFLAGS = -O -r -Z -mh -j5 -g8 -Isrc -Iinclude
@@ -18,7 +17,7 @@ install: out\dos\leaf.lib
 uninstall: out\dos\leaf.lib
 	@echo "--- UNINSTALLING ---"
 	$(CLIB) c:\tc\lib\cs.lib -out\dos\leaf.lib
-	$(CLIB) c:\tc\lib\cs.lib -out\dos\fdata.obj-out\dos\fbmp.obj-out\dos\fpcx.obj-out\dos\graphic.obj
+	$(CLIB) c:\tc\lib\cs.lib -out\dos\fdata.obj-out\dos\fbmp.obj-out\dos\fpcx.obj-out\dos\graphic.obj-out\dos\mouse.obj
 	del c:\tc\include\leaf.h
 	del c:\tc\lib\leaf.lib
 	@echo "--- UNINSTALLING DONE ---"
@@ -26,9 +25,9 @@ uninstall: out\dos\leaf.lib
 clean:
 	del out\dos\*.*
 
-out\dos\leaf.lib: out\dos\fdata.obj out\dos\fbmp.obj out\dos\fpcx.obj out\dos\graphic.obj
+out\dos\leaf.lib: out\dos\fdata.obj out\dos\fbmp.obj out\dos\fpcx.obj out\dos\graphic.obj out\dos\mouse.obj
 	@echo "--- BUILDING $< ---"
-	$(CLIB) /C $< +out\dos\fdata.obj+out\dos\fbmp.obj+out\dos\fpcx.obj+out\dos\graphic.obj
+	$(CLIB) /C $< +out\dos\fdata.obj+out\dos\fbmp.obj+out\dos\fpcx.obj+out\dos\graphic.obj+out\dos\mouse.obj
 
 out\dos\fdata.obj: src\fdata.c src\fdata.h
 	@echo "--- BUILDING $< ---"

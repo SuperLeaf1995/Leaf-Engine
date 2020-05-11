@@ -51,15 +51,15 @@ signed int imageBitmap(const char * filename, Image * img) {
 		/*Windows 2.x uses short for sizes*/
 		if(db_WinBmpFileHeader.headerSize == 12) {
 			if(fread(&db_Win2xBmpFileHeader,sizeof(Win2xBmpFileHeader),1,fp) < 1) {
-				return -4;
+				return -5;
 			}
 			bitsPerPixel = db_Win2xBmpFileHeader.bitsPerPixel;
-			wide = db_Win2xBmpFileHeader.wide;
-			tall = db_Win2xBmpFileHeader.tall;
+			wide = (signed long)db_Win2xBmpFileHeader.wide;
+			tall = (signed long)db_Win2xBmpFileHeader.tall;
 		/*Windows 3.x+ uses long for sizes*/
-		} else if(db_WinBmpFileHeader.headerSize > 40) {
+		} else if(db_WinBmpFileHeader.headerSize >= 40) {
 			if(fread(&db_Win3xBmpFileHeader,sizeof(Win3xBmpFileHeader),1,fp) < 1) {
-				return -4;
+				return -6;
 			}
 			bitsPerPixel = db_Win3xBmpFileHeader.bitsPerPixel;
 			wide = db_Win3xBmpFileHeader.wide;
@@ -71,18 +71,18 @@ signed int imageBitmap(const char * filename, Image * img) {
 		/*Windows 3.x Bitmap*/
 		if(db_WinBmpFileHeader.headerSize == 40) {
 			if(fread(&db_Win3xBmpHeader,sizeof(Win3xBmpHeader),1,fp) < 1) {
-				return -5;
+				return -7;
 			}
 			compression = db_Win3xBmpHeader.compression;
 		}
 		/*Windows NT Bitmap*/
 		else if(db_WinBmpFileHeader.headerSize == 40) {
 			if(fread(&db_WinNTBmpHeader,sizeof(WinNTBmpHeader),1,fp) < 1) {
-				return -5;
+				return -8;
 			}
 			if(db_WinNTBmpHeader.compression == 3) {
 				if(fread(&db_WinNTBmpMasks,sizeof(WinNTBmpMasks),1,fp) < 1) {
-					return -5;
+					return -9;
 				}
 			}
 			compression = db_WinNTBmpHeader.compression;
@@ -90,20 +90,22 @@ signed int imageBitmap(const char * filename, Image * img) {
 		/*Windows 95/98 Bitmap*/
 		else if(db_WinBmpFileHeader.headerSize == 108) {
 			if(fread(&db_Win95BmpHeader,sizeof(Win95BmpHeader),1,fp) < 1) {
-				return -5;
+				return -10;
 			}
 			compression = db_Win95BmpHeader.compression;
 		}
 	} else {
-		return -6;
+		return -11;
 	}
+	
+	/*Read the palette*/
 	
 	/*Only use palette for 8-bit images*/
 	if(bitsPerPixel < 8) {
 		paletteEntries = (1<<(bitsPerPixel));
 		img->palette = (paletteEntry *)malloc(sizeof(paletteEntry)*paletteEntries);
 		if(img->palette == NULL) {
-			return -7;
+			return -12;
 		}
 		for(i = 0; i < paletteEntries; i++) { /*Read the palette*/
 			img->palette[i].b = fgetc(fp); /*Bitmap has reverse RGB order for each entry*/
@@ -115,9 +117,13 @@ signed int imageBitmap(const char * filename, Image * img) {
 		}
 	}
 	
+	/*Read the bitmap data*/
 	img->data = (unsigned char *)malloc(wide*tall);
 	if(img->data == NULL) {
-		return -8;
+		if(img->palette == NULL) {
+			free(img->palette);
+		}
+		return -13;
 	}
 	
 	switch(compression) {
@@ -129,8 +135,8 @@ signed int imageBitmap(const char * filename, Image * img) {
 							fread(&hold,sizeof(unsigned char),1,fp);
 							img->data[(i2+((tall-i)*wide))] = (hold);
 						}
-						if(((((wide*8)+7)>>3)&3)) { /*skip padding (dword)*/
-							fseek(fp,SEEK_CUR,(int)(3-((((wide*8)+7)>>3)&3)));
+						if((wide&3) != 0) { /*skip padding (dword)*/
+							fseek(fp,SEEK_CUR,(int)(wide&3));
 						}
 					}
 					break;
@@ -179,15 +185,24 @@ signed int imageBitmap(const char * filename, Image * img) {
 					if(img->data != NULL) {
 						free(img->data);
 					}
-					return -9;
+					if(img->palette == NULL) {
+						free(img->palette);
+					}
+					return -14;
 			}
 			break;
 		default:
 			if(img->data != NULL) {
 				free(img->data);
 			}
-			return -10;
+			if(img->palette == NULL) {
+				free(img->palette);
+			}
+			return -15;
 	}
+	
+	img->wide = wide;
+	img->tall = tall;
 	
 	fclose(fp);
 	return 0;

@@ -1,4 +1,7 @@
+#include <dos.h>
 #include "mouse.h"
+
+static union REGS in,out;
 
 /**
 @brief Initializes mouse driver/cursor

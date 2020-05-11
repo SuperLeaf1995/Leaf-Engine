@@ -5,6 +5,16 @@
 extern "C" {
 #endif /* __cplusplus */
 
+/* Mouse handler structure */
+struct mouse {
+	unsigned char buttonLeft;
+	unsigned char buttonRight;
+	unsigned char buttonMiddle;
+	unsigned char buttons;
+	signed short x; signed short y;
+	signed short mx; signed short my;
+};
+
 /*
 Functions for manipulating the cursor and retrieving data from it.
 Using the mouse structure to create a mouse handler.

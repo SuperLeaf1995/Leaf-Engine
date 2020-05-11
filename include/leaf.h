@@ -8,10 +8,6 @@ using multiple versions*/
 #define __ega	0x07
 #define __mcga	0x0F
 
-#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
-extern unsigned short vtable[32][3];
-#endif
-
 typedef struct paletteEntry {
 	/** Red component of the palette */
 	unsigned char r;
@@ -75,6 +71,7 @@ extern void plotLine(register signed short sx, register signed short sy, registe
 extern void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
 extern void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
 extern void updateScreen(void);
+extern void drawImage(Image * img, register unsigned short x, register unsigned short y);
 extern void drawSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy);
 extern void drawTiledSprite(unsigned char * data, unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy, register unsigned short tx, register unsigned short ty);
 
@@ -164,7 +161,7 @@ removed, due to the fact that other systems have different keymappings)*/
 /*Useless function, return SVGA as default*/
 #define getVideoAdapter() 0
 
-/*Yet another obsolete function. With double-buffer mouse redraw is
+/*Yet another obsolete function. With double-buffer mouse, redraw is
 almost unessesary and useless*/
 #define redrawOnMouse(m) 0
 

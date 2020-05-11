@@ -110,16 +110,6 @@ typedef struct leafEvent {
 	signed char ui;
 }leafEvent;
 
-/* Mouse handler structure */
-struct mouse {
-	unsigned char buttonLeft;
-	unsigned char buttonRight;
-	unsigned char buttonMiddle;
-	unsigned char buttons;
-	signed short x; signed short y;
-	signed short mx; signed short my;
-};
-
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 /*Global variable for register I/O (DOS-only)*/
 static union REGS in,out;
@@ -137,17 +127,6 @@ Time-based random number generator
 */
 void seedRandom(void);
 signed int generateRandom(void);
-
-/*
-Functions for manipulating the cursor and retrieving data from it.
-Using the mouse structure to create a mouse handler.
-*/
-char initMouse(struct mouse * m);
-void setMousePosition(unsigned short x, unsigned short y);
-void showMouse(void);
-void hideMouse(void);
-void getMouseStatus(struct mouse * m);
-void getMouseMovement(struct mouse * m);
 
 /*
 Sound functions
