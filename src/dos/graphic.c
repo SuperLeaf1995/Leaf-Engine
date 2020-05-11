@@ -1,4 +1,12 @@
+#if defined(__TURBOC__) || defined(__BORLANDC__)
+#include <dos.h>
+#endif
+#if defined(__DJGPP__)
+#include <sys/nearptr.h>
+#endif /* __DJGPP__ */
 #include "graphic.h"
+
+static union REGS in,out;
 
 unsigned int setVideo(unsigned char v) {
 	in.h.al = v;
@@ -40,6 +48,27 @@ static void waitRetrace(void) {
 }
 
 void updateScreen(void) {
+	register unsigned long i;
+	size_t x; size_t y; size_t offs;
+	unsigned char * cgaSelect[2] = {
+		(unsigned char *)0xB8000000L,
+		(unsigned char *)0xBA000000L
+	};
+	register unsigned char bitMask; 
+	waitRetrace(); /* Wait for VGA retrace */
+	if(leafCurrentCtx->vvideo == __vga) {
+		/*in VGA simply copy it to the plain VGA memory*/
+		memcpy(video,videoBuffer,(size_t)leafCurrentCtx->vwide*leafCurrentCtx->vtall); /* Copy data to VGA */
+	} else if(leafCurrentCtx->vvideo == __ega) {
+		/*TODO: Add working EGA code*/
+		in.h.ah = 0x0C;
+		for(i = 0; i < (leafCurrentCtx->vwide*leafCurrentCtx->vtall); i++) {
+			in.x.dx = (i/leafCurrentCtx->vwide);
+			in.x.cx = (i%leafCurrentCtx->vwide);
+			in.h.al = videoBuffer[i];
+			int86(0x10,&in,&out);
+		}
+	} else if(leafCurrentCtx->vvideo == __cga) {
 #if defined(__386__) || defined(_M_I386) || defined(__i386__) || defined(__32BIT__) /*A 32-bit compiler*/
 		/*Use adaptive framebuffer (all-screen)*/
 		for(i = 0; i < (leafCurrentCtx->vwide*leafCurrentCtx->vtall); i++) {

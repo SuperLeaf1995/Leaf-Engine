@@ -8,12 +8,6 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
-#include <dos.h>
-#endif
-#if defined(__DJGPP__)
-#include <sys/nearptr.h>
-#endif /* __DJGPP__ */
 #include "palette.h"
 #include "context.h"
 #include "image.h"
@@ -64,11 +58,6 @@ unsigned char * video = (unsigned char * )0xA0000000L;
 unsigned char * video = (unsigned char * )0x2000;
 #elif defined(__GBA__)
 unsigned short * video = (unsigned short *)0x6000000;
-#endif
-
-#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
-/*Global variable for register I/O (DOS-only)*/
-static union REGS in,out;
 #endif
 
 /*
