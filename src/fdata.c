@@ -23,6 +23,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#include "fdata.h"
 #include "leaf.h"
 
 void seedRandom(void) {
@@ -178,82 +179,6 @@ void getMouseMovement(struct mouse * m) {
 	return;
 }
 
-/**
-@brief Saves data to file
-
-@param fileName Name of the file
-@param data Pointer to the place of data to put on file
-@param n Size of data to write
-*/
-signed char saveLeafDataFile(const char * fileName, void * data, size_t n) {
-	FILE * s;
-	s = fopen(fileName,"wb");
-	if(!s) {
-		return -1;
-	}
-	fwrite((unsigned char *)data,sizeof(unsigned char),n,s);
-	fclose(s);
-	return 0;
-}
-
-/**
-@brief Loads data from file
-
-@param fileName Name of the file
-@param data Pointer to the place to put data on
-@param n Size of data to read
-*/
-signed char loadLeafDataFile(const char * fileName, void * data, size_t n) {
-	FILE * s;
-	s = fopen(fileName,"rb");
-	if(!s) {
-		return -1;
-	}
-	fread((unsigned char *)data,sizeof(unsigned char),n,s);
-	fclose(s);
-	return 0;
-}
-
-/**
-@brief Opens log file
-
-@param stream Stream/File to open
-@param name Filename of the file to open
-*/
-signed char openLogFile(FILE * stream, const char * name) {
-	stream = fopen(name,"a+t");
-	if(!stream) {
-		return -1;
-	}
-	return 0;
-}
-
-/**
-@brief Appends a log entry into the log file
-
-@param stream Stream/File to close
-@param entry Contents of the logging entry
-*/
-signed char appendLogFile(FILE * stream, const char * entry) {
-	if(!stream) {
-		return -1;
-	}
-	fprintf(stream,"%s\n",entry);
-	return 0;
-}
-
-/**
-@brief Closes log file
-
-@param stream Stream/File to close
-*/
-signed char closeLogFile(FILE * stream) {
-	if(stream) {
-		fclose(stream);
-	}
-	return 0;
-}
-
 #if defined(OPENAL)
 ALuint b;
 #endif
@@ -301,6 +226,7 @@ void playSound(unsigned long freq) {
 		s[i] = (signed short)(32760*sin((3.14*freq)/rate*i));
 	}
 	alBufferData(b,AL_FORMAT_MONO8,s,bsize,rate);
+	alSourcePlay(freq);
 #endif
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 	register unsigned long cot; /*countdown value*/
@@ -314,7 +240,6 @@ void playSound(unsigned long freq) {
 		outp(0x61,tmp|3);
 	}
 #endif
-	alSourcePlay(freq);
 	return;
 }
 

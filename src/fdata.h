@@ -150,20 +150,6 @@ void getMouseStatus(struct mouse * m);
 void getMouseMovement(struct mouse * m);
 
 /*
-Functions to save data in (TODO) compressed format. Example: A savefile
-or a array of characters with their respective information.
-*/
-signed char saveDataFile(FILE * s, void * data, size_t n);
-signed char loadDataFile(FILE * s, void * data, size_t n);
-
-/*
-Simple functions to help debugging
-*/
-signed char openLogFile(FILE * s, const char * name);
-signed char appendLogFile(FILE * s, const char * entry);
-signed char closeLogFile(FILE * s);
-
-/*
 Sound functions
 */
 signed char initSound(void);

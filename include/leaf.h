@@ -92,13 +92,6 @@ extern void hideMouse(void);
 extern void getMouseStatus(struct mouse * m);
 extern void getMouseMovement(struct mouse * m);
 
-extern signed char saveDataFile(FILE * s, void * data, size_t n);
-extern signed char loadDataFile(FILE * s, void * data, size_t n);
-
-extern signed char openLogFile(FILE * s, const char * name);
-extern signed char appendLogFile(FILE * s, const char * entry);
-extern signed char closeLogFile(FILE * s);
-
 extern signed char initSound(void);
 extern void playSound(unsigned long freq);
 extern void stopSound(void);
