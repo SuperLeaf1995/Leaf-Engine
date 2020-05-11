@@ -63,12 +63,6 @@ volatile unsigned short * biosClock = (volatile unsigned short *)0x0000046CL;
 #endif
 
 /*
-Codes for UI (Always check those, In DOS the exit code is produced
-by Ctrl+C)
-*/
-#define _exit_code 1
-
-/*
 Video automatic-modes for leafGame (see leafGameCreate)
 */
 #define _video_auto 1

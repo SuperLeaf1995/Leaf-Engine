@@ -5,7 +5,9 @@
 #elif defined(__APPLE2__) /*In APPLE2 there is only one mode used and it's HIGHRES*/
 #include "appleii\graphic.c"
 #elif defined(__GBA__)
-#include "gba\graphic.c"
+#include "gba/graphic.c"
+#elif defined(__linux) || defined(linux)
+#include "linux/graphic.c"
 #endif
 
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c) {

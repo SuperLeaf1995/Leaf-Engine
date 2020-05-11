@@ -36,53 +36,7 @@ void seedRandom(void) {
 }
 
 signed int generateRandom(void) {
-#if defined(__GBA__)
-
-#else
 	return rand();
-#endif
-}
-
-signed int leafContextCreate(leafContext * g) {
-#if defined(__DJGPP__)
-	if(__djgpp_nearptr_enable() == 0) {
-		fprintf(stderr,"Cannot enable nearptr\n");
-		exit(-1);
-	}
-#endif /* __DJGPP__ */
-#if defined(__GBA__)
-	g->vwide = 240; g->vtall = 160;
-#else
-	g->vwide = 320; g->vtall = 200;
-#endif
-	videoBuffer = (unsigned char *)malloc(g->vwide*g->vtall);
-	if(videoBuffer == NULL) {
-		return -1;
-	}
-#if defined(__GBA__) || defined(__linux) || defined(linux)
-	g->rgbPalette = (paletteEntry *)malloc(sizeof(paletteEntry)*256);
-	if(g->rgbPalette == NULL) {
-		return -2;
-	}
-#endif
-#if defined(OPENAL)
-	alGetError(); /*Do dummy call to reset error stack*/
-#endif /* OPENAL */
-	leafCurrentCtx = g;
-	return 0;
-}
-
-signed int leafContextDestroy(leafContext * g) {
-	if(videoBuffer != NULL) {
-		free(videoBuffer);
-	}
-	if(g->name != NULL) {
-		free(g->name);
-	}
-#if defined(__DJGPP__)
-	__djgpp_nearptr_disable();
-#endif
-	return 0;
 }
 
 #if defined(OPENAL)
