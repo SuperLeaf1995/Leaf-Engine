@@ -112,8 +112,7 @@ static union REGS in,out;
 /*
 The main game context we are working on
 */
-leafContext * leafCurrentCtx;
-
+extern leafContext * leafCurrentCtx;
 extern unsigned char * videoBuffer;
 
 /*

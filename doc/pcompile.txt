@@ -72,7 +72,7 @@ happen)
 - If everything succeded, you may be able to run the application and
 call leaf functions without problems
 
-COMPILE FOR LINUX
+COMPILE FOR LINUX (GCC)
 ========================================================================
 
 - Get gcc and make
@@ -92,7 +92,7 @@ gcc -Wall -Wextra -lleaf myprg.c -o myprg.o
 - If everything succeded, you may be able to run the application and
 call leaf functions without problems
 
-COMPILE FOR FREEBSD
+COMPILE FOR FREEBSD (GCC)
 ========================================================================
 
 - Get leaf.h and libleaf.a (static) or libleaf.so (shared) and place

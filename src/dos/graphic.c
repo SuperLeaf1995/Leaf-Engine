@@ -58,14 +58,14 @@ void updateScreen(void) {
 	waitRetrace(); /* Wait for VGA retrace */
 	if(leafCurrentCtx->vvideo == __vga) {
 		/*in VGA simply copy it to the plain VGA memory*/
-		memcpy(video,videoBuffer,(size_t)leafCurrentCtx->vwide*leafCurrentCtx->vtall); /* Copy data to VGA */
+		memcpy(video,leafCurrentCtx->videoBuffer,(size_t)leafCurrentCtx->vwide*leafCurrentCtx->vtall); /* Copy data to VGA */
 	} else if(leafCurrentCtx->vvideo == __ega) {
 		/*TODO: Add working EGA code*/
 		in.h.ah = 0x0C;
 		for(i = 0; i < (leafCurrentCtx->vwide*leafCurrentCtx->vtall); i++) {
 			in.x.dx = (i/leafCurrentCtx->vwide);
 			in.x.cx = (i%leafCurrentCtx->vwide);
-			in.h.al = videoBuffer[i];
+			in.h.al = leafCurrentCtx->videoBuffer[i];
 			int86(0x10,&in,&out);
 		}
 	} else if(leafCurrentCtx->vvideo == __cga) {
@@ -75,7 +75,7 @@ void updateScreen(void) {
 			x = (i%320); y = (i/320);
 			bitMask = 0x80>>(x%8);
 			offs = ((y>>1)*((leafCurrentCtx->vwide)>>3)+(x>>3));
-			if(videoBuffer[i]) { *(cgaSelect[y&1]+offs) |= bitMask; }
+			if(leafCurrentCtx->videoBuffer[i]) { *(cgaSelect[y&1]+offs) |= bitMask; }
 			else { *(cgaSelect[y&1]+offs) &= ~bitMask; }
 		}
 #else /*A 16-bit compiler*/
@@ -84,11 +84,11 @@ void updateScreen(void) {
 			x = (i%320); y = (i/320);
 			bitMask = 0x80>>(x%8);
 			offs = ((y>>1)*((leafCurrentCtx->vwide<<1)>>3)+(x>>3));
-			if(videoBuffer[i]) { *(cgaSelect[y&1]+offs) |= bitMask; }
+			if(leafCurrentCtx->videoBuffer[i]) { *(cgaSelect[y&1]+offs) |= bitMask; }
 			else { *(cgaSelect[y&1]+offs) &= ~bitMask; }
 		}
 #endif
 	}
-	memset(videoBuffer,0,(size_t)leafCurrentCtx->vwide*leafCurrentCtx->vtall); /* Clear our buffer */
+	memset(leafCurrentCtx->videoBuffer,0,(size_t)leafCurrentCtx->vwide*leafCurrentCtx->vtall); /* Clear our buffer */
 	return;
 }
