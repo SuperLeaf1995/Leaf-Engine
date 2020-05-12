@@ -21,8 +21,6 @@ extern "C" {
 #include "context.h"
 #include "image.h"
 
-extern leafContext * leafCurrentCtx;
-
 /*allows easy-detection and on-demand video switching without
 using multiple versions*/
 #define __cga	0x01
@@ -56,9 +54,6 @@ unsigned short vtable[32][3] = {
 };
 #endif
 
-/*Emulated/Buffer video buffer for drawing operations*/
-unsigned char * videoBuffer;
-
 #if defined(__DJGPP__)
 unsigned char * video = (unsigned char * )0xA0000+__djgpp_conventional_base;
 #elif defined(__TURBOC__) || defined(__BORLANDC__)
@@ -68,6 +63,8 @@ unsigned char * video = (unsigned char * )0x2000;
 #elif defined(__GBA__)
 unsigned short * video = (unsigned short *)0x6000000;
 #endif
+
+extern leafContext * leafCurrentCtx;
 
 /*
 General graphics manipulation functions.

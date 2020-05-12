@@ -1,6 +1,8 @@
 #ifndef __LEAF_CONTEXT_H__
 #define __LEAF_CONTEXT_H__
 
+#include <stdio.h>
+#include <stdlib.h>
 #if defined(__linux) || defined(linux)
 #include <unistd.h>
 #include <sys/utsname.h>
@@ -45,7 +47,6 @@ typedef struct leafContext {
 	Window xwindow; /*Our main window in X11*/
 	Atom WM_DELETE_WINDOW; /*"x" atom in window (to close it)*/
 	GC xgraphic; /*The X11 graphic context where we will draw on*/
-	unsigned char * video; /*Used to emulate a monitor*/
 #endif
 #if defined(__GBA__) || defined(__linux) || defined(linux)
 	/** Emulate a VGA palette for newer systems */
@@ -63,6 +64,7 @@ typedef struct leafContext {
 	unsigned char vvideo;
 	/** Used for UI-break case, Ctrl+C in DOS makes this 1 */
 	signed char ui;
+	unsigned char * videoBuffer;
 }leafContext;
 
 signed int leafContextCreate(leafContext * g);

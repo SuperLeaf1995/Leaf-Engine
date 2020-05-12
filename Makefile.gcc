@@ -12,6 +12,14 @@ CROSS_PATH = ~/opt
 GBA_CC = $(CROSS_PATH)/gcc-arm-none-eabi/bin/arm-none-eabi-gcc
 GBA_AR = $(CROSS_PATH)/gcc-arm-none-eabi/bin/arm-none-eabi-ar
 
+LINUX_OBJS = 	$(OUT_DIR)/linux/fbmp.o		\
+				$(OUT_DIR)/linux/mouse.o	\
+				$(OUT_DIR)/linux/fpcx.o		\
+				$(OUT_DIR)/linux/graphic.o	\
+				$(OUT_DIR)/linux/fdata.o	\
+				$(OUT_DIR)/linux/context.o	\
+				
+
 # All-target
 all: gba linux-shared linux-static
 
@@ -19,8 +27,12 @@ linux-shared: $(OUT_DIR)/linux $(OUT_DIR)/linux/libleaf.so
 linux-static: $(OUT_DIR)/linux $(OUT_DIR)/linux/libleaf.a
 gba: $(OUT_DIR)/gba $(OUT_DIR)/gba/libleaf.a
 
-install:
-	cp $(OUT_DIR)/libleaf.so /usr/lib
+install-shared: linux-shared
+	cp $(OUT_DIR)/linux/libleaf.so /usr/lib
+	cp $(INC_DIR)/leaf.h /usr/include
+
+install-static: linux-static
+	cp $(OUT_DIR)/linux/libleaf.a /usr/lib
 	cp $(INC_DIR)/leaf.h /usr/include
 
 clean:
@@ -35,14 +47,14 @@ $(OUT_DIR)/gba: $(OUT_DIR)
 	mkdir -p $@
 
 # Linux (Static)
-$(OUT_DIR)/linux/libleaf.a: $(OUT_DIR)/linux/mouse.obj $(OUT_DIR)/linux/fpcx.obj $(OUT_DIR)/linux/fbmp.obj $(OUT_DIR)/linux/graphic.obj
+$(OUT_DIR)/linux/libleaf.a: $(LINUX_OBJS)
 	$(AR) rcs $@ $^
 
 $(OUT_DIR)/linux/%.obj: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
 	$(CC) $(CFLAGS) -c $< -o $@
 	
 # Linux (Shared)
-$(OUT_DIR)/linux/libleaf.so: $(OUT_DIR)/linux/mouse.o $(OUT_DIR)/linux/fpcx.o $(OUT_DIR)/linux/fbmp.o $(OUT_DIR)/linux/graphic.o
+$(OUT_DIR)/linux/libleaf.so: $(LINUX_OBJS)
 	$(CC) -shared $^ -o $@
 
 $(OUT_DIR)/linux/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h

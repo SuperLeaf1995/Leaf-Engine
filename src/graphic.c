@@ -12,21 +12,21 @@
 
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c) {
 	if(y >= leafCurrentCtx->vtall || x >= leafCurrentCtx->vwide) { return; }
-	videoBuffer[(y*leafCurrentCtx->vwide)+x] = c;
+	leafCurrentCtx->videoBuffer[(y*leafCurrentCtx->vwide)+x] = c;
 	return;
 }
 
 void plotLinearPixel(register unsigned short p,register unsigned char c) {
-	videoBuffer[p] = c;
+	leafCurrentCtx->videoBuffer[p] = c;
 	return;
 }
 
 unsigned char fetchPixel(register unsigned short x,register unsigned short y) {
-	return videoBuffer[(y*leafCurrentCtx->vwide)+x];
+	return leafCurrentCtx->videoBuffer[(y*leafCurrentCtx->vwide)+x];
 }
 
 unsigned char fetchLinearPixel(register unsigned short p) {
-	return videoBuffer[p];
+	return leafCurrentCtx->videoBuffer[p];
 }
 
 void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c) {

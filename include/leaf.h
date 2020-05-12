@@ -1,6 +1,28 @@
 #ifndef __LEAF_LEAF_H__
 #define __LEAF_LEAF_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stddef.h>
+#include <string.h>
+#include <ctype.h>
+#include <limits.h>
+#include <time.h>
+#include <math.h>
+#include <float.h>
+#if defined(__linux) || defined(linux)
+#include <unistd.h>
+#include <sys/utsname.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xos.h>
+#include <X11/Xatom.h>
+#include <X11/X.h>
+#include <AL/al.h>
+#include <AL/alc.h>
+#endif
+
 /*allows easy-detection and on-demand video switching without
 using multiple versions*/
 #define __cga	0x01
@@ -32,6 +54,13 @@ typedef struct leafContext {
 	ALCcontext * alCtx;
 	ALuint alSoundSrc;
 #endif
+#if defined(__linux) || defined(linux)
+	XEvent xevent; /*Event handler*/
+	Display * xdisplay; /*Main X11 display for our X11 game*/
+	Window xwindow; /*Our main window in X11*/
+	Atom WM_DELETE_WINDOW; /*"x" atom in window (to close it)*/
+	GC xgraphic; /*The X11 graphic context where we will draw on*/
+#endif
 #if defined(__GBA__) || defined(__linux) || defined(linux)
 	/** Emulate a VGA palette for newer systems */
 	paletteEntry * rgbPalette; /*Emulate a VGA palette*/
@@ -46,6 +75,9 @@ typedef struct leafContext {
 	unsigned short vtall;
 	/** Current video mode (Always VGA on UI systems) */
 	unsigned char vvideo;
+	/** Used for UI-break case, Ctrl+C in DOS makes this 1 */
+	signed char ui;
+	unsigned char * videoBuffer;
 }leafContext;
 
 struct mouse {
