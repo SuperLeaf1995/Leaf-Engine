@@ -10,7 +10,7 @@ all: out\dos\leaf.lib
 install: out\dos\leaf.lib
 	@echo "--- INSTALLING ---"
 	copy out\dos\leaf.lib c:\tc\lib
-	copy include c:\tc\include
+	copy include\leaf.h c:\tc\include
 	$(CLIB) c:\tc\lib\cs.lib +out\dos\leaf.lib
 	@echo "--- INSTALLING DONE ---"
 	
