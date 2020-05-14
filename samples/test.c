@@ -9,19 +9,25 @@ Image timg;
 int main(void) {
 	ctx.vwide = 320;
 	ctx.vtall = 200;
-	leafContextCreate(&ctx);
+	if(leafContextCreate(&ctx) != 0) {
+		fprintf(stderr,"Error on context\n");
+		return -1;
+	}
 	
 	if(imageBitmap("res/test.bmp",&timg) != 0) {
-		return -1;
+		fprintf(stderr,"Error on imageBitmap\n");
+		return -2;
 	}
 
 	setPalette(timg.palette,16);
 
-	while(1) {
+	for(;;) {
 		drawImage(&timg,0,0);
+		
 		updateScreen();
 	}
 
 	leafContextDestroy(&ctx);
+	fprintf(stdout,"End of program\n");
 	return 0;
 }
