@@ -18,11 +18,14 @@ CFLAGS =	-Werror						\
 			-Wmissing-prototypes		\
 			-Wstrict-prototypes			\
 			-fsanitize=address			\
+			-fstrict-aliasing			\
+			-std=c89					\
 			-ansi						\
 			-pedantic					\
 			-O3							\
 			-I$(SRC_DIR)				\
-			-I$(INC_DIR)
+			-I$(INC_DIR)				\
+			-g
 CROSS_PATH = ~/opt
 
 GBA_CC = $(CROSS_PATH)/gcc-arm-none-eabi/bin/arm-none-eabi-gcc

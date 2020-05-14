@@ -1,14 +1,14 @@
 #ifndef __LEAF_FPCX_H__
 #define __LEAF_FPCX_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "palette.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
 
 /* PcxHeader structure */
 typedef struct pcxHeader {
