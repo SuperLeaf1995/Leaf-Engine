@@ -1,5 +1,5 @@
 /*
- * Leaf-Engine FDATA Header
+ * Leaf-Engine sound Header
  * Copyright (C) 2020 Jesus A. Diaz <jesusantonio30122016@gmail.com>
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,8 @@
  * 
  */
 
-#ifndef __LEAF_FDATA_H__
-#define __LEAF_FDATA_H__
+#ifndef __LEAF_SOUND_H__
+#define __LEAF_SOUND_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,6 +29,27 @@ extern "C" {
 /*These should be supported on all targets*/
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
+#include <ctype.h>
+
+#if defined(__linux) || defined(linux)
+#include <AL/al.h>
+#include <AL/alc.h>
+#endif
+
+#include "context.h"
+
+/*
+The main game context we are working on
+*/
+extern leafContext * leafCurrentCtx;
+
+/*
+Sound functions
+*/
+signed char initSound(void);
+void playSound(unsigned long freq);
+void stopSound(void);
 
 #ifdef __cplusplus
 }

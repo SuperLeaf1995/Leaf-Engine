@@ -29,6 +29,13 @@
 
 static union REGS in,out;
 
+/*The Borland compilers uses inportb()
+to avoid further confusions, inp() and outp() are used*/
+#if defined(__TURBOC__) || defined(__BORLANDC__)
+#define inp(x) inportb(x)
+#define outp(x,y) outportb(x,y)
+#endif
+
 signed char setVideo(unsigned char v) {
 	in.h.al = v;
 	in.h.ah = 0; /*set the video we want*/

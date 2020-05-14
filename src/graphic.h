@@ -111,4 +111,13 @@ void updateEvent(void);
 void updateScreen(void);
 void drawImage(Image * img, unsigned short x, unsigned short y);
 void drawTiled(Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy);
+
+#if defined(__GBA__)
+#define rgb16(r,g,b) ((r)+(g<<5)+(b<<10))
+#endif
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
 #endif

@@ -1,5 +1,5 @@
 /*
- * Leaf-Engine FDATA Header
+ * Leaf-Engine event Header
  * Copyright (C) 2020 Jesus A. Diaz <jesusantonio30122016@gmail.com>
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,8 @@
  * 
  */
 
-#ifndef __LEAF_FDATA_H__
-#define __LEAF_FDATA_H__
+#ifndef __LEAF_LEAF_H__
+#define __LEAF_LEAF_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,6 +29,25 @@ extern "C" {
 /*These should be supported on all targets*/
 #include <stdio.h>
 #include <stdlib.h>
+
+/*
+LeafEvent is a special structure wich handles all events in a program
+this should be the main structure and there should be generally one per
+program.
+
+The structure aims to provide a simple way to get/set data for input.
+*/
+typedef struct leafEvent {
+	signed int key;
+	/** Change of the mouse X */
+	signed short cx;
+	/** Change of the mouse Y */
+	signed short cy;
+	signed char eventStatus;
+	/** UI code, can be used in UI-based/capable operating systems
+	Always zero on DOS */
+	signed char ui;
+}leafEvent;
 
 #ifdef __cplusplus
 }
