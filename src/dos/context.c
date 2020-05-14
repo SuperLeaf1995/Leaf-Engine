@@ -8,8 +8,8 @@ signed int leafContextCreate(leafContext * g) {
 	}
 #endif /* __DJGPP__ */
 	g->vwide = 320; g->vtall = 200;
-	leafCurrentCtx->videoBuffer = (unsigned char *)malloc(g->vwide*g->vtall);
-	if(leafCurrentCtx->videoBuffer == NULL) {
+	g->videoBuffer = (unsigned char *)malloc((g->vwide*g->vtall));
+	if(g->videoBuffer == NULL) {
 		return -1;
 	}
 	leafCurrentCtx = g;

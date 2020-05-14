@@ -23,6 +23,12 @@
 #include <AL/alc.h>
 #endif
 
+/*
+Codes for UI (Always check those, In DOS the exit code is produced
+by Ctrl+C)
+*/
+#define __LEAF_UI_EXIT_CODE 1
+
 /*allows easy-detection and on-demand video switching without
 using multiple versions*/
 #define __cga	0x01
@@ -92,20 +98,21 @@ struct mouse {
 extern unsigned char * videoBuffer;
 extern unsigned char * video;
 
-extern unsigned int setVideo(unsigned char v);
+extern signed char setVideo(unsigned char v);
 extern void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c);
 extern void plotLinearPixel(register unsigned short pos,register unsigned char color);
 extern unsigned char fetchPixel(register unsigned short x,register unsigned short y);
+extern unsigned char fetchLinearPixel(register unsigned short p);
 extern void setPalette(paletteEntry * p, register unsigned short n);
 extern void waitRetrace(void);
 
 extern void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
 extern void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
 extern void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
+extern void updateEvent(void);
 extern void updateScreen(void);
 extern void drawImage(Image * img, register unsigned short x, register unsigned short y);
-extern void drawSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy);
-extern void drawTiledSprite(unsigned char * data, unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy, register unsigned short tx, register unsigned short ty);
+extern void drawTiled(Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy);
 
 extern void seedRandom(void);
 extern signed int generateRandom(void);

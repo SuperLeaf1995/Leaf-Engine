@@ -68,10 +68,11 @@ extern leafContext * leafCurrentCtx;
 General graphics manipulation functions.
 Comaptible with almost all displays (VGA,EGA,CGA,etc).
 */
-unsigned int setVideo(unsigned char v);
+signed char setVideo(unsigned char v);
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c);
 void plotLinearPixel(register unsigned short pos,register unsigned char color);
 unsigned char fetchPixel(register unsigned short x,register unsigned short y);
+unsigned char fetchLinearPixel(register unsigned short p);
 void setPalette(paletteEntry * p, register unsigned short n);
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 static void waitRetrace(void);
@@ -85,9 +86,8 @@ principal graphics functions
 void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
 void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
 void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
+void updateEvent(void);
 void updateScreen(void);
-void drawImage(Image * img, register unsigned short x, register unsigned short y);
-void drawSprite(unsigned char * data, register unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy);
-void drawTiledSprite(unsigned char * data, unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy, register unsigned short tx, register unsigned short ty);
-
+void drawImage(Image * img, unsigned short x, unsigned short y);
+void drawTiled(Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy);
 #endif

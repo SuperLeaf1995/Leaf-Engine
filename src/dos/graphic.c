@@ -8,7 +8,7 @@
 
 static union REGS in,out;
 
-unsigned int setVideo(unsigned char v) {
+signed char setVideo(unsigned char v) {
 	in.h.al = v;
 	in.h.ah = 0; /*set the video we want*/
 	int86(0x10,&in,&out);
@@ -16,12 +16,19 @@ unsigned int setVideo(unsigned char v) {
 	leafCurrentCtx->vwide = vtable[v][0];
 	leafCurrentCtx->vtall = vtable[v][1];
 	leafCurrentCtx->vvideo = vtable[v][2];
+	
 	if(leafCurrentCtx->vvideo == __ega || leafCurrentCtx->vvideo == __vga) {
 		video = (unsigned char *)0xA0000000L;
 	} else if(leafCurrentCtx->vvideo == __cga) {
 		video = (unsigned char *)0xB8000000L;
 	}
-	return (unsigned int)v;
+	
+	leafCurrentCtx->videoBuffer = (unsigned char *)realloc(leafCurrentCtx->videoBuffer,(leafCurrentCtx->vwide*leafCurrentCtx->vtall));
+	if(leafCurrentCtx->videoBuffer == NULL) {
+		return -1;
+	}
+	
+	return 0;
 }
 
 void setPalette(paletteEntry * p, register unsigned short n) {
@@ -44,6 +51,10 @@ void setPalette(paletteEntry * p, register unsigned short n) {
 static void waitRetrace(void) {
 	while((inp(0x03DA)&8));
 	while(!(inp(0x03DA)&8));
+	return;
+}
+
+void updateEvent(void) {
 	return;
 }
 
@@ -73,7 +84,7 @@ void updateScreen(void) {
 		/*Use adaptive framebuffer (all-screen)*/
 		for(i = 0; i < (leafCurrentCtx->vwide*leafCurrentCtx->vtall); i++) {
 			x = (i%320); y = (i/320);
-			bitMask = 0x80>>(x%8);
+			bitMask = 0x80>>(x&7);
 			offs = ((y>>1)*((leafCurrentCtx->vwide)>>3)+(x>>3));
 			if(leafCurrentCtx->videoBuffer[i]) { *(cgaSelect[y&1]+offs) |= bitMask; }
 			else { *(cgaSelect[y&1]+offs) &= ~bitMask; }
@@ -82,7 +93,7 @@ void updateScreen(void) {
 		/*Wide the pixels*/
 		for(i = 0; i < (leafCurrentCtx->vwide*leafCurrentCtx->vtall); i++) {
 			x = (i%320); y = (i/320);
-			bitMask = 0x80>>(x%8);
+			bitMask = 0x80>>(x&7);
 			offs = ((y>>1)*((leafCurrentCtx->vwide<<1)>>3)+(x>>3));
 			if(leafCurrentCtx->videoBuffer[i]) { *(cgaSelect[y&1]+offs) |= bitMask; }
 			else { *(cgaSelect[y&1]+offs) &= ~bitMask; }

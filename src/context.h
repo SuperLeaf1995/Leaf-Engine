@@ -25,7 +25,7 @@ extern "C" {
 Codes for UI (Always check those, In DOS the exit code is produced
 by Ctrl+C)
 */
-#define _exit_code 1
+#define __LEAF_UI_EXIT_CODE 1
 
 /*
 LeafGame is another special structure wich is the main structure for

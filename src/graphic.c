@@ -77,7 +77,7 @@ void plotWirePolygon(signed short * d, register unsigned short n, register unsig
 	return;
 }
 
-void drawImage(Image * img, register unsigned short x, register unsigned short y) {
+void drawImage(Image * img, unsigned short x, unsigned short y) {
 	unsigned short i;
 	unsigned short i2;
 	for(i = 0; i < img->wide; i++) {
@@ -88,15 +88,16 @@ void drawImage(Image * img, register unsigned short x, register unsigned short y
 	return;
 }
 
-void drawTiledSprite(unsigned char * data, unsigned short x, register unsigned short y, register unsigned short sx, register unsigned short sy, register unsigned short ix, register unsigned short iy, register unsigned short tx, register unsigned short ty) {
-	unsigned short i;
-	unsigned short i2;
-	unsigned short i3;
-	unsigned short i4;
-	for(i = 0; i < tx; i++) {
-		for(i2 = 0; i2 < ty; i2++) {
-			i4 = iy; i3 = ix;
-			plotPixel((x+i),(y+i2),data[(((i4*tx)+i2)*sy)+((i3)*ty)+i]);
+void drawTiled(Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy) {
+	register unsigned short i,i2;
+
+	register unsigned short tTall;
+
+	for(i2 = 0; i2 < 16; i2++) {
+		tTall = (((iy<<4)+i2)*img->wide);
+
+		for(i = 0; i < 16; i++) {
+			plotPixel(x+i,y+i2,img->data[tTall+(ix<<4)+i]);
 		}
 	}
 	return;

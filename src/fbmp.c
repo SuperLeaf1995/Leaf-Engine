@@ -15,9 +15,9 @@ signed int imageBitmap(const char * filename, Image * img) {
 	
 	unsigned char hold;
 	
-	unsigned long compression;
-	unsigned long bitsPerPixel;
-	signed long wide; signed long tall;
+	unsigned long compression = 0;
+	unsigned long bitsPerPixel = 0;
+	signed long wide = 0; signed long tall = 0;
 	
 	FILE * fp;
 	
@@ -120,7 +120,7 @@ signed int imageBitmap(const char * filename, Image * img) {
 	/*Read the bitmap data*/
 	img->data = (unsigned char *)malloc(wide*tall);
 	if(img->data == NULL) {
-		if(img->palette == NULL) {
+		if(img->palette != NULL) {
 			free(img->palette);
 		}
 		return -13;

@@ -1,7 +1,7 @@
 # Makefile for TurboC Leaf-Engine builds
 # Change accordingly
 CC = c:\tc\tcc
-CFLAGS = -O -r -Z -mh -j5 -g8 -Isrc -Iinclude
+CFLAGS = -w -mh -Isrc -Iinclude
 CLIB = c:\tc\tlib
 
 all: out\dos\leaf.lib
