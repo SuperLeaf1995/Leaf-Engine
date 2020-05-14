@@ -23,7 +23,7 @@ int main(void)
 
 	setPalette(timg.palette,16);
 
-	for(;;)
+	while(ctx.ui != __LEAF_UI_EXIT_CODE)
 	{
 		drawImage(&timg,0,0);
 		
