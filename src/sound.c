@@ -19,14 +19,10 @@
  * 
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
 #include "sound.h"
 
-
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
+#include "dos\sound.c"
+#elif defined(__linux) || defined(linux)
+#include "linux/sound.c"
+#endif

@@ -37,7 +37,8 @@ program.
 
 The structure aims to provide a simple way to get/set data for input.
 */
-typedef struct leafEvent {
+typedef struct leafEvent
+{
 	signed int key;
 	/** Change of the mouse X */
 	signed short cx;

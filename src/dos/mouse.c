@@ -29,20 +29,29 @@ static union REGS in,out;
 
 @param m Mouse structure
 */
-char initMouse(struct mouse * m) {
+char initMouse(struct mouse * m)
+{
 	in.x.ax = 0x00;
 	in.x.bx = 0x00;
 	int86(0x33,&in,&out);
-	if((in.x.bx&2) != 0) { /*Two button mouse*/
+	
+	/*Two button mouse*/
+	if((in.x.bx&2) != 0)
+	{
         m->buttons = 2;
 	}
-	else if((in.x.bx&3) != 0) { /*Three button mouse*/
+	/*Three button mouse*/
+	else if((in.x.bx&3) != 0)
+	{
         m->buttons = 3;
 	}
-	else { /*Unknown buttons*/
+	/*Unknown buttons*/
+	else
+	{
         m->buttons = 0;
 	}
-	return (out.x.ax != 0) ? 0 : -1; /*If the mouse was initialized return 0, else return -1*/
+	/*If the mouse was initialized return 0, else return -1*/
+	return ((out.x.ax != 0) ? 0 : -1); 
 }
 
 /**
@@ -51,7 +60,8 @@ char initMouse(struct mouse * m) {
 @param x X Coordinates
 @param y Y Coordinates
 */
-void setMousePosition(register unsigned short x, register unsigned short y) {
+void setMousePosition(register unsigned short x, register unsigned short y)
+{
 	in.x.ax = 0x04;
 	in.x.cx = x;
 	in.x.dx = y;
@@ -62,7 +72,8 @@ void setMousePosition(register unsigned short x, register unsigned short y) {
 /**
 @brief Shows mouse
 */
-void showMouse(void) {
+void showMouse(void)
+{
 	in.x.ax = 0x01;
 	int86(0x33,&in,&out);
 	return;
@@ -71,7 +82,8 @@ void showMouse(void) {
 /**
 @brief Hides mouse
 */
-void hideMouse(void) {
+void hideMouse(void)
+{
 	in.x.ax = 0x02;
 	int86(0x33,&in,&out);
 	return;
@@ -82,12 +94,15 @@ void hideMouse(void) {
 
 @param m Mouse structure
 */
-void getMouseStatus(struct mouse * m) {
+void getMouseStatus(struct mouse * m)
+{
 	in.x.ax = 0x03;
 	int86(0x33,&in,&out);
 	m->x = out.x.cx;
 	m->y = out.x.dx;
-	m->buttonLeft = (out.x.bx & 1); /*While it is not equal 0, its HOLD/PRESSED, else its RELEASED*/
+	
+	/*While it is not equal 0, its HOLD/PRESSED, else its RELEASED*/
+	m->buttonLeft = (out.x.bx & 1);
 	m->buttonRight = (out.x.bx & 2);
 	m->buttonMiddle = (out.x.bx & 4);
 	return;
@@ -98,7 +113,8 @@ void getMouseStatus(struct mouse * m) {
 
 @param m Mouse structure
 */
-void getMouseMovement(struct mouse * m) {
+void getMouseMovement(struct mouse * m)
+{
 	in.x.ax = 0x0B;
 	int86(0x33,&in,&out);
 	m->mx = out.x.cx;

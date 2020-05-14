@@ -11,7 +11,8 @@ extern "C" {
 #include "palette.h"
 
 /* PcxHeader structure */
-typedef struct pcxHeader {
+typedef struct pcxHeader
+{
 	unsigned char type;
 	unsigned char version;
 	unsigned char compression;

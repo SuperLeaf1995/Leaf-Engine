@@ -108,15 +108,27 @@ unsigned char *  readImagePcxData(FILE * stream, pcxHeader * p) {
 	dataSize = (p->xEnd+1)*(p->yEnd+1);
 	index = 0; total = 0;
 	data = (unsigned char *)malloc(dataSize);
-	if(data == NULL) { return 0; }
-	while(index < dataSize) {
+	if(data == NULL)
+	{
+		return 0;
+	}
+	while(index < dataSize)
+	{
 		tmp = fgetc(stream);
-		if((tmp&0xC0) == 0xC0) { /*is it a 2 byte value*/
+		
+		/*Is it a 2 byte value*/
+		if((tmp&0xC0) == 0xC0)
+		{
 			rLen = tmp&0x3F; val = fgetc(stream);
-		} else { /*1 byte value*/
+		}
+		/*1 byte value*/
+		else
+		{
 			rLen = 1; val = tmp;
 		}
-		for(total += rLen; rLen&&index < dataSize; rLen--, index++) { /*decompress the data*/
+		/*Decompress the data*/
+		for(total += rLen; rLen&&index < dataSize; rLen--, index++)
+		{
 			data[index] = val;
 		}
 	}
@@ -129,16 +141,25 @@ unsigned char *  readImagePcxData(FILE * stream, pcxHeader * p) {
 
 @param stream File stream of the PCX file
 */
-paletteEntry *  readImagePcxVgaPalette(FILE * stream) {
+paletteEntry *  readImagePcxVgaPalette(FILE * stream)
+{
 	register signed short vgaPaletteChecker;
 	register unsigned short i;
 	paletteEntry * pal;
-	vgaPaletteChecker = fgetc(stream); /*is last byte 0x0C or EOF?*/
-	if(vgaPaletteChecker != 0x0C || vgaPaletteChecker == EOF) { return NULL; }
+	vgaPaletteChecker = fgetc(stream); /*Is last byte 0x0C or EOF?*/
+	if(vgaPaletteChecker != 0x0C || vgaPaletteChecker == EOF)
+	{
+		return NULL;
+	}
 	pal = (paletteEntry *)malloc(256*sizeof(paletteEntry));
-	if(pal == NULL) { return NULL; } /*allocation error*/
-	/*read rgb components into the palette entry*/
-	for(i = 0; i < 256; i++) {
+	if(pal == NULL)
+	{
+		return NULL;
+	}
+	
+	/*Read rgb components into the palette entry*/
+	for(i = 0; i < 256; i++)
+	{
 		pal[i].r = fgetc(stream);
 		pal[i].g = fgetc(stream);
 		pal[i].b = fgetc(stream);

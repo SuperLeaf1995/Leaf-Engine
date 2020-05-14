@@ -19,7 +19,10 @@
  * 
  */
 
-signed int leafContextCreate(leafContext * g) {
+signed int leafContextCreate(leafContext * g)
+{
+	size_t i;
+	
 	leafCurrentCtx = g;
 	
 	if(g->vwide == 0) {
@@ -30,15 +33,18 @@ signed int leafContextCreate(leafContext * g) {
 	
 	/*Create video buffer*/
 	g->videoBuffer = (unsigned char *)malloc(g->vwide*g->vtall);
-	if(g->videoBuffer == NULL) {
+	if(g->videoBuffer == NULL)
+	{
 		return -1;
 	}
 	
 	/*Open the x11 display*/
 	g->xdisplay = XOpenDisplay(0);
-	if(g->xdisplay == NULL) {
+	/*error opening x11 display*/
+	if(g->xdisplay == NULL)
+	{
 		return -2;
-	} /*error opening x11 display*/
+	}
 	
 	g->xwindow = XCreateSimpleWindow(g->xdisplay,RootWindow(g->xdisplay,
 	BlackPixel(g->xdisplay,DefaultScreen(g->xdisplay))),10,10,g->vwide,
@@ -47,7 +53,8 @@ signed int leafContextCreate(leafContext * g) {
 	
 	XSelectInput(g->xdisplay,g->xwindow,ExposureMask|KeyReleaseMask); /*Select input...*/
 	XMapWindow(g->xdisplay,g->xwindow); /*Display it (or map it)*/
-	if(g->name != NULL) {
+	if(g->name != NULL)
+	{
 		XStoreName(g->xdisplay,g->xwindow,g->name); /*Set the window's title*/
 	}
 	
@@ -57,9 +64,17 @@ signed int leafContextCreate(leafContext * g) {
 	g->xgraphic = XCreateGC(g->xdisplay,g->xwindow,0,0);
 	
 	/*Load a default VGA palette (DOSBox and other programs does this)*/
-	g->rgbPalette = malloc(256*sizeof(paletteEntry));
-	if(g->rgbPalette == NULL) {
+	g->rgbPalette = malloc(sizeof(paletteEntry)*256);
+	if(g->rgbPalette == NULL)
+	{
 		return -3;
+	}
+	
+	for(i = 0; i < 256; i++)
+	{
+		g->rgbPalette[i].r = 0;
+		g->rgbPalette[i].g = 0;
+		g->rgbPalette[i].b = 0;
 	}
 	
 #if defined(OPENAL)
@@ -68,11 +83,14 @@ signed int leafContextCreate(leafContext * g) {
 	return 0;
 }
 
-signed int leafContextDestroy(leafContext * g) {
-	if(g->videoBuffer != NULL) {
+signed int leafContextDestroy(leafContext * g)
+{
+	if(g->videoBuffer != NULL)
+	{
 		free(g->videoBuffer);
 	}
-	if(g->name != NULL) {
+	if(g->name != NULL)
+	{
 		free(g->name);
 	}
 	return 0;

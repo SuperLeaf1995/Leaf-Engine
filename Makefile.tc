@@ -17,8 +17,9 @@ install: out\dos\leaf.lib
 uninstall: out\dos\leaf.lib
 	@echo "--- UNINSTALLING ---"
 	$(CLIB) c:\tc\lib\cs.lib -out\dos\leaf.lib
-	$(CLIB) c:\tc\lib\cs.lib -out\dos\fdata.obj-out\dos\fbmp.obj
-	$(CLIB) c:\tc\lib\cs.lib -out\dos\fpcx.obj-out\dos\graphic.obj-out\dos\mouse.obj-out\dos\context.obj
+	$(CLIB) c:\tc\lib\cs.lib -out\dos\fdata.obj-out\dos\fbmp.obj-out\dos\fpcx.obj
+	$(CLIB) c:\tc\lib\cs.lib -out\dos\graphic.obj-out\dos\mouse.obj-out\dos\context.obj
+	$(CLIB) c:\tc\lib\cs.lib -out\dos\sound.obj
 	del c:\tc\include\leaf.h
 	del c:\tc\lib\leaf.lib
 	@echo "--- UNINSTALLING DONE ---"
@@ -26,10 +27,11 @@ uninstall: out\dos\leaf.lib
 clean:
 	del out\dos\*.*
 
-out\dos\leaf.lib: out\dos\fdata.obj out\dos\fbmp.obj out\dos\fpcx.obj out\dos\graphic.obj out\dos\mouse.obj out\dos\context.obj
+out\dos\leaf.lib: out\dos\fdata.obj out\dos\fbmp.obj out\dos\fpcx.obj out\dos\graphic.obj out\dos\mouse.obj out\dos\context.obj out\dos\sound.obj
 	@echo "--- BUILDING $< ---"
 	$(CLIB) /C $< +out\dos\fdata.obj+out\dos\fbmp.obj+out\dos\fpcx.obj
 	$(CLIB) /C $< +out\dos\graphic.obj+out\dos\mouse.obj+out\dos\context.obj
+	$(CLIB) /C $< +out\dos\sound.obj
 
 out\dos\fdata.obj: src\fdata.c src\fdata.h
 	@echo "--- BUILDING $< ---"
@@ -54,3 +56,7 @@ out\dos\mouse.obj: src\mouse.c src\mouse.h
 out\dos\context.obj: src\context.c src\context.h
 	@echo "--- BUILDING $< ---"
 	$(CC) -c $(CFLAGS) -o$< src\context.c
+
+out\dos\sound.obj: src\sound.c src\sound.h
+	@echo "--- BUILDING $< ---"
+	$(CC) -c $(CFLAGS) -o$< src\sound.c

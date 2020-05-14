@@ -33,7 +33,8 @@ extern "C" {
 #include "image.h"
 
 /** Device-Dependant bitmap file for Windows 1.x*/
-typedef struct _DDBheader {
+typedef struct _DDBheader
+{
 	unsigned short wide;
 	unsigned short tall;
 	unsigned short bitmapSize;
@@ -42,7 +43,8 @@ typedef struct _DDBheader {
 }DDBheader;
 
 /** Windows Bitmap File header, included in all Windows bitmaps */
-typedef struct _WinBmpFileHeader {
+typedef struct _WinBmpFileHeader
+{
 	unsigned long fileSize;
 	unsigned long reserved;
 	unsigned long offset;
@@ -50,7 +52,8 @@ typedef struct _WinBmpFileHeader {
 }WinBmpFileHeader;
 
 /** Windows 2.x bitmap file header */
-typedef struct _Win2xBmpFileHeader {
+typedef struct _Win2xBmpFileHeader
+{
 	signed short wide;
 	signed short tall;
 	unsigned short planes;
@@ -58,7 +61,8 @@ typedef struct _Win2xBmpFileHeader {
 }Win2xBmpFileHeader;
 
 /** Windows 3.x+ (inc. 95/98) bitmap file header */
-typedef struct _Win3xBmpFileHeader {
+typedef struct _Win3xBmpFileHeader
+{
 	signed long wide;
 	signed long tall;
 	unsigned short planes;
@@ -66,7 +70,8 @@ typedef struct _Win3xBmpFileHeader {
 }Win3xBmpFileHeader;
 
 /** Windows 3.x bitmap info header */
-typedef struct _Win3xBmpHeader {
+typedef struct _Win3xBmpHeader
+{
 	unsigned long compression;
 	unsigned long bitmapSize;
 	signed long xResolution;
@@ -86,14 +91,16 @@ typedef struct _WinNTBmpHeader {
 }WinNTBmpHeader;
 
 /** Windows NT bitmap masks */
-typedef struct _WinNTBmpMasks {
+typedef struct _WinNTBmpMasks
+{
 	unsigned long r;
 	unsigned long g;
 	unsigned long b;
 }WinNTBmpMasks;
 
 /** Windows 95/98 bitmap info header */
-typedef struct _Win95BmpHeader {
+typedef struct _Win95BmpHeader
+{
 	unsigned long compression;
 	unsigned long bitmapSize;
 	signed long xResolution;

@@ -27,7 +27,8 @@ extern "C" {
 #endif /* __cplusplus */
 
 /* Mouse handler structure */
-struct mouse {
+struct mouse
+{
 	unsigned char buttonLeft;
 	unsigned char buttonRight;
 	unsigned char buttonMiddle;

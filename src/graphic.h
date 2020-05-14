@@ -49,7 +49,8 @@ using multiple versions*/
 #define __ega	0x07
 #define __mcga	0x0F
 
-static unsigned short vtable[32][3] = {
+static unsigned short vtable[32][3] =
+{
 	{0,0,0}, /* 0x00 */
 	{0,0,0}, /* 0x01 */
 	{0,0,0}, /* 0x02 */

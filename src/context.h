@@ -56,7 +56,8 @@ leafEvent and any of the functions that depends of it.
 Provides a simple way for porting DOS, Linux and BSD applications without
 the hassle of setting everything separately
 */
-typedef struct leafContext {
+typedef struct leafContext
+{
 #if defined(OPENAL)
 	ALCdevice * alDev;
 	ALCcontext * alCtx;

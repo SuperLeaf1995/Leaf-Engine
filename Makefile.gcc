@@ -10,15 +10,12 @@ CFLAGS =	-Werror						\
 			-Wall						\
 			-Wextra						\
 			-Waddress					\
-			-Wabi=2						\
 			-Wdate-time					\
 			-Wformat-y2k				\
 			-Wdouble-promotion			\
 			-Wold-style-definition		\
 			-Wmissing-prototypes		\
 			-Wstrict-prototypes			\
-			-fsanitize=address			\
-			-fstrict-aliasing			\
 			-std=c89					\
 			-ansi						\
 			-pedantic					\
@@ -31,56 +28,77 @@ CROSS_PATH = ~/opt
 GBA_CC = $(CROSS_PATH)/gcc-arm-none-eabi/bin/arm-none-eabi-gcc
 GBA_AR = $(CROSS_PATH)/gcc-arm-none-eabi/bin/arm-none-eabi-ar
 
-LINUX_OBJS = 	$(OUT_DIR)/linux/fbmp.o		\
-				$(OUT_DIR)/linux/mouse.o	\
-				$(OUT_DIR)/linux/fpcx.o		\
-				$(OUT_DIR)/linux/graphic.o	\
-				$(OUT_DIR)/linux/fdata.o	\
-				$(OUT_DIR)/linux/context.o	\
+LINUX_OBJS_STATIC = 	$(OUT_DIR)/linux/static/fbmp.o		\
+						$(OUT_DIR)/linux/static/mouse.o		\
+						$(OUT_DIR)/linux/static/fpcx.o		\
+						$(OUT_DIR)/linux/static/graphic.o	\
+						$(OUT_DIR)/linux/static/fdata.o		\
+						$(OUT_DIR)/linux/static/context.o	\
+						
+LINUX_OBJS_SHARED = 	$(OUT_DIR)/linux/shared/fbmp.o		\
+						$(OUT_DIR)/linux/shared/mouse.o		\
+						$(OUT_DIR)/linux/shared/fpcx.o		\
+						$(OUT_DIR)/linux/shared/graphic.o	\
+						$(OUT_DIR)/linux/shared/fdata.o		\
+						$(OUT_DIR)/linux/shared/context.o	\
+
+GBA_OBJS =				$(OUT_DIR)/gba/fbmp.o		\
+						$(OUT_DIR)/gba/mouse.o		\
+						$(OUT_DIR)/gba/fpcx.o		\
+						$(OUT_DIR)/gba/graphic.o	\
+						$(OUT_DIR)/gba/fdata.o		\
+						$(OUT_DIR)/gba/context.o	\
 				
 
 # All-target
 all: gba linux-shared linux-static
 
-linux-shared: $(OUT_DIR)/linux $(OUT_DIR)/linux/libleaf.so
-linux-static: $(OUT_DIR)/linux $(OUT_DIR)/linux/libleaf.a
+linux-shared: $(OUT_DIR)/linux/shared $(OUT_DIR)/linux/shared/libleaf.so
+linux-static: $(OUT_DIR)/linux/static $(OUT_DIR)/linux/static/libleaf.a
 gba: $(OUT_DIR)/gba $(OUT_DIR)/gba/libleaf.a
 
-install-shared: linux-shared
-	cp $(OUT_DIR)/linux/libleaf.so /usr/lib
+install-linux-shared: linux-shared
+	cp $(OUT_DIR)/linux/shared/libleaf.so /usr/lib
 	cp $(INC_DIR)/leaf.h /usr/include
 
-install-static: linux-static
-	cp $(OUT_DIR)/linux/libleaf.a /usr/lib
+install-linux-static: linux-static
+	cp $(OUT_DIR)/linux/static/libleaf.a /usr/lib
 	cp $(INC_DIR)/leaf.h /usr/include
 
 clean:
-	rm -f out/linux/*.*
+	rm -f out/linux/shared/*.*
+	rm -f out/linux/static/*.*
 	rm -f out/gba/*.*
 
 # Directories
 $(OUT_DIR)/linux: $(OUT_DIR)
+	mkdir -p $@
+
+$(OUT_DIR)/linux/shared: $(OUT_DIR)
+	mkdir -p $@
+
+$(OUT_DIR)/linux/static: $(OUT_DIR)
 	mkdir -p $@
 	
 $(OUT_DIR)/gba: $(OUT_DIR)
 	mkdir -p $@
 
 # Linux (Static)
-$(OUT_DIR)/linux/libleaf.a: $(LINUX_OBJS)
+$(OUT_DIR)/linux/static/libleaf.a: $(LINUX_OBJS_STATIC)
 	$(AR) rcs $@ $^
 
-$(OUT_DIR)/linux/%.obj: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+$(OUT_DIR)/linux/static/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
 	$(CC) $(CFLAGS) -c $< -o $@
 	
 # Linux (Shared)
-$(OUT_DIR)/linux/libleaf.so: $(LINUX_OBJS)
+$(OUT_DIR)/linux/shared/libleaf.so: $(LINUX_OBJS_SHARED)
 	$(CC) -shared $^ -o $@
 
-$(OUT_DIR)/linux/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+$(OUT_DIR)/linux/shared/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
 	$(CC) $(CFLAGS) -fpic -c $< -o $@
 
 # GBA
-$(OUT_DIR)/gba/libleaf.a: $(OUT_DIR)/gba/mouse.obj $(OUT_DIR)/gba/fpcx.obj
+$(OUT_DIR)/gba/libleaf.a: $(GBA_OBJS)
 	$(GBA_AR) rcs $@ $^
 
 $(OUT_DIR)/gba/%.obj: $(SRC_DIR)/%.c $(SRC_DIR)/%.h

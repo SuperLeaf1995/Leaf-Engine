@@ -21,23 +21,27 @@
 
 #include "graphic.h"
 
-signed char setVideo(unsigned char v) {
+#define toRgb(r,g,b) (r+(g<<8)+(b<<16))
+
+signed char setVideo(unsigned char v)
+{
 	leafCurrentCtx->vwide = vtable[v][0];
 	leafCurrentCtx->vtall = vtable[v][1];
 	leafCurrentCtx->vvideo = vtable[v][2];
 	
 	leafCurrentCtx->videoBuffer = (unsigned char *)realloc(leafCurrentCtx->videoBuffer,(leafCurrentCtx->vwide*leafCurrentCtx->vtall));
-	if(leafCurrentCtx->videoBuffer == NULL) {
+	if(leafCurrentCtx->videoBuffer == NULL)
+	{
 		return -1;
 	}
 	return 0;
 }
 
-#define toRgb(r,g,b) (r+(g<<8)+(b<<16))
-
-void setPalette(paletteEntry * p, register unsigned short n) {
-	register unsigned short i;
-	for(i = 0; i < n; i++) {
+void setPalette(paletteEntry * p, register unsigned short n)
+{
+	size_t i;
+	for(i = 0; i < n; i++)
+	{
 		leafCurrentCtx->rgbPalette[i].r = p[i].r;
 		leafCurrentCtx->rgbPalette[i].g = p[i].g;
 		leafCurrentCtx->rgbPalette[i].b = p[i].b;
@@ -45,26 +49,28 @@ void setPalette(paletteEntry * p, register unsigned short n) {
 	return;
 }
 
-void updateEvent(void) {
+void updateScreen(void)
+{
+	register size_t i,i2,d;
+	
 	XNextEvent(leafCurrentCtx->xdisplay,&leafCurrentCtx->xevent);
 	
 	if(leafCurrentCtx->xevent.type == ClientMessage
-	&& (unsigned int)leafCurrentCtx->xevent.xclient.data.l[0] == leafCurrentCtx->WM_DELETE_WINDOW) {
+	&& (unsigned int)leafCurrentCtx->xevent.xclient.data.l[0] == leafCurrentCtx->WM_DELETE_WINDOW)
+	{
 		leafCurrentCtx->ui = __LEAF_UI_EXIT_CODE;
 	}
-	return;
-}
-
-void updateScreen(void) {
-	register size_t i,i2,d;
 	
-	if(leafCurrentCtx == NULL) {
+	if(leafCurrentCtx == NULL)
+	{
 		return;
 	}
 	
 	/*Draw in the window the video buffer*/
-	for(i = 0; i < leafCurrentCtx->vwide; i++) {
-		for(i2 = 0; i2 < leafCurrentCtx->vtall; i2++) {
+	for(i = 0; i < leafCurrentCtx->vwide; i++)
+	{
+		for(i2 = 0; i2 < leafCurrentCtx->vtall; i2++)
+		{
 			/*Set the pixel colour according to the palette*/
 			d = leafCurrentCtx->videoBuffer[((i2*leafCurrentCtx->vwide)+i)];
 			
