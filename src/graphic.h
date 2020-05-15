@@ -28,14 +28,10 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #if defined(__linux) || defined(linux)
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xos.h>
-#include <X11/Xatom.h>
 #include <X11/X.h>
 #endif
 #include "palette.h"
@@ -49,6 +45,7 @@ using multiple versions*/
 #define __ega	0x07
 #define __mcga	0x0F
 
+#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 static unsigned short vtable[32][3] =
 {
 	{0,0,0}, /* 0x00 */
@@ -73,6 +70,7 @@ static unsigned short vtable[32][3] =
 	{320,200,__vga}, /* 0x13 */
 	{0,0,0} /* 0x14 */
 };
+#endif
 
 #if defined(__DJGPP__)
 unsigned char * video = (unsigned char * )0xA0000+__djgpp_conventional_base;

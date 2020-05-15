@@ -34,6 +34,7 @@ LINUX_OBJS_STATIC = 	$(OUT_DIR)/linux/static/fbmp.o		\
 						$(OUT_DIR)/linux/static/graphic.o	\
 						$(OUT_DIR)/linux/static/fdata.o		\
 						$(OUT_DIR)/linux/static/context.o	\
+						$(OUT_DIR)/linux/static/sound.o		\
 						
 LINUX_OBJS_SHARED = 	$(OUT_DIR)/linux/shared/fbmp.o		\
 						$(OUT_DIR)/linux/shared/mouse.o		\
@@ -41,13 +42,15 @@ LINUX_OBJS_SHARED = 	$(OUT_DIR)/linux/shared/fbmp.o		\
 						$(OUT_DIR)/linux/shared/graphic.o	\
 						$(OUT_DIR)/linux/shared/fdata.o		\
 						$(OUT_DIR)/linux/shared/context.o	\
+						$(OUT_DIR)/linux/shared/sound.o		\
 
-GBA_OBJS =				$(OUT_DIR)/gba/fbmp.o		\
-						$(OUT_DIR)/gba/mouse.o		\
-						$(OUT_DIR)/gba/fpcx.o		\
-						$(OUT_DIR)/gba/graphic.o	\
-						$(OUT_DIR)/gba/fdata.o		\
-						$(OUT_DIR)/gba/context.o	\
+GBA_OBJS =				$(OUT_DIR)/gba/fbmp.o				\
+						$(OUT_DIR)/gba/mouse.o				\
+						$(OUT_DIR)/gba/fpcx.o				\
+						$(OUT_DIR)/gba/graphic.o			\
+						$(OUT_DIR)/gba/fdata.o				\
+						$(OUT_DIR)/gba/context.o			\
+						$(OUT_DIR)/gba/sound.o				\
 				
 
 # All-target
@@ -101,5 +104,5 @@ $(OUT_DIR)/linux/shared/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
 $(OUT_DIR)/gba/libleaf.a: $(GBA_OBJS)
 	$(GBA_AR) rcs $@ $^
 
-$(OUT_DIR)/gba/%.obj: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
-	$(GBA_CC) -D__GBA__ $(CFLAGS) -c $< -o $@
+$(OUT_DIR)/gba/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	$(GBA_CC) -D__GBA__ -Iextern/newlib-1.10.0/newlib/libc/include/ $(CFLAGS) -c $< -o $@

@@ -21,10 +21,10 @@
 
 #include "graphic.h"
 
-unsigned int setVideo(unsigned char v)
+signed char setVideo(unsigned char v)
 {
 	*(unsigned long*)0x4000000 = 0x403; /*Set mode 3*/
-	return (unsigned int)v;
+	return (signed char)v;
 }
 
 void setPalette(paletteEntry * p, register unsigned short n)
@@ -44,11 +44,11 @@ void updateScreen(void)
 	{
 		/*Why does this work?*/
 		*(unsigned short *)(0x6000000+(i*sizeof(unsigned short))) = rgb16(
-		leafCurrentCtx->rgbPalette[videoBuffer[i]].r,
-		leafCurrentCtx->rgbPalette[videoBuffer[i]].g,
-		leafCurrentCtx->rgbPalette[videoBuffer[i]].b
+		leafCurrentCtx->rgbPalette[leafCurrentCtx->videoBuffer[i]].r,
+		leafCurrentCtx->rgbPalette[leafCurrentCtx->videoBuffer[i]].g,
+		leafCurrentCtx->rgbPalette[leafCurrentCtx->videoBuffer[i]].b
 		);
 	}
-	memset(videoBuffer,0,(size_t)leafCurrentCtx->vwide*leafCurrentCtx->vtall); /* Clear our buffer */
+	memset(leafCurrentCtx->videoBuffer,0,(size_t)leafCurrentCtx->vwide*leafCurrentCtx->vtall); /* Clear our buffer */
 	return;
 }

@@ -22,8 +22,8 @@
 signed int leafContextCreate(leafContext * g)
 {
 	g->vwide = 240; g->vtall = 160;
-	videoBuffer = (unsigned char *)malloc(g->vwide*g->vtall);
-	if(videoBuffer == NULL)
+	g->videoBuffer = (unsigned char *)malloc(g->vwide*g->vtall);
+	if(g->videoBuffer == NULL)
 	{
 		return -1;
 	}
@@ -41,9 +41,9 @@ signed int leafContextCreate(leafContext * g)
 
 signed int leafContextDestroy(leafContext * g)
 {
-	if(videoBuffer != NULL)
+	if(g->videoBuffer != NULL)
 	{
-		free(videoBuffer);
+		free(g->videoBuffer);
 	}
 	if(g->name != NULL)
 	{
