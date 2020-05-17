@@ -86,7 +86,7 @@ typedef struct leafContext {
 	unsigned char * videoBuffer;
 }leafContext;
 
-struct _Mouse {
+typedef struct _Mouse {
 	unsigned char buttonLeft;
 	unsigned char buttonRight;
 	unsigned char buttonMiddle;

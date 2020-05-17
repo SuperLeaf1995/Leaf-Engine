@@ -9,6 +9,9 @@ int main(void)
 {
 	ctx.vwide = 320;
 	ctx.vtall = 200;
+	
+	fprintf(stdout,"Test v1.0\n");
+	
 	if(leafContextCreate(&ctx) != 0)
 	{
 		fprintf(stderr,"Error on context\n");

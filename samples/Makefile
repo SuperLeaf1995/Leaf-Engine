@@ -44,4 +44,4 @@ out/gba-test.gba: out/gba-test.elf
 
 # test
 out/test.o: test.c
-	gcc $(CFLAGS) -lX11 -lopenal $^ /usr/lib/libleaf.a -o $@
+	gcc $(CFLAGS) -lopenal -lX11 $^ /usr/lib/libleaf.a -o $@
