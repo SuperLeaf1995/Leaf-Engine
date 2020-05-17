@@ -103,6 +103,14 @@ VIC20_OBJS =			$(OUT_DIR)/vic20/fbmp.o				\
 						$(OUT_DIR)/vic20/fdata.o			\
 						$(OUT_DIR)/vic20/context.o			\
 						$(OUT_DIR)/vic20/sound.o			\
+						
+APPLE2_OBJS =			$(OUT_DIR)/apple2/fbmp.o			\
+						$(OUT_DIR)/apple2/mouse.o			\
+						$(OUT_DIR)/apple2/fpcx.o			\
+						$(OUT_DIR)/apple2/graphic.o			\
+						$(OUT_DIR)/apple2/fdata.o			\
+						$(OUT_DIR)/apple2/context.o			\
+						$(OUT_DIR)/apple2/sound.o			\
 			
 # I/O Stuff is deliberately removed NES dosent supports
 # filesystems since its a ROM system.
@@ -121,7 +129,7 @@ NES_OBJS =				$(OUT_DIR)/nes/graphic.o			\
 				
 
 # All-target
-all: linux-shared linux-static c16 c64 c128 vic20 pet nes gba
+all: linux-shared linux-static c16 c64 c128 vic20 pet nes apple2 gba
 
 linux-shared: $(OUT_DIR)/linux/shared $(OUT_DIR)/linux/shared/libleaf.so
 linux-static: $(OUT_DIR)/linux/static $(OUT_DIR)/linux/static/libleaf.a
@@ -131,6 +139,7 @@ c128: $(OUT_DIR)/c128 $(OUT_DIR)/c128/libleaf.a
 pet: $(OUT_DIR)/pet $(OUT_DIR)/pet/libleaf.a
 vic20: $(OUT_DIR)/vic20 $(OUT_DIR)/vic20/libleaf.a
 nes: $(OUT_DIR)/nes $(OUT_DIR)/nes/libleaf.a
+apple2: $(OUT_DIR)/apple2 $(OUT_DIR)/apple2/libleaf.a
 gba: $(OUT_DIR)/gba $(OUT_DIR)/gba/libleaf.a
 
 install-linux-shared: linux-shared
@@ -172,6 +181,8 @@ $(OUT_DIR)/pet: $(OUT_DIR)
 $(OUT_DIR)/vic20: $(OUT_DIR)
 	mkdir -p $@
 $(OUT_DIR)/nes: $(OUT_DIR)
+	mkdir -p $@
+$(OUT_DIR)/apple2: $(OUT_DIR)
 	mkdir -p $@
 
 # Linux (Static)
@@ -255,6 +266,17 @@ $(OUT_DIR)/nes/%.o: $(OUT_DIR)/nes/%.s
 $(OUT_DIR)/nes/%.s: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
 	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - \e[40;1mNES\e[0m"
 	$(65_CC) $(65_CFLAGS) -t nes $< -o $@ --add-source
+	
+# APPLE 2
+$(OUT_DIR)/apple2/libleaf.a: $(APPLE2_OBJS)
+	$(65_AR) rcs $@ $^
+	
+$(OUT_DIR)/apple2/%.o: $(OUT_DIR)/apple2/%.s
+	$(65_CA) $< -o $@
+	
+$(OUT_DIR)/apple2/%.s: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - \e[40;1mAPPLE 2\e[0m"
+	$(65_CC) $(65_CFLAGS) -t apple2 $< -o $@ --add-source
 
 # GBA
 $(OUT_DIR)/gba/libleaf.a: $(GBA_OBJS)

@@ -26,7 +26,7 @@
 #endif
 
 #if defined(__APPLE2__)
-#include "appleii\graphic.c"
+#include "apple2/graphic.c"
 #endif
 
 #if defined(__GBA__)
