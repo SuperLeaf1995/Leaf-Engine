@@ -35,6 +35,7 @@ extern "C" {
 #if defined(__linux) || defined(linux)
 #include <AL/al.h>
 #include <AL/alc.h>
+#include <math.h>
 #endif
 
 #include "context.h"

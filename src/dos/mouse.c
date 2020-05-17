@@ -29,7 +29,7 @@ static union REGS in,out;
 
 @param m Mouse structure
 */
-char initMouse(struct mouse * m)
+char initMouse(Mouse * m)
 {
 	in.x.ax = 0x00;
 	in.x.bx = 0x00;
@@ -94,7 +94,7 @@ void hideMouse(void)
 
 @param m Mouse structure
 */
-void getMouseStatus(struct mouse * m)
+void getMouseStatus(Mouse * m)
 {
 	in.x.ax = 0x03;
 	int86(0x33,&in,&out);
@@ -113,7 +113,7 @@ void getMouseStatus(struct mouse * m)
 
 @param m Mouse structure
 */
-void getMouseMovement(struct mouse * m)
+void getMouseMovement(Mouse * m)
 {
 	in.x.ax = 0x0B;
 	int86(0x33,&in,&out);

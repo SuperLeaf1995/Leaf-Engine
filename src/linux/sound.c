@@ -43,9 +43,9 @@ signed char initSound(void)
 void playSound(unsigned long freq)
 {
 #if defined(OPENAL)
-	unsigned rate = 80000; float sec = 0.5;
+	unsigned rate = 800; float sec = 0.5;
 	size_t i; size_t bsize = (sec*rate);
-	signed short s[4000];
+	signed short s[1000];
 	
 	for(i = 0; i < bsize; i++) {
 		s[i] = (signed short)(32760*sin((3.14*freq)/rate*i));

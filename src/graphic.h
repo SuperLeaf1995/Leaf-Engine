@@ -45,7 +45,6 @@ using multiple versions*/
 #define __ega	0x07
 #define __mcga	0x0F
 
-#if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 static unsigned short vtable[32][3] =
 {
 	{0,0,0}, /* 0x00 */
@@ -70,7 +69,6 @@ static unsigned short vtable[32][3] =
 	{320,200,__vga}, /* 0x13 */
 	{0,0,0} /* 0x14 */
 };
-#endif
 
 #if defined(__DJGPP__)
 unsigned char * video = (unsigned char * )0xA0000+__djgpp_conventional_base;

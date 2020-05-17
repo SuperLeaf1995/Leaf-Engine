@@ -4,29 +4,41 @@ OUT_DIR = out
 INC_DIR = include
 SRC_DIR = src
 
-AR = ar
-CC = gcc
-CFLAGS =	-Werror						\
-			-Wall						\
-			-Wextra						\
-			-Waddress					\
-			-Wdate-time					\
-			-Wformat-y2k				\
-			-Wdouble-promotion			\
-			-Wold-style-definition		\
-			-Wmissing-prototypes		\
-			-Wstrict-prototypes			\
-			-std=c89					\
-			-ansi						\
-			-pedantic					\
-			-O3							\
-			-I$(SRC_DIR)				\
-			-I$(INC_DIR)				\
-			-g
 CROSS_PATH = ~/opt
 
+AR = ar
+CC = gcc
+
+CFLAGS =				-Werror						\
+						-Wall						\
+						-Wextra						\
+						-Waddress					\
+						-Wdate-time					\
+						-Wformat-y2k				\
+						-Wdouble-promotion			\
+						-Wold-style-definition		\
+						-Wmissing-prototypes		\
+						-Wstrict-prototypes			\
+						-std=c89					\
+						-ansi						\
+						-pedantic					\
+						-O3							\
+						-I$(SRC_DIR)				\
+						-I$(INC_DIR)				\
+						-g
+				
 GBA_CC = $(CROSS_PATH)/gcc-arm-none-eabi/bin/arm-none-eabi-gcc
 GBA_AR = $(CROSS_PATH)/gcc-arm-none-eabi/bin/arm-none-eabi-ar
+				
+6502_AR = ar65
+6502_CC = cc65
+6502_CA = ca65
+
+6502_CFLAGS =			-I$(SRC_DIR)			\
+						-I$(INC_DIR)			\
+						-Oirs					\
+						-r						\
+						--standard c89
 
 LINUX_OBJS_STATIC = 	$(OUT_DIR)/linux/static/fbmp.o		\
 						$(OUT_DIR)/linux/static/mouse.o		\
@@ -51,13 +63,22 @@ GBA_OBJS =				$(OUT_DIR)/gba/fbmp.o				\
 						$(OUT_DIR)/gba/fdata.o				\
 						$(OUT_DIR)/gba/context.o			\
 						$(OUT_DIR)/gba/sound.o				\
+						
+C64_OBJS =				$(OUT_DIR)/c64/fbmp.o				\
+						$(OUT_DIR)/c64/mouse.o				\
+						$(OUT_DIR)/c64/fpcx.o				\
+						$(OUT_DIR)/c64/graphic.o			\
+						$(OUT_DIR)/c64/fdata.o				\
+						$(OUT_DIR)/c64/context.o			\
+						$(OUT_DIR)/c64/sound.o				\
 				
 
 # All-target
-all: gba linux-shared linux-static
+all: linux-shared linux-static c64 gba
 
 linux-shared: $(OUT_DIR)/linux/shared $(OUT_DIR)/linux/shared/libleaf.so
 linux-static: $(OUT_DIR)/linux/static $(OUT_DIR)/linux/static/libleaf.a
+c64: $(OUT_DIR)/c64 $(OUT_DIR)/c64/libleaf.a
 gba: $(OUT_DIR)/gba $(OUT_DIR)/gba/libleaf.a
 
 install-linux-shared: linux-shared
@@ -72,6 +93,7 @@ clean:
 	rm -f out/linux/shared/*.*
 	rm -f out/linux/static/*.*
 	rm -f out/gba/*.*
+	rm -f out/c64/*.*
 
 # Directories
 $(OUT_DIR)/linux: $(OUT_DIR)
@@ -86,11 +108,15 @@ $(OUT_DIR)/linux/static: $(OUT_DIR)
 $(OUT_DIR)/gba: $(OUT_DIR)
 	mkdir -p $@
 
+$(OUT_DIR)/c64: $(OUT_DIR)
+	mkdir -p $@
+
 # Linux (Static)
 $(OUT_DIR)/linux/static/libleaf.a: $(LINUX_OBJS_STATIC)
 	$(AR) rcs $@ $^
 
 $(OUT_DIR)/linux/static/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - LINUX (STATIC)"
 	$(CC) $(CFLAGS) -c $< -o $@
 	
 # Linux (Shared)
@@ -98,11 +124,24 @@ $(OUT_DIR)/linux/shared/libleaf.so: $(LINUX_OBJS_SHARED)
 	$(CC) -shared $^ -o $@
 
 $(OUT_DIR)/linux/shared/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - LINUX (SHARED)"
 	$(CC) $(CFLAGS) -fpic -c $< -o $@
+
+# Commodore 64
+$(OUT_DIR)/c64/libleaf.a: $(C64_OBJS)
+	$(6502_AR) rcs $@ $^
+	
+$(OUT_DIR)/c64/%.o: $(OUT_DIR)/c64/%.s
+	$(6502_CA) $< -o $@
+	
+$(OUT_DIR)/c64/%.s: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - C64"
+	$(6502_CC) -D__C64__ $(6502_CFLAGS) $< -o $@ --add-source
 
 # GBA
 $(OUT_DIR)/gba/libleaf.a: $(GBA_OBJS)
 	$(GBA_AR) rcs $@ $^
 
 $(OUT_DIR)/gba/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - GBA"
 	$(GBA_CC) -D__GBA__ -Iextern/newlib-1.10.0/newlib/libc/include/ $(CFLAGS) -c $< -o $@

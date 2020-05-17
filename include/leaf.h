@@ -86,14 +86,14 @@ typedef struct leafContext {
 	unsigned char * videoBuffer;
 }leafContext;
 
-struct mouse {
+struct _Mouse {
 	unsigned char buttonLeft;
 	unsigned char buttonRight;
 	unsigned char buttonMiddle;
 	unsigned char buttons;
 	signed short x; signed short y;
 	signed short mx; signed short my;
-};
+}Mouse;
 
 extern unsigned char * videoBuffer;
 extern unsigned char * video;
@@ -121,12 +121,12 @@ extern signed int leafContextCreate(leafContext * g);
 extern signed int leafContextDestroy(leafContext * g);
 extern signed int leafSetVideo(leafContext * g);
 
-extern char initMouse(struct mouse * m);
+extern char initMouse(Mouse * m);
 extern void setMousePosition(unsigned short x, unsigned short y);
 extern void showMouse(void);
 extern void hideMouse(void);
-extern void getMouseStatus(struct mouse * m);
-extern void getMouseMovement(struct mouse * m);
+extern void getMouseStatus(Mouse * m);
+extern void getMouseMovement(Mouse * m);
 
 extern signed char initSound(void);
 extern void playSound(unsigned long freq);
