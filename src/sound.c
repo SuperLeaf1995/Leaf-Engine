@@ -23,6 +23,8 @@
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 #include "dos\sound.c"
-#elif defined(__linux) || defined(linux)
+#endif
+
+#if defined(__linux) || defined(linux)
 #include "linux/sound.c"
 #endif

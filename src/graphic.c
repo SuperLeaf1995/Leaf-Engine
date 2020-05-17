@@ -23,11 +23,17 @@
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 #include "dos\graphic.c"
-#elif defined(__APPLE2__) /*In APPLE2 there is only one mode used and it's HIGHRES*/
+#endif
+
+#if defined(__APPLE2__)
 #include "appleii\graphic.c"
-#elif defined(__GBA__)
+#endif
+
+#if defined(__GBA__)
 #include "gba/graphic.c"
-#elif defined(__linux) || defined(linux)
+#endif
+
+#if defined(__linux) || defined(linux)
 #include "linux/graphic.c"
 #endif
 

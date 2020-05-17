@@ -144,4 +144,4 @@ $(OUT_DIR)/gba/libleaf.a: $(GBA_OBJS)
 
 $(OUT_DIR)/gba/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
 	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - GBA"
-	$(GBA_CC) -D__GBA__ -Iextern/newlib-1.10.0/newlib/libc/include/ $(CFLAGS) -c $< -o $@
+	$(GBA_CC) -D__ROM_ONLY__ -D__GBA__ -Iextern/newlib-1.10.0/newlib/libc/include/ $(CFLAGS) -c $< -o $@

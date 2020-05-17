@@ -40,7 +40,6 @@ signed int imageBitmap(const char * filename, Image * img)
 	unsigned long compression = 0;
 	unsigned long bitsPerPixel = 0;
 	signed long wide = 0; signed long tall = 0;
-	
 	FILE * fp;
 	
 	fp = fopen(filename,"rb");
