@@ -29,12 +29,12 @@ CFLAGS =				-Werror						\
 				
 GBA_CC = $(CROSS_PATH)/gcc-arm-none-eabi/bin/arm-none-eabi-gcc
 GBA_AR = $(CROSS_PATH)/gcc-arm-none-eabi/bin/arm-none-eabi-ar
-				
-6502_AR = ar65
-6502_CC = cc65
-6502_CA = ca65
 
-6502_CFLAGS =			-I$(SRC_DIR)			\
+65_AR = ar65
+65_CC = cc65
+65_CA = ca65
+
+65_CFLAGS =				-I$(SRC_DIR)			\
 						-I$(INC_DIR)			\
 						-Oirs					\
 						-r						\
@@ -64,6 +64,14 @@ GBA_OBJS =				$(OUT_DIR)/gba/fbmp.o				\
 						$(OUT_DIR)/gba/context.o			\
 						$(OUT_DIR)/gba/sound.o				\
 						
+C16_OBJS =				$(OUT_DIR)/c16/fbmp.o				\
+						$(OUT_DIR)/c16/mouse.o				\
+						$(OUT_DIR)/c16/fpcx.o				\
+						$(OUT_DIR)/c16/graphic.o			\
+						$(OUT_DIR)/c16/fdata.o				\
+						$(OUT_DIR)/c16/context.o			\
+						$(OUT_DIR)/c16/sound.o				\
+						
 C64_OBJS =				$(OUT_DIR)/c64/fbmp.o				\
 						$(OUT_DIR)/c64/mouse.o				\
 						$(OUT_DIR)/c64/fpcx.o				\
@@ -71,14 +79,58 @@ C64_OBJS =				$(OUT_DIR)/c64/fbmp.o				\
 						$(OUT_DIR)/c64/fdata.o				\
 						$(OUT_DIR)/c64/context.o			\
 						$(OUT_DIR)/c64/sound.o				\
+						
+C128_OBJS =				$(OUT_DIR)/c128/fbmp.o				\
+						$(OUT_DIR)/c128/mouse.o				\
+						$(OUT_DIR)/c128/fpcx.o				\
+						$(OUT_DIR)/c128/graphic.o			\
+						$(OUT_DIR)/c128/fdata.o				\
+						$(OUT_DIR)/c128/context.o			\
+						$(OUT_DIR)/c128/sound.o				\
+						
+PET_OBJS =				$(OUT_DIR)/pet/fbmp.o				\
+						$(OUT_DIR)/pet/mouse.o				\
+						$(OUT_DIR)/pet/fpcx.o				\
+						$(OUT_DIR)/pet/graphic.o			\
+						$(OUT_DIR)/pet/fdata.o				\
+						$(OUT_DIR)/pet/context.o			\
+						$(OUT_DIR)/pet/sound.o				\
+
+VIC20_OBJS =			$(OUT_DIR)/vic20/fbmp.o				\
+						$(OUT_DIR)/vic20/mouse.o			\
+						$(OUT_DIR)/vic20/fpcx.o				\
+						$(OUT_DIR)/vic20/graphic.o			\
+						$(OUT_DIR)/vic20/fdata.o			\
+						$(OUT_DIR)/vic20/context.o			\
+						$(OUT_DIR)/vic20/sound.o			\
+			
+# I/O Stuff is deliberately removed NES dosent supports
+# filesystems since its a ROM system.
+#
+#
+#
+# Due to the limitedless of the NES the following was
+# removed:
+#	fbmp
+#	mouse
+#	fpcx
+#	fdata		
+NES_OBJS =				$(OUT_DIR)/nes/graphic.o			\
+						$(OUT_DIR)/nes/context.o			\
+						$(OUT_DIR)/nes/sound.o				\
 				
 
 # All-target
-all: linux-shared linux-static c64 gba
+all: linux-shared linux-static c16 c64 c128 vic20 pet nes gba
 
 linux-shared: $(OUT_DIR)/linux/shared $(OUT_DIR)/linux/shared/libleaf.so
 linux-static: $(OUT_DIR)/linux/static $(OUT_DIR)/linux/static/libleaf.a
+c16: $(OUT_DIR)/c16 $(OUT_DIR)/c16/libleaf.a
 c64: $(OUT_DIR)/c64 $(OUT_DIR)/c64/libleaf.a
+c128: $(OUT_DIR)/c128 $(OUT_DIR)/c128/libleaf.a
+pet: $(OUT_DIR)/pet $(OUT_DIR)/pet/libleaf.a
+vic20: $(OUT_DIR)/vic20 $(OUT_DIR)/vic20/libleaf.a
+nes: $(OUT_DIR)/nes $(OUT_DIR)/nes/libleaf.a
 gba: $(OUT_DIR)/gba $(OUT_DIR)/gba/libleaf.a
 
 install-linux-shared: linux-shared
@@ -93,22 +145,33 @@ clean:
 	rm -f out/linux/shared/*.*
 	rm -f out/linux/static/*.*
 	rm -f out/gba/*.*
+	rm -f out/c16/*.*
 	rm -f out/c64/*.*
+	rm -f out/c128/*.*
+	rm -f out/vic20/*.*
+	rm -f out/pet/*.*
+	rm -f out/nes/*.*
 
 # Directories
 $(OUT_DIR)/linux: $(OUT_DIR)
 	mkdir -p $@
-
 $(OUT_DIR)/linux/shared: $(OUT_DIR)
 	mkdir -p $@
-
 $(OUT_DIR)/linux/static: $(OUT_DIR)
 	mkdir -p $@
-	
 $(OUT_DIR)/gba: $(OUT_DIR)
 	mkdir -p $@
-
+$(OUT_DIR)/c16: $(OUT_DIR)
+	mkdir -p $@
 $(OUT_DIR)/c64: $(OUT_DIR)
+	mkdir -p $@
+$(OUT_DIR)/c128: $(OUT_DIR)
+	mkdir -p $@
+$(OUT_DIR)/pet: $(OUT_DIR)
+	mkdir -p $@
+$(OUT_DIR)/vic20: $(OUT_DIR)
+	mkdir -p $@
+$(OUT_DIR)/nes: $(OUT_DIR)
 	mkdir -p $@
 
 # Linux (Static)
@@ -116,7 +179,7 @@ $(OUT_DIR)/linux/static/libleaf.a: $(LINUX_OBJS_STATIC)
 	$(AR) rcs $@ $^
 
 $(OUT_DIR)/linux/static/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
-	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - LINUX (STATIC)"
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - \e[40;1mLINUX (STATIC)\e[0m"
 	$(CC) $(CFLAGS) -c $< -o $@
 	
 # Linux (Shared)
@@ -124,24 +187,79 @@ $(OUT_DIR)/linux/shared/libleaf.so: $(LINUX_OBJS_SHARED)
 	$(CC) -shared $^ -o $@
 
 $(OUT_DIR)/linux/shared/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
-	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - LINUX (SHARED)"
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - \e[40;1mLINUX (SHARED)\e[0m"
 	$(CC) $(CFLAGS) -fpic -c $< -o $@
+
+# Commodore 16
+$(OUT_DIR)/c16/libleaf.a: $(C16_OBJS)
+	$(65_AR) rcs $@ $^
+	
+$(OUT_DIR)/c16/%.o: $(OUT_DIR)/c16/%.s
+	$(65_CA) $< -o $@
+	
+$(OUT_DIR)/c16/%.s: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - \e[40;1mC16\e[0m"
+	$(65_CC) $(65_CFLAGS) -t c16 $< -o $@ --add-source
 
 # Commodore 64
 $(OUT_DIR)/c64/libleaf.a: $(C64_OBJS)
-	$(6502_AR) rcs $@ $^
+	$(65_AR) rcs $@ $^
 	
 $(OUT_DIR)/c64/%.o: $(OUT_DIR)/c64/%.s
-	$(6502_CA) $< -o $@
+	$(65_CA) $< -o $@
 	
 $(OUT_DIR)/c64/%.s: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
-	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - C64"
-	$(6502_CC) -D__C64__ $(6502_CFLAGS) $< -o $@ --add-source
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - \e[40;1mC64\e[0m"
+	$(65_CC) $(65_CFLAGS) -t c64 $< -o $@ --add-source
+	
+# Commodore 128
+$(OUT_DIR)/c128/libleaf.a: $(C128_OBJS)
+	$(65_AR) rcs $@ $^
+	
+$(OUT_DIR)/c128/%.o: $(OUT_DIR)/c128/%.s
+	$(65_CA) $< -o $@
+	
+$(OUT_DIR)/c128/%.s: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - \e[40;1mC128\e[0m"
+	$(65_CC) $(65_CFLAGS) -t c128 $< -o $@ --add-source
+	
+# Commodore PET
+$(OUT_DIR)/pet/libleaf.a: $(PET_OBJS)
+	$(65_AR) rcs $@ $^
+	
+$(OUT_DIR)/pet/%.o: $(OUT_DIR)/pet/%.s
+	$(65_CA) $< -o $@
+	
+$(OUT_DIR)/pet/%.s: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - \e[40;1mPET\e[0m"
+	$(65_CC) $(65_CFLAGS) -t pet $< -o $@ --add-source
+	
+# VIC 20
+$(OUT_DIR)/vic20/libleaf.a: $(VIC20_OBJS)
+	$(65_AR) rcs $@ $^
+	
+$(OUT_DIR)/vic20/%.o: $(OUT_DIR)/vic20/%.s
+	$(65_CA) $< -o $@
+	
+$(OUT_DIR)/vic20/%.s: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - \e[40;1mVIC20\e[0m"
+	$(65_CC) $(65_CFLAGS) -t vic20 $< -o $@ --add-source
+	
+# NES
+$(OUT_DIR)/nes/libleaf.a: $(NES_OBJS)
+	$(65_AR) rcs $@ $^
+	
+$(OUT_DIR)/nes/%.o: $(OUT_DIR)/nes/%.s
+	$(65_CA) $< -o $@
+	
+$(OUT_DIR)/nes/%.s: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - \e[40;1mNES\e[0m"
+	$(65_CC) $(65_CFLAGS) -t nes $< -o $@ --add-source
 
 # GBA
 $(OUT_DIR)/gba/libleaf.a: $(GBA_OBJS)
 	$(GBA_AR) rcs $@ $^
 
 $(OUT_DIR)/gba/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
-	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - GBA"
-	$(GBA_CC) -D__ROM_ONLY__ -D__GBA__ -Iextern/newlib-1.10.0/newlib/libc/include/ $(CFLAGS) -c $< -o $@
+	@echo "\e[40;1m[COMPILING]\e[0m - \e[40;32m$@\e[0m - \e[40;1mGBA\e[0m"
+	$(GBA_CC) -D__GBA__ -Iextern/newlib-1.10.0/newlib/libc/include/ $(CFLAGS) -c $< -o $@
