@@ -12,7 +12,7 @@ void Leaf_destroyImage(Leaf_Image * img) {
 		free(img->palette);
 	}
 	if(img->data != NULL) {
-		free(img->palette);
+		free(img->data);
 	}
 	return;
 }
@@ -45,6 +45,7 @@ int main(void)
 	while(ctx.ui != __LEAF_UI_EXIT_CODE) {
 		Leaf_drawImage(&timg,0,0);
 		Leaf_updateScreen();
+		fprintf(stdout,"UI Status: %u\n",ctx.ui);
 	}
 
 	end:

@@ -109,6 +109,9 @@ signed int Leaf_ContextDestroy(leafContext * g) {
 	if(leafCurrentCtx->rgbPalette != NULL) {
 		free(leafCurrentCtx->rgbPalette);
 	}
+	/*Free the graphic context*/
+	XFreeGC(leafCurrentCtx->xdisplay,leafCurrentCtx->xgraphic);
+	/*Free the display context*/
 	XCloseDisplay(leafCurrentCtx->xdisplay);
 	leafCurrentCtx = NULL;
 	return 0;

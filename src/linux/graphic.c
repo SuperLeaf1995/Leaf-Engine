@@ -48,11 +48,12 @@ void Leaf_setPalette(paletteEntry * p, register unsigned short n) {
 void Leaf_updateScreen(void) {
 	register size_t i,i2,d;
 	
-	XNextEvent(leafCurrentCtx->xdisplay,&leafCurrentCtx->xevent);
-	
-	if(leafCurrentCtx->xevent.type == ClientMessage
-	&& (unsigned int)leafCurrentCtx->xevent.xclient.data.l[0] == leafCurrentCtx->WM_DELETE_WINDOW) {
-		leafCurrentCtx->ui = __LEAF_UI_EXIT_CODE;
+	while(XPending(leafCurrentCtx->xdisplay)) {
+		XNextEvent(leafCurrentCtx->xdisplay,&leafCurrentCtx->xevent);
+		if(leafCurrentCtx->xevent.type == ClientMessage
+		&& (unsigned int)leafCurrentCtx->xevent.xclient.data.l[0] == leafCurrentCtx->WM_DELETE_WINDOW) {
+			leafCurrentCtx->ui = __LEAF_UI_EXIT_CODE;
+		}
 	}
 	
 	/*Draw in the window the video buffer*/
