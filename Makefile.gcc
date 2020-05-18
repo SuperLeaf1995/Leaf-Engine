@@ -22,7 +22,7 @@ CFLAGS =				-Werror						\
 						-std=c89					\
 						-ansi						\
 						-pedantic					\
-						-O3							\
+						-O2							\
 						-I$(SRC_DIR)				\
 						-I$(INC_DIR)				\
 						-g

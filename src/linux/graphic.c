@@ -38,9 +38,9 @@ signed char setVideo(unsigned char v) {
 void setPalette(paletteEntry * p, register unsigned short n) {
 	size_t i;
 	for(i = 0; i < n; i++) {
-		leafCurrentCtx->rgbPalette[i].r = p[i].b;
+		leafCurrentCtx->rgbPalette[i].r = p[i].r;
 		leafCurrentCtx->rgbPalette[i].g = p[i].g;
-		leafCurrentCtx->rgbPalette[i].b = p[i].r;
+		leafCurrentCtx->rgbPalette[i].b = p[i].b;
 	}
 	return;
 }
@@ -53,10 +53,6 @@ void updateScreen(void) {
 	if(leafCurrentCtx->xevent.type == ClientMessage
 	&& (unsigned int)leafCurrentCtx->xevent.xclient.data.l[0] == leafCurrentCtx->WM_DELETE_WINDOW) {
 		leafCurrentCtx->ui = __LEAF_UI_EXIT_CODE;
-	}
-	
-	if(leafCurrentCtx == NULL) {
-		return;
 	}
 	
 	/*Draw in the window the video buffer*/

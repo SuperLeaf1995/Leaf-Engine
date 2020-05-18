@@ -19,22 +19,28 @@ void destroyImage(Image * img) {
 
 int main(void)
 {
-	ctx.vwide = 320;
-	ctx.vtall = 200;
-	
 	fprintf(stdout,"Test v1.0\n");
-	
+
+	fprintf(stdout,"Creating context\n");
 	if(leafContextCreate(&ctx) != 0) {
 		fprintf(stderr,"Error on context\n");
 		goto end;
 	}
+	fprintf(stdout,"Buffer: %p\n",(void *)ctx.videoBuffer);
 	
+	fprintf(stdout,"Creating image\n");
 	if(imageBitmap("res/test.bmp",&timg) != 0) {
 		fprintf(stderr,"Error on imageBitmap\n");
 		goto end;
 	}
-
+	
+	fprintf(stdout,"Buffer: %p\n",(void *)ctx.videoBuffer);
+	fprintf(stdout,"Setting palette\n");
 	setPalette(timg.palette,16);
+
+	fprintf(stdout,"Tall: %u, Wide: %u\n",ctx.vwide,ctx.vtall);
+	fprintf(stdout,"Buffer: %p\n",(void *)ctx.videoBuffer);
+	fprintf(stdout,"Data: %p, Palette: %p\n",(void *)timg.data,(void *)timg.palette);
 
 	while(ctx.ui != __LEAF_UI_EXIT_CODE) {
 		drawImage(&timg,0,0);
@@ -42,7 +48,9 @@ int main(void)
 	}
 
 	end:
+	fprintf(stdout,"Destroying context\n");
 	leafContextDestroy(&ctx);
+	fprintf(stdout,"Destroying image\n");
 	destroyImage(&timg);
 	fprintf(stdout,"End of program\n");
 	return 0;

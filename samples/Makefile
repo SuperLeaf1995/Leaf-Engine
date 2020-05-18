@@ -9,6 +9,7 @@ clean:
 	rm -f out/*.gba
 	rm -f out/*.elf
 	rm -f out/*.obj
+	rm -f out/*.o
 	
 CFLAGS =	-Werror						\
 			-Wall						\
@@ -20,7 +21,6 @@ CFLAGS =	-Werror						\
 			-Wold-style-definition		\
 			-Wmissing-prototypes		\
 			-Wstrict-prototypes			\
-			-fno-omit-frame-pointer		\
 			-fstrict-aliasing			\
 			-std=c89					\
 			-ansi						\

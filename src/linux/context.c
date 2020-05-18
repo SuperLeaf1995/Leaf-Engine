@@ -21,18 +21,12 @@
 
 signed int leafContextCreate(leafContext * g) {
 	fd_set is;
-	size_t i;
 	
-	leafCurrentCtx = g;
-	
-	if(g->vwide == 0) {
-		g->vwide = 640;
-	} if(g->vtall == 0) {
-		g->vtall = 400;
-	}
+	g->vwide = 640;
+	g->vtall = 400;
 	
 	/*Create video buffer*/
-	g->videoBuffer = (unsigned char *)malloc(g->vwide*g->vtall);
+	g->videoBuffer = calloc(g->vwide*g->vtall,sizeof(unsigned char));
 	if(g->videoBuffer == NULL) {
 		return -1;
 	}
@@ -59,14 +53,11 @@ signed int leafContextCreate(leafContext * g) {
 	|ButtonReleaseMask
 	|KeyReleaseMask
 	|PointerMotionMask
+	|StructureNotifyMask
 	);
 	
 	/*Map our window*/
 	XMapWindow(g->xdisplay,g->xwindow);
-	/*Set window's title to something cool*/
-	if(g->name != NULL) {
-		XStoreName(g->xdisplay,g->xwindow,g->name);
-	}
 	
 	/*Display the close button*/
 	g->WM_DELETE_WINDOW = XInternAtom(g->xdisplay,"WM_DELETE_WINDOW",False);
@@ -78,29 +69,28 @@ signed int leafContextCreate(leafContext * g) {
 	if(g->rgbPalette == NULL) {
 		return -3;
 	}
-	for(i = 0; i < 256; i++) {
-		g->rgbPalette[i].r = 0;
-		g->rgbPalette[i].g = 0;
-		g->rgbPalette[i].b = 0;
-	}
 	
 	/*Wait until the window is mapped into the screen*/
 	for(;;) {
-		XNextEvent(leafCurrentCtx->xdisplay,&leafCurrentCtx->xevent);
-		if(leafCurrentCtx->xevent.type == MapNotify) {
+		XNextEvent(g->xdisplay,&g->xevent);
+		if(g->xevent.type == MapNotify) {
 			break;
 		}
 	}
 	
 	/*Connect to our display*/
-	g->xFd = ConnectionNumber(leafCurrentCtx->xdisplay);
+	g->xFd = ConnectionNumber(g->xdisplay);
 	
 	FD_ZERO(&is);
 	FD_SET(g->xFd,&is);
 	
+	leafCurrentCtx = g;
 #if defined(OPENAL)
 	alGetError(); /*Do dummy call to reset error stack*/
 #endif /* OPENAL */
+
+	fprintf(stdout,"2 Buffer: %p\n",(void *)leafCurrentCtx->videoBuffer);
+
 	return 0;
 }
 
@@ -114,5 +104,6 @@ signed int leafContextDestroy(leafContext * g) {
 	if(g->rgbPalette != NULL) {
 		free(g->rgbPalette);
 	}
+	XCloseDisplay(g->xdisplay);
 	return 0;
 }

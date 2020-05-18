@@ -39,8 +39,7 @@
 
 void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c)
 {
-	if(y >= leafCurrentCtx->vtall || x >= leafCurrentCtx->vwide)
-	{
+	if(y >= leafCurrentCtx->vtall || x >= leafCurrentCtx->vwide) {
 		return;
 	}
 	leafCurrentCtx->videoBuffer[(y*leafCurrentCtx->vwide)+x] = c;
@@ -129,7 +128,6 @@ void drawImage(Image * img, unsigned short x, unsigned short y)
 void drawTiled(Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy)
 {
 	register unsigned short i,i2;
-
 	register unsigned short tTall;
 
 	for(i2 = 0; i2 < 16; i2++) {
