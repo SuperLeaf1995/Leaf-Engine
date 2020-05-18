@@ -49,7 +49,7 @@ typedef struct _BmpFileHeader
 	unsigned long reserved;
 	unsigned long offset;
 	unsigned long headerSize;
-}WinBmpFileHeader;
+}BmpFileHeader;
 
 /** Windows 2.x bitmap file header */
 typedef struct _WinOldBmpFileHeader

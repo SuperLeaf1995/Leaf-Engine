@@ -25,7 +25,7 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 {
 	unsigned short sHold;
 	DDBheader db_DDBheader;
-	WinBmpFileHeader db_WinBmpFileHeader;
+	BmpFileHeader db_WinBmpFileHeader;
 	WinBmpHeader db_WinBmpHeader;
 	WinNTBmpMasks db_WinNTBmpMasks;
 	Win95BmpHeaderExtension db_Win95BmpHeaderExtension;
@@ -120,6 +120,7 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 		return -11;
 	}
 	
+	/*Check that information is correct*/
 	switch(bitsPerPixel) {
 		case 1:
 		case 2:
@@ -137,7 +138,7 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 	/*Only use palette for 8-bit images*/
 	if(bitsPerPixel <= 8) {
 		if(db_WinBmpFileHeader.headerSize == 12) {
-			paletteEntries = (db_WinBmpFileHeader.offset-sizeof(WinBmpFileHeader)-sizeof(WinOldBmpFileHeader))/4;
+			paletteEntries = (db_WinBmpFileHeader.offset-sizeof(BmpFileHeader)-sizeof(WinOldBmpFileHeader))/4;
 		} else {
 			paletteEntries = (1<<(bitsPerPixel));
 		}
