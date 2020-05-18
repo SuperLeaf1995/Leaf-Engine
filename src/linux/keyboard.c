@@ -21,7 +21,7 @@
 
 #include "keyboard.h"
 
-int kbhit(void) {
+int Leaf_kbhit(void) {
 	while(XPending(leafCurrentCtx->xdisplay)) {
 		XNextEvent(leafCurrentCtx->xdisplay,&leafCurrentCtx->xevent);
 		if(leafCurrentCtx->xevent.type == KeyPress) {
@@ -33,7 +33,7 @@ int kbhit(void) {
 	return 0;
 }
 
-int getch(void) {
+int Leaf_getch(void) {
 	getEvent:
 	XNextEvent(leafCurrentCtx->xdisplay,&leafCurrentCtx->xevent);
 	if(leafCurrentCtx->xevent.type == KeyPress) {

@@ -36,7 +36,7 @@ to avoid further confusions, inp() and outp() are used*/
 #define outp(x,y) outportb(x,y)
 #endif
 
-signed char setVideo(unsigned char v)
+signed char Leaf_setVideo(unsigned char v)
 {
 	in.h.al = v;
 	in.h.ah = 0; /*set the video we want*/
@@ -61,7 +61,7 @@ signed char setVideo(unsigned char v)
 	return 0;
 }
 
-void setPalette(paletteEntry * p, register unsigned short n)
+void Leaf_setPalette(paletteEntry * p, register unsigned short n)
 {
 	register unsigned short i;
 	if(leafCurrentCtx->vvideo == __vga) {
@@ -87,11 +87,11 @@ static void waitRetrace(void) {
 	return;
 }
 
-void updateEvent(void) {
+void Leaf_updateEvent(void) {
 	return;
 }
 
-void updateScreen(void) {
+void Leaf_updateScreen(void) {
 	unsigned long i;
 	size_t x; size_t y; size_t offs;
 	unsigned char * cgaSelect[2] =

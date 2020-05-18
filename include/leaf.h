@@ -45,14 +45,14 @@ typedef struct paletteEntry {
 	unsigned char b;
 }paletteEntry;
 
-typedef struct _Image {
+typedef struct _Leaf_Image {
 	unsigned long wide;
 	unsigned long tall;
 	unsigned char bitsPerPixel;
 	unsigned char * data;
 	
 	paletteEntry * palette;
-}Image;
+}Leaf_Image;
 
 typedef struct leafContext {
 #if defined(OPENAL)
@@ -66,6 +66,7 @@ typedef struct leafContext {
 	Window xwindow; /*Our main window in X11*/
 	Atom WM_DELETE_WINDOW; /*"x" atom in window (to close it)*/
 	GC xgraphic; /*The X11 graphic context where we will draw on*/
+	int xFd;
 #endif
 #if defined(__GBA__) || defined(__linux) || defined(linux)
 	/** Emulate a VGA palette for newer systems */
@@ -86,6 +87,8 @@ typedef struct leafContext {
 	unsigned char * videoBuffer;
 }leafContext;
 
+typedef leafContext Leaf_Context;
+
 typedef struct _Mouse {
 	unsigned char buttonLeft;
 	unsigned char buttonRight;
@@ -98,44 +101,40 @@ typedef struct _Mouse {
 extern unsigned char * videoBuffer;
 extern unsigned char * video;
 
-extern signed char setVideo(unsigned char v);
-extern void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c);
-extern void plotLinearPixel(register unsigned short pos,register unsigned char color);
-extern unsigned char fetchPixel(register unsigned short x,register unsigned short y);
-extern unsigned char fetchLinearPixel(register unsigned short p);
-extern void setPalette(paletteEntry * p, register unsigned short n);
-extern void waitRetrace(void);
+extern signed char Leaf_setVideo(unsigned char v);
+extern void Leaf_plotPixel(register unsigned short x, register unsigned short y, register unsigned char c);
+extern void Leaf_plotLinearPixel(register unsigned short pos,register unsigned char color);
+extern unsigned char Leaf_fetchPixel(register unsigned short x,register unsigned short y);
+extern unsigned char Leaf_fetchLinearPixel(register unsigned short p);
+extern void Leaf_setPalette(paletteEntry * p, register unsigned short n);
 
-extern void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
-extern void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
-extern void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
-extern void updateEvent(void);
-extern void updateScreen(void);
-extern void drawImage(Image * img, register unsigned short x, register unsigned short y);
-extern void drawTiled(Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy);
+extern void Leaf_plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
+extern void Leaf_plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
+extern void Leaf_plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
+extern void Leaf_updateEvent(void);
+extern void Leaf_updateScreen(void);
+extern void Leaf_drawImage(Leaf_Image * img, register unsigned short x, register unsigned short y);
+extern void Leaf_drawTiled(Leaf_Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy);
 
-extern void seedRandom(void);
-extern signed int generateRandom(void);
+extern signed int Leaf_ContextCreate(leafContext * g);
+extern signed int Leaf_ContextDestroy(leafContext * g);
+extern signed int Leaf_SetVideo(leafContext * g);
 
-extern signed int leafContextCreate(leafContext * g);
-extern signed int leafContextDestroy(leafContext * g);
-extern signed int leafSetVideo(leafContext * g);
+extern char Leaf_initMouse(Mouse * m);
+extern void Leaf_setMousePosition(unsigned short x, unsigned short y);
+extern void Leaf_showMouse(void);
+extern void Leaf_hideMouse(void);
+extern void Leaf_getMouseStatus(Mouse * m);
+extern void Leaf_getMouseMovement(Mouse * m);
 
-extern char initMouse(Mouse * m);
-extern void setMousePosition(unsigned short x, unsigned short y);
-extern void showMouse(void);
-extern void hideMouse(void);
-extern void getMouseStatus(Mouse * m);
-extern void getMouseMovement(Mouse * m);
+extern signed char Leaf_initSound(void);
+extern void Leaf_playSound(unsigned long freq);
+extern void Leaf_stopSound(void);
 
-extern signed char initSound(void);
-extern void playSound(unsigned long freq);
-extern void stopSound(void);
+extern signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img);
 
-extern signed int imageBitmap(const char * filename, Image * img);
-
-extern int kbhit(void);
-extern int getch(void);
+extern int Leaf_kbhit(void);
+extern int Leaf_getch(void);
 
 /*Legacy support (LeafEngine <= 0.3.4)*/
 #if (LEAF_ENGINE <= 034L)

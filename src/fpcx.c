@@ -27,7 +27,7 @@
 @param stream File stream of the PCX file
 @param p PCXHeader used to store metadata
 */
-signed int  readImagePcxHeader(FILE * stream, pcxHeader * p)
+signed int Leaf_readImagePcxHeader(FILE * stream, pcxHeader * p)
 {
 	unsigned char type,version,compression,bitsPerPixel,reserved,planes;
 	unsigned char paletteType,horizontalScreenSize,verticalScreenSize;
@@ -101,7 +101,7 @@ signed int  readImagePcxHeader(FILE * stream, pcxHeader * p)
 @param stream File stream of the PCX file
 @param p Used for getting correct data
 */
-unsigned char *  readImagePcxData(FILE * stream, pcxHeader * p) {
+unsigned char * Leaf_readImagePcxData(FILE * stream, pcxHeader * p) {
 	register unsigned char rLen,tmp,val;
 	register unsigned long index,dataSize,total;
 	static unsigned char * data;
@@ -141,7 +141,7 @@ unsigned char *  readImagePcxData(FILE * stream, pcxHeader * p) {
 
 @param stream File stream of the PCX file
 */
-paletteEntry *  readImagePcxVgaPalette(FILE * stream)
+paletteEntry * Leaf_readImagePcxVgaPalette(FILE * stream)
 {
 	register signed short vgaPaletteChecker;
 	register unsigned short i;

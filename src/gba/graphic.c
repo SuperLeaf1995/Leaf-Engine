@@ -21,13 +21,13 @@
 
 #include "graphic.h"
 
-signed char setVideo(unsigned char v)
+signed char Leaf_setVideo(unsigned char v)
 {
 	*(unsigned long*)0x4000000 = 0x403; /*Set mode 3*/
 	return (signed char)v;
 }
 
-void setPalette(paletteEntry * p, register unsigned short n)
+void Leaf_setPalette(paletteEntry * p, register unsigned short n)
 {
 	register unsigned short i;
 	for(i = 0; i < n; i++)
@@ -37,7 +37,7 @@ void setPalette(paletteEntry * p, register unsigned short n)
 	return;
 }
 
-void updateScreen(void)
+void Leaf_updateScreen(void)
 {
 	size_t i;
 	for(i = 0; i < (160*240); i++)

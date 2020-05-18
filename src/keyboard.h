@@ -44,8 +44,8 @@ extern "C" {
 
 extern leafContext * leafCurrentCtx;
 
-int kbhit(void);
-int getch(void);
+int Leaf_kbhit(void);
+int Leaf_getch(void);
 
 #ifdef __cplusplus
 }

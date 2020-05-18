@@ -38,9 +38,9 @@ typedef struct pcxHeader
 /*
 PCX read functions
 */
-signed int readImagePcxHeader(FILE * stream, pcxHeader * p);
-unsigned char * readImagePcxData(FILE * stream, pcxHeader * p);
-paletteEntry * readImagePcxVgaPalette(FILE * stream);
+signed int Leaf_readImagePcxHeader(FILE * stream, pcxHeader * p);
+unsigned char * Leaf_readImagePcxData(FILE * stream, pcxHeader * p);
+paletteEntry * Leaf_readImagePcxVgaPalette(FILE * stream);
 
 #ifdef __cplusplus
 }

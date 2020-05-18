@@ -90,9 +90,9 @@ typedef struct leafContext
 	unsigned char * videoBuffer;
 }leafContext;
 
-signed int leafContextCreate(leafContext * g);
-signed int leafContextDestroy(leafContext * g);
-signed int leafSetVideo(leafContext * g);
+signed int Leaf_ContextCreate(leafContext * g);
+signed int Leaf_ContextDestroy(leafContext * g);
+signed int Leaf_SetVideo(leafContext * g);
 
 #ifdef __cplusplus
 }

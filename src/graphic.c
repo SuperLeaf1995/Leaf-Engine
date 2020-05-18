@@ -37,7 +37,7 @@
 #include "linux/graphic.c"
 #endif
 
-void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c)
+void Leaf_plotPixel(register unsigned short x, register unsigned short y, register unsigned char c)
 {
 	if(y >= leafCurrentCtx->vtall || x >= leafCurrentCtx->vwide) {
 		return;
@@ -46,23 +46,23 @@ void plotPixel(register unsigned short x, register unsigned short y, register un
 	return;
 }
 
-void plotLinearPixel(register unsigned short p,register unsigned char c)
+void Leaf_plotLinearPixel(register unsigned short p,register unsigned char c)
 {
 	leafCurrentCtx->videoBuffer[p] = c;
 	return;
 }
 
-unsigned char fetchPixel(register unsigned short x,register unsigned short y)
+unsigned char Leaf_fetchPixel(register unsigned short x,register unsigned short y)
 {
 	return leafCurrentCtx->videoBuffer[(y*leafCurrentCtx->vwide)+x];
 }
 
-unsigned char fetchLinearPixel(register unsigned short p)
+unsigned char Leaf_fetchLinearPixel(register unsigned short p)
 {
 	return leafCurrentCtx->videoBuffer[p];
 }
 
-void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c)
+void Leaf_plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c)
 {
 	signed short i,dx,dy,sdx,sdy,dxabs,dyabs,px,py,x,y;
 	dx = ex-sx; dy = ey-sy;
@@ -72,7 +72,7 @@ void plotLine(register signed short sx, register signed short sy, register signe
 	x = (dyabs>>1); y = (dxabs>>1);
 	px = sx; py = sy;
 	
-	plotPixel(px,py,c);
+	Leaf_plotPixel(px,py,c);
 	
 	if(dxabs >= dyabs) {
 		for(i = 0; i < dxabs; i++) {
@@ -81,7 +81,7 @@ void plotLine(register signed short sx, register signed short sy, register signe
 				y -= dxabs; py += sdy;
 			}
 			px += sdx;
-			plotPixel(px,py,c);
+			Leaf_plotPixel(px,py,c);
 		}
 	} else {
 		for(i = 0; i < dyabs; i++) {
@@ -90,42 +90,42 @@ void plotLine(register signed short sx, register signed short sy, register signe
 				x -= dyabs; px += sdx;
 			}
 			py += sdy;
-			plotPixel(px,py,c);
+			Leaf_plotPixel(px,py,c);
 		}
 	}
 	return;
 }
 
-void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c)
+void Leaf_plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c)
 {
-	plotLine(x1,y1,x2,y1,c); plotLine(x1,y1,x1,y2,c);
-	plotLine(x1,y2,x2,y2,c); plotLine(x2,y2,x2,y1,c);
+	Leaf_plotLine(x1,y1,x2,y1,c); Leaf_plotLine(x1,y1,x1,y2,c);
+	Leaf_plotLine(x1,y2,x2,y2,c); Leaf_plotLine(x2,y2,x2,y1,c);
 	return;
 }
 
-void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c)
+void Leaf_plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c)
 {
 	unsigned short i;
 	for(i = 0; i < n-1; i++) {
-		plotLine(d[(i<<1)],d[((i<<1)+1)],d[((i<<1)+2)],d[((i<<1)+3)],c);
+		Leaf_plotLine(d[(i<<1)],d[((i<<1)+1)],d[((i<<1)+2)],d[((i<<1)+3)],c);
 	}
-	plotLine(d[(i<<1)],d[(i<<1)+1],d[0],d[1],c);
+	Leaf_plotLine(d[(i<<1)],d[(i<<1)+1],d[0],d[1],c);
 	return;
 }
 
-void drawImage(Image * img, unsigned short x, unsigned short y)
+void Leaf_drawImage(Leaf_Image * img, unsigned short x, unsigned short y)
 {
 	unsigned short i;
 	unsigned short i2;
 	for(i = 0; i < img->wide; i++) {
 		for(i2 = 0; i2 < img->tall; i2++) {
-			plotPixel(x+i,y+i2,img->data[(i2*img->wide)+i]);
+			Leaf_plotPixel(x+i,y+i2,img->data[(i2*img->wide)+i]);
 		}
 	}
 	return;
 }
 
-void drawTiled(Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy)
+void Leaf_drawTiled(Leaf_Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy)
 {
 	register unsigned short i,i2;
 	register unsigned short tTall;
@@ -134,7 +134,7 @@ void drawTiled(Image * img, unsigned short x, unsigned short y, unsigned short i
 		tTall = (((iy<<4)+i2)*img->wide);
 
 		for(i = 0; i < 16; i++) {
-			plotPixel(x+i,y+i2,img->data[tTall+(ix<<4)+i]);
+			Leaf_plotPixel(x+i,y+i2,img->data[tTall+(ix<<4)+i]);
 		}
 	}
 	return;

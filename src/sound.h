@@ -48,9 +48,9 @@ extern leafContext * leafCurrentCtx;
 /*
 Sound functions
 */
-signed char initSound(void);
-void playSound(unsigned long freq);
-void stopSound(void);
+signed char Leaf_initSound(void);
+void Leaf_playSound(unsigned long freq);
+void Leaf_stopSound(void);
 
 #ifdef __cplusplus
 }

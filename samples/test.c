@@ -3,11 +3,11 @@
 #include <leaf.h>
 
 leafContext ctx;
-Image timg;
+Leaf_Image timg;
 
-void destroyImage(Image * img);
+void Leaf_destroyImage(Leaf_Image * img);
 
-void destroyImage(Image * img) {
+void Leaf_destroyImage(Leaf_Image * img) {
 	if(img->palette != NULL) {
 		free(img->palette);
 	}
@@ -22,36 +22,36 @@ int main(void)
 	fprintf(stdout,"Test v1.0\n");
 
 	fprintf(stdout,"Creating context\n");
-	if(leafContextCreate(&ctx) != 0) {
+	if(Leaf_ContextCreate(&ctx) != 0) {
 		fprintf(stderr,"Error on context\n");
 		goto end;
 	}
 	fprintf(stdout,"Buffer: %p\n",(void *)ctx.videoBuffer);
 	
 	fprintf(stdout,"Creating image\n");
-	if(imageBitmap("res/test.bmp",&timg) != 0) {
+	if(Leaf_imageBitmap("res/test.bmp",&timg) != 0) {
 		fprintf(stderr,"Error on imageBitmap\n");
 		goto end;
 	}
 	
 	fprintf(stdout,"Buffer: %p\n",(void *)ctx.videoBuffer);
 	fprintf(stdout,"Setting palette\n");
-	setPalette(timg.palette,16);
+	Leaf_setPalette(timg.palette,16);
 
 	fprintf(stdout,"Tall: %u, Wide: %u\n",ctx.vwide,ctx.vtall);
 	fprintf(stdout,"Buffer: %p\n",(void *)ctx.videoBuffer);
 	fprintf(stdout,"Data: %p, Palette: %p\n",(void *)timg.data,(void *)timg.palette);
 
 	while(ctx.ui != __LEAF_UI_EXIT_CODE) {
-		drawImage(&timg,0,0);
-		updateScreen();
+		Leaf_drawImage(&timg,0,0);
+		Leaf_updateScreen();
 	}
 
 	end:
 	fprintf(stdout,"Destroying context\n");
-	leafContextDestroy(&ctx);
+	Leaf_ContextDestroy(&ctx);
 	fprintf(stdout,"Destroying image\n");
-	destroyImage(&timg);
+	Leaf_destroyImage(&timg);
 	fprintf(stdout,"End of program\n");
 	return 0;
 }

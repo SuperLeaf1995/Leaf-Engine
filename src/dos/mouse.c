@@ -29,7 +29,7 @@ static union REGS in,out;
 
 @param m Mouse structure
 */
-char initMouse(Mouse * m)
+char Leaf_initMouse(Mouse * m)
 {
 	in.x.ax = 0x00;
 	in.x.bx = 0x00;
@@ -60,7 +60,7 @@ char initMouse(Mouse * m)
 @param x X Coordinates
 @param y Y Coordinates
 */
-void setMousePosition(register unsigned short x, register unsigned short y)
+void Leaf_setMousePosition(register unsigned short x, register unsigned short y)
 {
 	in.x.ax = 0x04;
 	in.x.cx = x;
@@ -72,7 +72,7 @@ void setMousePosition(register unsigned short x, register unsigned short y)
 /**
 @brief Shows mouse
 */
-void showMouse(void)
+void Leaf_showMouse(void)
 {
 	in.x.ax = 0x01;
 	int86(0x33,&in,&out);
@@ -82,7 +82,7 @@ void showMouse(void)
 /**
 @brief Hides mouse
 */
-void hideMouse(void)
+void Leaf_hideMouse(void)
 {
 	in.x.ax = 0x02;
 	int86(0x33,&in,&out);
@@ -94,7 +94,7 @@ void hideMouse(void)
 
 @param m Mouse structure
 */
-void getMouseStatus(Mouse * m)
+void Leaf_getMouseStatus(Mouse * m)
 {
 	in.x.ax = 0x03;
 	int86(0x33,&in,&out);
@@ -113,7 +113,7 @@ void getMouseStatus(Mouse * m)
 
 @param m Mouse structure
 */
-void getMouseMovement(Mouse * m)
+void Leaf_getMouseMovement(Mouse * m)
 {
 	in.x.ax = 0x0B;
 	int86(0x33,&in,&out);

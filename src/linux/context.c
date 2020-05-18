@@ -19,33 +19,35 @@
  * 
  */
 
-signed int leafContextCreate(leafContext * g) {
+signed int Leaf_ContextCreate(leafContext * g) {
 	fd_set is;
 	
-	g->vwide = 640;
-	g->vtall = 400;
+	leafCurrentCtx = g;
+	
+	leafCurrentCtx->vwide = 640;
+	leafCurrentCtx->vtall = 400;
 	
 	/*Create video buffer*/
-	g->videoBuffer = calloc(g->vwide*g->vtall,sizeof(unsigned char));
-	if(g->videoBuffer == NULL) {
+	leafCurrentCtx->videoBuffer = calloc(leafCurrentCtx->vwide*leafCurrentCtx->vtall,sizeof(unsigned char));
+	if(leafCurrentCtx->videoBuffer == NULL) {
 		return -1;
 	}
 	
 	/*Open the x11 display*/
-	g->xdisplay = XOpenDisplay(0);
+	leafCurrentCtx->xdisplay = XOpenDisplay(0);
 	/*error opening x11 display*/
-	if(g->xdisplay == NULL) {
+	if(leafCurrentCtx->xdisplay == NULL) {
 		return -2;
 	}
 	
 	/*Create a "simple" window*/
-	g->xwindow = XCreateSimpleWindow(g->xdisplay,RootWindow(g->xdisplay,
-	BlackPixel(g->xdisplay,DefaultScreen(g->xdisplay))),10,10,g->vwide,
-	g->vtall,1,WhitePixel(g->xdisplay,DefaultScreen(g->xdisplay)),
-	BlackPixel(g->xdisplay,DefaultScreen(g->xdisplay)));
+	leafCurrentCtx->xwindow = XCreateSimpleWindow(leafCurrentCtx->xdisplay,RootWindow(leafCurrentCtx->xdisplay,
+	BlackPixel(leafCurrentCtx->xdisplay,DefaultScreen(leafCurrentCtx->xdisplay))),10,10,leafCurrentCtx->vwide,
+	leafCurrentCtx->vtall,1,WhitePixel(leafCurrentCtx->xdisplay,DefaultScreen(leafCurrentCtx->xdisplay)),
+	BlackPixel(leafCurrentCtx->xdisplay,DefaultScreen(leafCurrentCtx->xdisplay)));
 	
 	/*Select all inputs*/
-	XSelectInput(g->xdisplay,g->xwindow,
+	XSelectInput(leafCurrentCtx->xdisplay,leafCurrentCtx->xwindow,
 	ExposureMask
 	|KeyPressMask
 	|PointerMotionMask
@@ -57,34 +59,33 @@ signed int leafContextCreate(leafContext * g) {
 	);
 	
 	/*Map our window*/
-	XMapWindow(g->xdisplay,g->xwindow);
+	XMapWindow(leafCurrentCtx->xdisplay,leafCurrentCtx->xwindow);
 	
 	/*Display the close button*/
-	g->WM_DELETE_WINDOW = XInternAtom(g->xdisplay,"WM_DELETE_WINDOW",False);
-	XSetWMProtocols(g->xdisplay,g->xwindow,&g->WM_DELETE_WINDOW,1);
-	g->xgraphic = XCreateGC(g->xdisplay,g->xwindow,0,0);
+	g->WM_DELETE_WINDOW = XInternAtom(leafCurrentCtx->xdisplay,"WM_DELETE_WINDOW",False);
+	XSetWMProtocols(leafCurrentCtx->xdisplay,leafCurrentCtx->xwindow,&g->WM_DELETE_WINDOW,1);
+	g->xgraphic = XCreateGC(leafCurrentCtx->xdisplay,leafCurrentCtx->xwindow,0,0);
 	
 	/*Create a dummy palette*/
-	g->rgbPalette = malloc(sizeof(paletteEntry)*256);
-	if(g->rgbPalette == NULL) {
+	leafCurrentCtx->rgbPalette = malloc(sizeof(paletteEntry)*256);
+	if(leafCurrentCtx->rgbPalette == NULL) {
 		return -3;
 	}
 	
 	/*Wait until the window is mapped into the screen*/
 	for(;;) {
-		XNextEvent(g->xdisplay,&g->xevent);
-		if(g->xevent.type == MapNotify) {
+		XNextEvent(leafCurrentCtx->xdisplay,&leafCurrentCtx->xevent);
+		if(leafCurrentCtx->xevent.type == MapNotify) {
 			break;
 		}
 	}
 	
 	/*Connect to our display*/
-	g->xFd = ConnectionNumber(g->xdisplay);
+	leafCurrentCtx->xFd = ConnectionNumber(leafCurrentCtx->xdisplay);
 	
 	FD_ZERO(&is);
-	FD_SET(g->xFd,&is);
-	
-	leafCurrentCtx = g;
+	FD_SET(leafCurrentCtx->xFd,&is);
+
 #if defined(OPENAL)
 	alGetError(); /*Do dummy call to reset error stack*/
 #endif /* OPENAL */
@@ -94,16 +95,21 @@ signed int leafContextCreate(leafContext * g) {
 	return 0;
 }
 
-signed int leafContextDestroy(leafContext * g) {
-	if(g->videoBuffer != NULL) {
-		free(g->videoBuffer);
+signed int Leaf_ContextDestroy(leafContext * g) {
+	if(leafCurrentCtx == NULL
+	|| leafCurrentCtx != g) {
+		return 0;
 	}
-	if(g->name != NULL) {
-		free(g->name);
+	if(leafCurrentCtx->videoBuffer != NULL) {
+		free(leafCurrentCtx->videoBuffer);
 	}
-	if(g->rgbPalette != NULL) {
-		free(g->rgbPalette);
+	if(leafCurrentCtx->name != NULL) {
+		free(leafCurrentCtx->name);
 	}
-	XCloseDisplay(g->xdisplay);
+	if(leafCurrentCtx->rgbPalette != NULL) {
+		free(leafCurrentCtx->rgbPalette);
+	}
+	XCloseDisplay(leafCurrentCtx->xdisplay);
+	leafCurrentCtx = NULL;
 	return 0;
 }

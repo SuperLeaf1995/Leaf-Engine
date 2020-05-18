@@ -86,12 +86,12 @@ extern leafContext * leafCurrentCtx;
 General graphics manipulation functions.
 Comaptible with almost all displays (VGA,EGA,CGA,etc).
 */
-signed char setVideo(unsigned char v);
-void plotPixel(register unsigned short x, register unsigned short y, register unsigned char c);
-void plotLinearPixel(register unsigned short pos,register unsigned char color);
-unsigned char fetchPixel(register unsigned short x,register unsigned short y);
-unsigned char fetchLinearPixel(register unsigned short p);
-void setPalette(paletteEntry * p, register unsigned short n);
+signed char Leaf_setVideo(unsigned char v);
+void Leaf_plotPixel(register unsigned short x, register unsigned short y, register unsigned char c);
+void Leaf_plotLinearPixel(register unsigned short pos,register unsigned char color);
+unsigned char Leaf_fetchPixel(register unsigned short x,register unsigned short y);
+unsigned char Leaf_fetchLinearPixel(register unsigned short p);
+void Leaf_setPalette(paletteEntry * p, register unsigned short n);
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 static void waitRetrace(void);
 #endif
@@ -101,13 +101,13 @@ Graphics manipulation routines
 This routines does not directly modify video, but they rely on the
 principal graphics functions
 */
-void plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
-void plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
-void plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
-void updateEvent(void);
-void updateScreen(void);
-void drawImage(Image * img, unsigned short x, unsigned short y);
-void drawTiled(Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy);
+void Leaf_plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
+void Leaf_plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
+void Leaf_plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
+void Leaf_updateEvent(void);
+void Leaf_updateScreen(void);
+void Leaf_drawImage(Leaf_Image * img, unsigned short x, unsigned short y);
+void Leaf_drawTiled(Leaf_Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy);
 
 #if defined(__GBA__)
 #define rgb16(r,g,b) ((r)+(g<<5)+(b<<10))

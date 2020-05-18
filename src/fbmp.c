@@ -21,7 +21,7 @@
 
 #include "fbmp.h"
 
-signed int imageBitmap(const char * filename, Image * img)
+signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 {
 	unsigned short sHold;
 	DDBheader db_DDBheader;

@@ -23,7 +23,7 @@
 
 #define toRgb(r,g,b) (r+(g<<8)+(b<<16))
 
-signed char setVideo(unsigned char v) {
+signed char Leaf_setVideo(unsigned char v) {
 	leafCurrentCtx->vwide = vtable[v][0];
 	leafCurrentCtx->vtall = vtable[v][1];
 	leafCurrentCtx->vvideo = vtable[v][2];
@@ -35,7 +35,7 @@ signed char setVideo(unsigned char v) {
 	return 0;
 }
 
-void setPalette(paletteEntry * p, register unsigned short n) {
+void Leaf_setPalette(paletteEntry * p, register unsigned short n) {
 	size_t i;
 	for(i = 0; i < n; i++) {
 		leafCurrentCtx->rgbPalette[i].r = p[i].r;
@@ -45,7 +45,7 @@ void setPalette(paletteEntry * p, register unsigned short n) {
 	return;
 }
 
-void updateScreen(void) {
+void Leaf_updateScreen(void) {
 	register size_t i,i2,d;
 	
 	XNextEvent(leafCurrentCtx->xdisplay,&leafCurrentCtx->xevent);

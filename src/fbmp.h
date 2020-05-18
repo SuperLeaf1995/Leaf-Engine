@@ -126,7 +126,7 @@ typedef struct _Win95BmpHeader
 	unsigned long gBlue;
 }Win95BmpHeader;
 
-signed int imageBitmap(const char * filename, Image * img);
+signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img);
 
 #ifdef __cplusplus
 }

@@ -41,12 +41,12 @@ typedef struct _Mouse
 Functions for manipulating the cursor and retrieving data from it.
 Using the mouse structure to create a mouse handler.
 */
-char initMouse(Mouse * m);
-void setMousePosition(unsigned short x, unsigned short y);
-void showMouse(void);
-void hideMouse(void);
-void getMouseStatus(Mouse * m);
-void getMouseMovement(Mouse * m);
+char Leaf_initMouse(Mouse * m);
+void Leaf_setMousePosition(unsigned short x, unsigned short y);
+void Leaf_showMouse(void);
+void Leaf_hideMouse(void);
+void Leaf_getMouseStatus(Mouse * m);
+void Leaf_getMouseMovement(Mouse * m);
 
 #ifdef __cplusplus
 }

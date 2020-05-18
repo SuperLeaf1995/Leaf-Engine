@@ -6,13 +6,13 @@
 #include <string.h>
 #include "palette.h"
 
-typedef struct _Image {
+typedef struct _Leaf_Image {
 	unsigned long wide;
 	unsigned long tall;
 	unsigned char bitsPerPixel;
 	unsigned char * data;
 	
 	paletteEntry * palette;
-}Image;
+}Leaf_Image;
 
 #endif
