@@ -48,6 +48,7 @@ LINUX_OBJS_STATIC = 	$(OUT_DIR)/linux/static/fbmp.o		\
 						$(OUT_DIR)/linux/static/context.o	\
 						$(OUT_DIR)/linux/static/sound.o		\
 						$(OUT_DIR)/linux/static/keyboard.o	\
+						$(OUT_DIR)/linux/static/image.o		\
 						
 LINUX_OBJS_SHARED = 	$(OUT_DIR)/linux/shared/fbmp.o		\
 						$(OUT_DIR)/linux/shared/mouse.o		\
@@ -57,6 +58,7 @@ LINUX_OBJS_SHARED = 	$(OUT_DIR)/linux/shared/fbmp.o		\
 						$(OUT_DIR)/linux/shared/context.o	\
 						$(OUT_DIR)/linux/shared/sound.o		\
 						$(OUT_DIR)/linux/shared/keyboard.o	\
+						$(OUT_DIR)/linux/shared/image.o		\
 
 GBA_OBJS =				$(OUT_DIR)/gba/fbmp.o				\
 						$(OUT_DIR)/gba/mouse.o				\
@@ -66,6 +68,7 @@ GBA_OBJS =				$(OUT_DIR)/gba/fbmp.o				\
 						$(OUT_DIR)/gba/context.o			\
 						$(OUT_DIR)/gba/sound.o				\
 						$(OUT_DIR)/gba/keyboard.o			\
+						$(OUT_DIR)/gba/image.o				\
 						
 C16_OBJS =				$(OUT_DIR)/c16/fbmp.o				\
 						$(OUT_DIR)/c16/mouse.o				\
@@ -75,6 +78,7 @@ C16_OBJS =				$(OUT_DIR)/c16/fbmp.o				\
 						$(OUT_DIR)/c16/context.o			\
 						$(OUT_DIR)/c16/sound.o				\
 						$(OUT_DIR)/c16/keyboard.o			\
+						$(OUT_DIR)/c16/image.o				\
 						
 C64_OBJS =				$(OUT_DIR)/c64/fbmp.o				\
 						$(OUT_DIR)/c64/mouse.o				\
@@ -84,6 +88,7 @@ C64_OBJS =				$(OUT_DIR)/c64/fbmp.o				\
 						$(OUT_DIR)/c64/context.o			\
 						$(OUT_DIR)/c64/sound.o				\
 						$(OUT_DIR)/c64/keyboard.o			\
+						$(OUT_DIR)/c64/image.o				\
 						
 C128_OBJS =				$(OUT_DIR)/c128/fbmp.o				\
 						$(OUT_DIR)/c128/mouse.o				\
@@ -93,6 +98,7 @@ C128_OBJS =				$(OUT_DIR)/c128/fbmp.o				\
 						$(OUT_DIR)/c128/context.o			\
 						$(OUT_DIR)/c128/sound.o				\
 						$(OUT_DIR)/c128/keyboard.o			\
+						$(OUT_DIR)/c128/image.o				\
 						
 PET_OBJS =				$(OUT_DIR)/pet/fbmp.o				\
 						$(OUT_DIR)/pet/mouse.o				\
@@ -102,6 +108,7 @@ PET_OBJS =				$(OUT_DIR)/pet/fbmp.o				\
 						$(OUT_DIR)/pet/context.o			\
 						$(OUT_DIR)/pet/sound.o				\
 						$(OUT_DIR)/pet/keyboard.o			\
+						$(OUT_DIR)/pet/image.o				\
 
 VIC20_OBJS =			$(OUT_DIR)/vic20/fbmp.o				\
 						$(OUT_DIR)/vic20/mouse.o			\
@@ -111,6 +118,7 @@ VIC20_OBJS =			$(OUT_DIR)/vic20/fbmp.o				\
 						$(OUT_DIR)/vic20/context.o			\
 						$(OUT_DIR)/vic20/sound.o			\
 						$(OUT_DIR)/vic20/keyboard.o			\
+						$(OUT_DIR)/vic20/image.o			\
 						
 APPLE2_OBJS =			$(OUT_DIR)/apple2/fbmp.o			\
 						$(OUT_DIR)/apple2/mouse.o			\
@@ -120,6 +128,7 @@ APPLE2_OBJS =			$(OUT_DIR)/apple2/fbmp.o			\
 						$(OUT_DIR)/apple2/context.o			\
 						$(OUT_DIR)/apple2/sound.o			\
 						$(OUT_DIR)/apple2/keyboard.o		\
+						$(OUT_DIR)/apple2/image.o			\
 			
 # I/O Stuff is deliberately removed NES dosent supports
 # filesystems since its a ROM system.

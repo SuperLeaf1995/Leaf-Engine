@@ -132,6 +132,7 @@ extern void Leaf_playSound(unsigned long freq);
 extern void Leaf_stopSound(void);
 
 extern signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img);
+extern void Leaf_destroyImage(Leaf_Image * img);
 
 extern int Leaf_kbhit(void);
 extern int Leaf_getch(void);
