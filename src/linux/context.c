@@ -89,9 +89,6 @@ signed int Leaf_ContextCreate(leafContext * g) {
 #if defined(OPENAL)
 	alGetError(); /*Do dummy call to reset error stack*/
 #endif /* OPENAL */
-
-	fprintf(stdout,"2 Buffer: %p\n",(void *)leafCurrentCtx->videoBuffer);
-
 	return 0;
 }
 

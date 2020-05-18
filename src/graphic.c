@@ -127,8 +127,8 @@ void Leaf_drawImage(Leaf_Image * img, unsigned short x, unsigned short y)
 
 void Leaf_drawTiled(Leaf_Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy)
 {
-	register unsigned short i,i2;
-	register unsigned short tTall;
+	unsigned short i,i2;
+	unsigned short tTall;
 
 	for(i2 = 0; i2 < 16; i2++) {
 		tTall = (((iy<<4)+i2)*img->wide);

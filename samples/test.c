@@ -18,11 +18,15 @@ int main(void)
 		fprintf(stderr,"Error on imageBitmap\n");
 		goto end;
 	}
+	
+	printf("Size of bitmap: %lu\n",(timg.wide*timg.tall));
+	printf("Palette entries: %u\n",timg.nPal);
+	printf("Dimensions: %li x %li\n",timg.wide,timg.tall);
 
 	Leaf_setPalette(timg.palette,timg.nPal);
 
 	while(ctx.ui != __LEAF_UI_EXIT_CODE) {
-		Leaf_drawImage(&timg,64,64);
+		Leaf_drawImage(&timg,0,0);
 		Leaf_updateScreen();
 	}
 

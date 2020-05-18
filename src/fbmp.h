@@ -43,7 +43,7 @@ typedef struct _DDBheader
 }DDBheader;
 
 /** Windows Bitmap File header, included in all Windows bitmaps */
-typedef struct _WinBmpFileHeader
+typedef struct _BmpFileHeader
 {
 	unsigned long fileSize;
 	unsigned long reserved;
@@ -52,61 +52,42 @@ typedef struct _WinBmpFileHeader
 }WinBmpFileHeader;
 
 /** Windows 2.x bitmap file header */
-typedef struct _Win2xBmpFileHeader
+typedef struct _WinOldBmpFileHeader
 {
 	signed short wide;
 	signed short tall;
 	unsigned short planes;
 	unsigned short bitsPerPixel;
-}Win2xBmpFileHeader;
+}WinOldBmpFileHeader;
 
-/** Windows 3.x+ (inc. 95/98) bitmap file header */
-typedef struct _Win3xBmpFileHeader
+/** Windows 3.x+ and newer, bitmap file header */
+typedef struct _WinNewBmpFileHeader
 {
 	signed long wide;
 	signed long tall;
 	unsigned short planes;
 	unsigned short bitsPerPixel;
-}Win3xBmpFileHeader;
+}WinNewBmpFileHeader;
 
-/** Windows 3.x bitmap info header */
-typedef struct _Win3xBmpHeader
-{
+/** Windows bitmap info header */
+typedef struct _WinBmpHeader {
 	unsigned long compression;
 	unsigned long bitmapSize;
 	signed long xResolution;
 	signed long yResolution;
 	unsigned long usedColors;
 	unsigned long importantColors;
-}Win3xBmpHeader;
-
-/** Windows NT bitmap info header */
-typedef struct _WinNTBmpHeader {
-	unsigned long compression;
-	unsigned long bitmapSize;
-	signed long xResolution;
-	signed long yResolution;
-	unsigned long usedColors;
-	unsigned long importantColors;
-}WinNTBmpHeader;
+}WinBmpHeader;
 
 /** Windows NT bitmap masks */
-typedef struct _WinNTBmpMasks
-{
+typedef struct _WinNTBmpMasks {
 	unsigned long r;
 	unsigned long g;
 	unsigned long b;
 }WinNTBmpMasks;
 
 /** Windows 95/98 bitmap info header */
-typedef struct _Win95BmpHeader
-{
-	unsigned long compression;
-	unsigned long bitmapSize;
-	signed long xResolution;
-	signed long yResolution;
-	unsigned long usedColors;
-	unsigned long importantColors;
+typedef struct _Win95BmpHeaderExtension {
 	unsigned long rMask;
 	unsigned long gMask;
 	unsigned long bMask;
@@ -124,7 +105,7 @@ typedef struct _Win95BmpHeader
 	unsigned long gRed;
 	unsigned long gGreen;
 	unsigned long gBlue;
-}Win95BmpHeader;
+}Win95BmpHeaderExtension;
 
 signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img);
 

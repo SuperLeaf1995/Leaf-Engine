@@ -26,13 +26,13 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 	unsigned short sHold;
 	DDBheader db_DDBheader;
 	WinBmpFileHeader db_WinBmpFileHeader;
-	/*Win3xBmpHeader db_Win3xBmpHeader;*/
-	WinNTBmpHeader db_WinNTBmpHeader;
+	WinBmpHeader db_WinBmpHeader;
 	WinNTBmpMasks db_WinNTBmpMasks;
-	Win95BmpHeader db_Win95BmpHeader;
-	Win2xBmpFileHeader db_Win2xBmpFileHeader;
-	Win3xBmpFileHeader db_Win3xBmpFileHeader;
+	Win95BmpHeaderExtension db_Win95BmpHeaderExtension;
+	WinOldBmpFileHeader db_WinOldBmpFileHeader;
+	WinNewBmpFileHeader db_WinNewBmpFileHeader;
 	size_t i; size_t i2;
+	signed long isl; signed long isl2;
 	unsigned short paletteEntries;
 	
 	unsigned char hold;
@@ -71,42 +71,48 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 		}
 		/*Windows 2.x uses short for sizes*/
 		if(db_WinBmpFileHeader.headerSize == 12) {
-			if(fread(&db_Win2xBmpFileHeader,sizeof(Win2xBmpFileHeader),1,fp) != 1) {
+			if(fread(&db_WinOldBmpFileHeader,sizeof(WinOldBmpFileHeader),1,fp) != 1) {
 				return -5;
 			}
-			bitsPerPixel = db_Win2xBmpFileHeader.bitsPerPixel;
-			wide = (signed long)db_Win2xBmpFileHeader.wide;
-			tall = (signed long)db_Win2xBmpFileHeader.tall;
+			bitsPerPixel = db_WinOldBmpFileHeader.bitsPerPixel;
+			wide = (signed long)db_WinOldBmpFileHeader.wide;
+			tall = (signed long)db_WinOldBmpFileHeader.tall;
 		}
-		/*Windows 3.x+ uses long for sizes*/
+		/*Windows 3.x+ uses signed long for sizes*/
 		else if(db_WinBmpFileHeader.headerSize >= 40) {
-			if(fread(&db_Win3xBmpFileHeader,sizeof(Win3xBmpFileHeader),1,fp) != 1) {
+			if(fread(&db_WinNewBmpFileHeader,sizeof(WinNewBmpFileHeader),1,fp) != 1) {
 				return -6;
 			}
-			bitsPerPixel = db_Win3xBmpFileHeader.bitsPerPixel;
-			wide = db_Win3xBmpFileHeader.wide;
-			tall = db_Win3xBmpFileHeader.tall;
+			bitsPerPixel = db_WinNewBmpFileHeader.bitsPerPixel;
+			wide = db_WinNewBmpFileHeader.wide;
+			tall = db_WinNewBmpFileHeader.tall;
+		}
+		else {
+			return -16;
 		}
 		
 		/*Bitmap Info Header*/
-		/*Windows 3.x/NT Bitmap*/
-		if(db_WinBmpFileHeader.headerSize == 40) {
-			if(fread(&db_WinNTBmpHeader,sizeof(WinNTBmpHeader),1,fp) != 1) {
+		if(db_WinBmpFileHeader.headerSize >= 40) {
+			/*Windows 3.x/NT Bitmap*/
+			if(fread(&db_WinBmpHeader,sizeof(WinBmpHeader),1,fp) != 1) {
 				return -8;
 			}
-			compression = db_WinNTBmpHeader.compression;
-			if(compression == 3) {
-				if(fread(&db_WinNTBmpMasks,sizeof(WinNTBmpMasks),1,fp) != 1) {
-					return -9;
+			compression = db_WinBmpHeader.compression;
+			
+			/*Windows NT added masks in Compression 3*/
+			if(db_WinBmpFileHeader.headerSize == 40) {
+				if(compression == 3) {
+					if(fread(&db_WinNTBmpMasks,sizeof(WinNTBmpMasks),1,fp) != 1) {
+						return -9;
+					}
 				}
 			}
-		}
-		/*Windows 95/98 Bitmap*/
-		else if(db_WinBmpFileHeader.headerSize == 108) {
-			if(fread(&db_Win95BmpHeader,sizeof(Win95BmpHeader),1,fp) != 1) {
-				return -10;
+			/*Windows 95/98 Bitmap Extended Windows 3.x Header*/
+			else if(db_WinBmpFileHeader.headerSize == 108) {
+				if(fread(&db_Win95BmpHeaderExtension,sizeof(Win95BmpHeaderExtension),1,fp) != 1) {
+					return -10;
+				}
 			}
-			compression = db_Win95BmpHeader.compression;
 		}
 	}
 	else {
@@ -114,10 +120,27 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 		return -11;
 	}
 	
+	switch(bitsPerPixel) {
+		case 1:
+		case 2:
+		case 4:
+		case 8:
+		case 16:
+		case 32:
+			break;
+		default:
+			fclose(fp);
+			return -17;
+	}
+	
 	/*Read the palette*/
 	/*Only use palette for 8-bit images*/
 	if(bitsPerPixel <= 8) {
-		paletteEntries = (1<<(bitsPerPixel));
+		if(db_WinBmpFileHeader.headerSize == 12) {
+			paletteEntries = (db_WinBmpFileHeader.offset-sizeof(WinBmpFileHeader)-sizeof(WinOldBmpFileHeader))/4;
+		} else {
+			paletteEntries = (1<<(bitsPerPixel));
+		}
 		img->palette = malloc(sizeof(paletteEntry)*paletteEntries);
 		if(img->palette == NULL) {
 			return -12;
@@ -150,60 +173,57 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 	switch(compression) {
 		case 0:
 			switch(bitsPerPixel) {
+				/*Reverse read wide, but not tall*/
 				case 8: /*256 colors*/
-					/*Reverse read wide, but not tall*/
-					for(i = 1; (signed long)i < tall+1; i++) {
-						for(i2 = 0; (signed long)i2 < wide; i2++) {
+					for(isl = 0; isl < tall; isl++) {
+						for(isl2 = 0; isl2 < wide; isl2++) {
 							fread(&hold,sizeof(unsigned char),1,fp);
-							img->data[(i2+((tall-i)*wide))] = (hold);
+							img->data[((tall-(isl+1))*wide)+isl2] = hold;
 						}
 						/*Skip padding (dword)*/
-						if((wide&3) != 0) {
+						if(wide&3) {
 							fseek(fp,SEEK_CUR,(int)(wide&3));
 						}
 					}
 					break;
 				case 4: /*16 colors*/
-					/*Reverse read wide, but not tall*/
 					for(i = 1; (signed long)i < tall+1; i++) {
 						for(i2 = 0; (signed long)i2 < wide; i2++) {
 							fread(&hold,sizeof(unsigned char),1,fp);
-							img->data[(i2+((tall-i)*wide))] = ((hold>>4)&0x0F);
+							img->data[((tall-i)*wide)+i2] = ((hold>>4)&0x0F);
 							i2++;
-							img->data[(i2+((tall-i)*wide))] = (hold&0x0F);
+							img->data[((tall-i)*wide)+i2] = (hold&0x0F);
 						}
-						if(((((wide*4)+7)>>3)&3)) {
-							fseek(fp,SEEK_CUR,(int)(3-((((wide*4)+7)>>3)&3)));
+						if((((wide<<2)+7)>>3)&3) {
+							fseek(fp,SEEK_CUR,(int)(3-((((wide<<2)+7)>>3)&3)));
 						}
 					}
 					break;
 				case 2: /*4 colors*/
-					/*Reverse read wide, but not tall*/
 					for(i = 1; (signed long)i < tall+1; i++) {
 						for(i2 = 0; (signed long)i2 < wide; i2++) {
 							if(!(i2&3)) {
 								fread(&hold,sizeof(unsigned char),1,fp);
 							}
-							img->data[(i2+((tall-i)*wide))] = (hold>>6)&3;
+							img->data[((tall-i)*wide)+i2] = (hold>>6)&3;
 							hold = (hold<<2);
 						}
-						if(((((wide*2)+7)>>3)&3)) {
-							fseek(fp,SEEK_CUR,(int)(3-((((wide*2)+7)>>3)&3)));
+						if((((wide<<1)+7)>>3)&3) {
+							fseek(fp,SEEK_CUR,(int)(3-((((wide<<1)+7)>>3)&3)));
 						}
 					}
 					break;
 				case 1: /*2 colors*/
-					/*Reverse read wide, but not tall*/
 					for(i = 1; (signed long)i < tall+1; i++) {
 						for(i2 = 0; (signed long)i2 < wide; i2++) {
 							if(!(i2&7)) {
 								fread(&hold,sizeof(unsigned char),1,fp);
 							}
-							img->data[(i2+((tall-i)*wide))] = ((hold>>7)&1);
+							img->data[((tall-i)*wide)+i2] = ((hold>>7)&1);
 							hold = (hold<<1);
 						}
-						if(((((wide*1)+7)>>3)&3)) {
-							fseek(fp,SEEK_CUR,(int)(3-((((wide*1)+7)>>3)&3)));
+						if(((wide+7)>>3)&3) {
+							fseek(fp,SEEK_CUR,(int)(3-((((wide)+7)>>3)&3)));
 						}
 					}
 					break;
