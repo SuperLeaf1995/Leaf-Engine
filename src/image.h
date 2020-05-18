@@ -17,6 +17,7 @@ typedef struct _Leaf_Image {
 	unsigned char * data;
 	
 	paletteEntry * palette;
+	size_t nPal;
 }Leaf_Image;
 
 void Leaf_destroyImage(Leaf_Image * img);

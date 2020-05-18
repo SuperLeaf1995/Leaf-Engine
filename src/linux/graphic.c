@@ -38,9 +38,9 @@ signed char Leaf_setVideo(unsigned char v) {
 void Leaf_setPalette(paletteEntry * p, register unsigned short n) {
 	size_t i;
 	for(i = 0; i < n; i++) {
-		leafCurrentCtx->rgbPalette[i].r = p[i].r;
+		leafCurrentCtx->rgbPalette[i].b = p[i].r;
 		leafCurrentCtx->rgbPalette[i].g = p[i].g;
-		leafCurrentCtx->rgbPalette[i].b = p[i].b;
+		leafCurrentCtx->rgbPalette[i].r = p[i].b;
 	}
 	return;
 }

@@ -51,26 +51,27 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 
 	/*Get signature*/
 	if(fread(&sHold,sizeof(unsigned short),1,fp) != 1) {
+		fclose(fp);
 		return -2;
 	}
 	
 	/*Read bitmap header*/
 	/*DDB File*/
 	if(sHold == 0) {
-		if(fread(&db_DDBheader,sizeof(DDBheader),1,fp) < 1) {
+		if(fread(&db_DDBheader,sizeof(DDBheader),1,fp) != 1) {
+			fclose(fp);
 			return -3;
 		}
 	}
 	/*Windows Bitmap File*/
 	else if(sHold == 0x4D42) {
 		/*File Info Header*/
-		if(fread(&db_WinBmpFileHeader,sizeof(WinBmpFileHeader),1,fp) < 1) {
+		if(fread(&db_WinBmpFileHeader,sizeof(WinBmpFileHeader),1,fp) != 1) {
 			return -4;
 		}
-		
 		/*Windows 2.x uses short for sizes*/
 		if(db_WinBmpFileHeader.headerSize == 12) {
-			if(fread(&db_Win2xBmpFileHeader,sizeof(Win2xBmpFileHeader),1,fp) < 1) {
+			if(fread(&db_Win2xBmpFileHeader,sizeof(Win2xBmpFileHeader),1,fp) != 1) {
 				return -5;
 			}
 			bitsPerPixel = db_Win2xBmpFileHeader.bitsPerPixel;
@@ -79,7 +80,7 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 		}
 		/*Windows 3.x+ uses long for sizes*/
 		else if(db_WinBmpFileHeader.headerSize >= 40) {
-			if(fread(&db_Win3xBmpFileHeader,sizeof(Win3xBmpFileHeader),1,fp) < 1) {
+			if(fread(&db_Win3xBmpFileHeader,sizeof(Win3xBmpFileHeader),1,fp) != 1) {
 				return -6;
 			}
 			bitsPerPixel = db_Win3xBmpFileHeader.bitsPerPixel;
@@ -89,26 +90,27 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 		
 		/*Bitmap Info Header*/
 		/*Windows 3.x/NT Bitmap*/
-		else if(db_WinBmpFileHeader.headerSize == 40) {
-			if(fread(&db_WinNTBmpHeader,sizeof(WinNTBmpHeader),1,fp) < 1) {
+		if(db_WinBmpFileHeader.headerSize == 40) {
+			if(fread(&db_WinNTBmpHeader,sizeof(WinNTBmpHeader),1,fp) != 1) {
 				return -8;
 			}
-			if(db_WinNTBmpHeader.compression == 3) {
-				if(fread(&db_WinNTBmpMasks,sizeof(WinNTBmpMasks),1,fp) < 1) {
+			compression = db_WinNTBmpHeader.compression;
+			if(compression == 3) {
+				if(fread(&db_WinNTBmpMasks,sizeof(WinNTBmpMasks),1,fp) != 1) {
 					return -9;
 				}
 			}
-			compression = db_WinNTBmpHeader.compression;
 		}
 		/*Windows 95/98 Bitmap*/
 		else if(db_WinBmpFileHeader.headerSize == 108) {
-			if(fread(&db_Win95BmpHeader,sizeof(Win95BmpHeader),1,fp) < 1) {
+			if(fread(&db_Win95BmpHeader,sizeof(Win95BmpHeader),1,fp) != 1) {
 				return -10;
 			}
 			compression = db_Win95BmpHeader.compression;
 		}
 	}
 	else {
+		fclose(fp);
 		return -11;
 	}
 	
@@ -132,6 +134,7 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 				fgetc(fp);
 			}
 		}
+		img->nPal = paletteEntries;
 	}
 	
 	/*Read the bitmap data*/
@@ -140,6 +143,7 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 		if(img->palette != NULL) {
 			free(img->palette);
 		}
+		fclose(fp);
 		return -13;
 	}
 	
@@ -210,6 +214,7 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 					if(img->palette == NULL) {
 						free(img->palette);
 					}
+					fclose(fp);
 					return -14;
 			}
 			break;
@@ -220,6 +225,7 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 			if(img->palette == NULL) {
 				free(img->palette);
 			}
+			fclose(fp);
 			return -15;
 	}
 	
