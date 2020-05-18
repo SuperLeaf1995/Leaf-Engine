@@ -30,9 +30,9 @@ or
 make -f Makefile.gcc linux-static
 
 - To install, run the following:
-sudo make -f Makefile.gcc install-shared
+sudo make -f Makefile.gcc install-linux-shared
 or
-sudo make -f Makefile.gcc install-static
+sudo make -f Makefile.gcc install-linux-static
 
 * Note: Installation of includes and libs happens in /usr/include and
 /usr/lib respectively
@@ -50,9 +50,9 @@ or
 make -f Makefile.gcc linux-static
 
 - To install, run the following:
-sudo make -f Makefile.gcc install-shared
+sudo make -f Makefile.gcc install-linux-shared
 or
-sudo make -f Makefile.gcc install-static
+sudo make -f Makefile.gcc install-linux-static
 
 * Note: Installation of includes and libs happens in /usr/include and
 /usr/lib respectively

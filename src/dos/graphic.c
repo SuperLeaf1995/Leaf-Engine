@@ -46,18 +46,15 @@ signed char setVideo(unsigned char v)
 	leafCurrentCtx->vtall = vtable[v][1];
 	leafCurrentCtx->vvideo = vtable[v][2];
 	
-	if(leafCurrentCtx->vvideo == __ega || leafCurrentCtx->vvideo == __vga)
-	{
+	if(leafCurrentCtx->vvideo == __ega || leafCurrentCtx->vvideo == __vga) {
 		video = (unsigned char *)0xA0000000L;
 	}
-	else if(leafCurrentCtx->vvideo == __cga)
-	{
+	else if(leafCurrentCtx->vvideo == __cga) {
 		video = (unsigned char *)0xB8000000L;
 	}
 	
 	leafCurrentCtx->videoBuffer = (unsigned char *)realloc(leafCurrentCtx->videoBuffer,(leafCurrentCtx->vwide*leafCurrentCtx->vtall));
-	if(leafCurrentCtx->videoBuffer == NULL)
-	{
+	if(leafCurrentCtx->videoBuffer == NULL) {
 		return -1;
 	}
 	
@@ -67,22 +64,18 @@ signed char setVideo(unsigned char v)
 void setPalette(paletteEntry * p, register unsigned short n)
 {
 	register unsigned short i;
-	if(leafCurrentCtx->vvideo == __vga)
-	{
+	if(leafCurrentCtx->vvideo == __vga) {
 		outp(0x03C8,(unsigned char)0); /*send to the vga registers that we are going to send palette data*/
-		for(i = 0; i < n; i++)
-		{
+		for(i = 0; i < n; i++) {
 			outp(0x03C9,(unsigned char)(p[i].r>>2));
 			outp(0x03C9,(unsigned char)(p[i].g>>2));
 			outp(0x03C9,(unsigned char)(p[i].b>>2));
 		}
 	}
-	else if(leafCurrentCtx->vvideo == __ega)
-	{
+	else if(leafCurrentCtx->vvideo == __ega) {
 
 	}
-	else if(leafCurrentCtx->vvideo == __cga)
-	{
+	else if(leafCurrentCtx->vvideo == __cga) {
 
 	}
 	return;

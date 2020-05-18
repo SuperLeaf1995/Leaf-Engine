@@ -69,6 +69,7 @@ typedef struct leafContext
 	Window xwindow; /*Our main window in X11*/
 	Atom WM_DELETE_WINDOW; /*"x" atom in window (to close it)*/
 	GC xgraphic; /*The X11 graphic context where we will draw on*/
+	int xFd; /*Used for non-blocking IO*/
 #endif
 #if defined(__GBA__) || defined(__linux) || defined(linux)
 	/** Emulate a VGA palette for newer systems */

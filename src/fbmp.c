@@ -116,7 +116,7 @@ signed int imageBitmap(const char * filename, Image * img)
 	/*Only use palette for 8-bit images*/
 	if(bitsPerPixel <= 8) {
 		paletteEntries = (1<<(bitsPerPixel));
-		img->palette = (paletteEntry *)malloc(sizeof(paletteEntry)*paletteEntries);
+		img->palette = malloc(sizeof(paletteEntry)*paletteEntries);
 		if(img->palette == NULL) {
 			return -12;
 		}
@@ -135,7 +135,7 @@ signed int imageBitmap(const char * filename, Image * img)
 	}
 	
 	/*Read the bitmap data*/
-	img->data = (unsigned char *)malloc(wide*tall);
+	img->data = malloc(wide*tall);
 	if(img->data == NULL) {
 		if(img->palette != NULL) {
 			free(img->palette);
@@ -175,61 +175,49 @@ signed int imageBitmap(const char * filename, Image * img)
 					break;
 				case 2: /*4 colors*/
 					/*Reverse read wide, but not tall*/
-					for(i = 1; (signed long)i < tall+1; i++)
-					{
-						for(i2 = 0; (signed long)i2 < wide; i2++)
-						{
-							if(!(i2&3))
-							{
+					for(i = 1; (signed long)i < tall+1; i++) {
+						for(i2 = 0; (signed long)i2 < wide; i2++) {
+							if(!(i2&3)) {
 								fread(&hold,sizeof(unsigned char),1,fp);
 							}
 							img->data[(i2+((tall-i)*wide))] = (hold>>6)&3;
 							hold = (hold<<2);
 						}
-						if(((((wide*2)+7)>>3)&3))
-						{
+						if(((((wide*2)+7)>>3)&3)) {
 							fseek(fp,SEEK_CUR,(int)(3-((((wide*2)+7)>>3)&3)));
 						}
 					}
 					break;
 				case 1: /*2 colors*/
 					/*Reverse read wide, but not tall*/
-					for(i = 1; (signed long)i < tall+1; i++)
-					{
-						for(i2 = 0; (signed long)i2 < wide; i2++)
-						{
-							if(!(i2&7))
-							{
+					for(i = 1; (signed long)i < tall+1; i++) {
+						for(i2 = 0; (signed long)i2 < wide; i2++) {
+							if(!(i2&7)) {
 								fread(&hold,sizeof(unsigned char),1,fp);
 							}
 							img->data[(i2+((tall-i)*wide))] = ((hold>>7)&1);
 							hold = (hold<<1);
 						}
-						if(((((wide*1)+7)>>3)&3))
-						{
+						if(((((wide*1)+7)>>3)&3)) {
 							fseek(fp,SEEK_CUR,(int)(3-((((wide*1)+7)>>3)&3)));
 						}
 					}
 					break;
 				default:
-					if(img->data != NULL)
-					{
+					if(img->data != NULL) {
 						free(img->data);
 					}
-					if(img->palette == NULL)
-					{
+					if(img->palette == NULL) {
 						free(img->palette);
 					}
 					return -14;
 			}
 			break;
 		default:
-			if(img->data != NULL)
-			{
+			if(img->data != NULL) {
 				free(img->data);
 			}
-			if(img->palette == NULL)
-			{
+			if(img->palette == NULL) {
 				free(img->palette);
 			}
 			return -15;

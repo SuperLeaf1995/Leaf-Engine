@@ -19,7 +19,7 @@ uninstall: out\dos\leaf.lib
 	$(CLIB) c:\tc\lib\cs.lib -out\dos\leaf.lib
 	$(CLIB) c:\tc\lib\cs.lib -out\dos\fdata.obj-out\dos\fbmp.obj-out\dos\fpcx.obj
 	$(CLIB) c:\tc\lib\cs.lib -out\dos\graphic.obj-out\dos\mouse.obj-out\dos\context.obj
-	$(CLIB) c:\tc\lib\cs.lib -out\dos\sound.obj
+	$(CLIB) c:\tc\lib\cs.lib -out\dos\sound.obj-out\dos\keyboard.obj
 	del c:\tc\include\leaf.h
 	del c:\tc\lib\leaf.lib
 	@echo "--- UNINSTALLING DONE ---"
@@ -27,11 +27,11 @@ uninstall: out\dos\leaf.lib
 clean:
 	del out\dos\*.*
 
-out\dos\leaf.lib: out\dos\fdata.obj out\dos\fbmp.obj out\dos\fpcx.obj out\dos\graphic.obj out\dos\mouse.obj out\dos\context.obj out\dos\sound.obj
+out\dos\leaf.lib: out\dos\keyboard.obj out\dos\fdata.obj out\dos\fbmp.obj out\dos\fpcx.obj out\dos\graphic.obj out\dos\mouse.obj out\dos\context.obj out\dos\sound.obj
 	@echo "--- BUILDING $< ---"
 	$(CLIB) /C $< +out\dos\fdata.obj+out\dos\fbmp.obj+out\dos\fpcx.obj
 	$(CLIB) /C $< +out\dos\graphic.obj+out\dos\mouse.obj+out\dos\context.obj
-	$(CLIB) /C $< +out\dos\sound.obj
+	$(CLIB) /C $< +out\dos\sound.obj+out\dos\keyboard.obj
 
 out\dos\fdata.obj: src\fdata.c src\fdata.h
 	@echo "--- BUILDING $< ---"
@@ -60,3 +60,7 @@ out\dos\context.obj: src\context.c src\context.h
 out\dos\sound.obj: src\sound.c src\sound.h
 	@echo "--- BUILDING $< ---"
 	$(CC) -c $(CFLAGS) -o$< src\sound.c
+
+out\dos\keyboard.obj: src\keyboard.c
+	@echo "--- BUILDING $< ---"
+	$(CC) -c $(CFLAGS) -o$< src\keyboard.c

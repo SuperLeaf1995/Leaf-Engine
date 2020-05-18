@@ -134,6 +134,9 @@ extern void stopSound(void);
 
 extern signed int imageBitmap(const char * filename, Image * img);
 
+extern int kbhit(void);
+extern int getch(void);
+
 /*Legacy support (LeafEngine <= 0.3.4)*/
 #if (LEAF_ENGINE <= 034L)
 #define leafGameCreate(x) leafContextCreate(x)
