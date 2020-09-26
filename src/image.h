@@ -16,11 +16,11 @@ typedef struct _Leaf_Image {
 	unsigned char bitsPerPixel;
 	unsigned char * data;
 	
-	paletteEntry * palette;
+	Leaf_PaletteEntry * palette;
 	size_t nPal;
 }Leaf_Image;
 
-void Leaf_destroyImage(Leaf_Image * img);
+void Leaf_DestroyImage(Leaf_Image * img);
 
 #ifdef __cplusplus
 }

@@ -1,37 +1,44 @@
+//
+// Leaf-Engine
+// Bitmap demo
+//
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <leaf.h>
+#include <leaf/leaf.h>
 
-leafContext ctx;
-Leaf_Image timg;
+Leaf_Context ctx;
+Leaf_Image img;
 
-int main(void)
-{
+int main(void) {
+	srand(time(NULL));
+	
 	fprintf(stdout,"Test v1.0\n");
 
 	if(Leaf_ContextCreate(&ctx) != 0) {
 		fprintf(stderr,"Error on context\n");
 		goto end;
 	}
-
-	if(Leaf_imageBitmap("res/test.bmp",&timg) != 0) {
-		fprintf(stderr,"Error on imageBitmap\n");
+	
+	if(Leaf_ImageBitmap("res/test.bmp",&img) != 0) {
+		fprintf(stderr,"Error loading bitmap %i\n",Leaf_ImageBitmap("res/test.bmp",&img));
 		goto end;
 	}
 	
-	printf("Size of bitmap: %lu\n",(timg.wide*timg.tall));
-	printf("Palette entries: %u\n",timg.nPal);
-	printf("Dimensions: %li x %li\n",timg.wide,timg.tall);
-
-	Leaf_setPalette(timg.palette,timg.nPal);
+	Leaf_SetPalette(img.palette,img.nPal);
 
 	while(ctx.ui != __LEAF_UI_EXIT_CODE) {
-		Leaf_drawImage(&timg,0,0);
-		Leaf_updateScreen();
+		// Clear the screen
+		Leaf_ClearScreen();
+		
+		Leaf_DrawImage(&img,0,0);
+		
+		// Update the screen
+		Leaf_UpdateScreen();
 	}
 
 	end:
+	Leaf_DestroyImage(&img);
 	Leaf_ContextDestroy(&ctx);
-	Leaf_destroyImage(&timg);
 	return 0;
 }

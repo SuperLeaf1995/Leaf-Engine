@@ -21,7 +21,7 @@
 
 #include "context.h"
 
-signed int Leaf_ContextCreate(leafContext * g)
+signed int Leaf_ContextCreate(Leaf_Context * g)
 {
 #if defined(__DJGPP__)
 	if(__djgpp_nearptr_enable() == 0) {
@@ -37,15 +37,15 @@ signed int Leaf_ContextCreate(leafContext * g)
 		return -1;
 	}
 	
-	leafCurrentCtx = g;
+	Leaf_CurrentContext = g;
 	return 0;
 }
 
-signed int Leaf_ContextDestroy(leafContext * g)
+signed int Leaf_ContextDestroy(Leaf_Context * g)
 {
-	if(leafCurrentCtx->videoBuffer != NULL)
+	if(Leaf_CurrentContext->videoBuffer != NULL)
 	{
-		free(leafCurrentCtx->videoBuffer);
+		free(Leaf_CurrentContext->videoBuffer);
 	}
 	if(g->name != NULL)
 	{

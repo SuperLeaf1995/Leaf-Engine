@@ -21,23 +21,46 @@
 
 #include "keyboard.h"
 
-int Leaf_kbhit(void) {
-	while(XPending(leafCurrentCtx->xdisplay)) {
-		XNextEvent(leafCurrentCtx->xdisplay,&leafCurrentCtx->xevent);
-		if(leafCurrentCtx->xevent.type == KeyPress) {
-			return 1;
-		} else if(leafCurrentCtx->xevent.type == KeyRelease) {
-			return 0;
+static unsigned char kbuf[0xFFFF];
+static int khit = 0;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+void Leaf_EventUpdate(void);
+void Leaf_EventUpdate(void) {
+	int c;
+	while(XPending(Leaf_CurrentContext->xdisplay)) {
+		XNextEvent(Leaf_CurrentContext->xdisplay,&Leaf_CurrentContext->xevent);
+		
+		if(Leaf_CurrentContext->xevent.type == KeyPress) {
+			c = XLookupKeysym(&Leaf_CurrentContext->xevent.xkey,0);
+			kbuf[c] = 1; khit = 1;
+		} else if(Leaf_CurrentContext->xevent.type == KeyRelease) {
+			c = XLookupKeysym(&Leaf_CurrentContext->xevent.xkey,0);
+			kbuf[c] = 0; khit = 0;
+		} else if(Leaf_CurrentContext->xevent.type == ClientMessage
+		&& (unsigned int)Leaf_CurrentContext->xevent.xclient.data.l[0] == Leaf_CurrentContext->WM_DELETE_WINDOW) {
+			Leaf_CurrentContext->ui = __LEAF_UI_EXIT_CODE;
+		} else {
+			
 		}
 	}
-	return 0;
+}
+#pragma GCC diagnostic pop
+
+int Leaf_Kbhit(void) {
+	Leaf_EventUpdate();
+	return khit;
 }
 
-int Leaf_getch(void) {
-	getEvent:
-	XNextEvent(leafCurrentCtx->xdisplay,&leafCurrentCtx->xevent);
-	if(leafCurrentCtx->xevent.type == KeyPress) {
-		return XLookupKeysym(&leafCurrentCtx->xevent.xkey,0);
+int Leaf_Getch(void) {
+	size_t i;
+	while(1) {
+		Leaf_EventUpdate();
+		for(i = 0; i < 0xFF; i++) {
+			if(kbuf[i] == 1) {
+				return i;
+			}
+		}
 	}
-	goto getEvent;
 }

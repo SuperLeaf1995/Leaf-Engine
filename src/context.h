@@ -29,6 +29,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #if defined(__linux) || defined(linux)
+#include <pthread.h>
+#include <signal.h>
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <X11/Xlib.h>
@@ -56,7 +58,7 @@ leafEvent and any of the functions that depends of it.
 Provides a simple way for porting DOS, Linux and BSD applications without
 the hassle of setting everything separately
 */
-typedef struct leafContext
+typedef struct Leaf_Context
 {
 #if defined(OPENAL)
 	ALCdevice * alDev;
@@ -73,7 +75,7 @@ typedef struct leafContext
 #endif
 #if defined(__GBA__) || defined(__linux) || defined(linux)
 	/** Emulate a VGA palette for newer systems */
-	paletteEntry * rgbPalette; /*Emulate a VGA palette*/
+	Leaf_PaletteEntry * rgbPalette; /*Emulate a VGA palette*/
 #endif
 	/** Name of the game, only displays on UI systems */
 	char * name;
@@ -88,11 +90,12 @@ typedef struct leafContext
 	/** Used for UI-break case, Ctrl+C in DOS makes this 1 */
 	signed char ui;
 	unsigned char * videoBuffer;
-}leafContext;
+}Leaf_Context;
 
-signed int Leaf_ContextCreate(leafContext * g);
-signed int Leaf_ContextDestroy(leafContext * g);
-signed int Leaf_SetVideo(leafContext * g);
+#include "keyboard.h"
+
+signed int Leaf_ContextCreate(Leaf_Context * g);
+signed int Leaf_ContextDestroy(Leaf_Context * g);
 
 #ifdef __cplusplus
 }

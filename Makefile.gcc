@@ -49,6 +49,7 @@ LINUX_OBJS_STATIC = 	$(OUT_DIR)/linux/static/fbmp.o		\
 						$(OUT_DIR)/linux/static/sound.o		\
 						$(OUT_DIR)/linux/static/keyboard.o	\
 						$(OUT_DIR)/linux/static/image.o		\
+						$(OUT_DIR)/linux/static/object.o	\
 						
 LINUX_OBJS_SHARED = 	$(OUT_DIR)/linux/shared/fbmp.o		\
 						$(OUT_DIR)/linux/shared/mouse.o		\
@@ -59,6 +60,7 @@ LINUX_OBJS_SHARED = 	$(OUT_DIR)/linux/shared/fbmp.o		\
 						$(OUT_DIR)/linux/shared/sound.o		\
 						$(OUT_DIR)/linux/shared/keyboard.o	\
 						$(OUT_DIR)/linux/shared/image.o		\
+						$(OUT_DIR)/linux/shared/object.o	\
 
 GBA_OBJS =				$(OUT_DIR)/gba/fbmp.o				\
 						$(OUT_DIR)/gba/mouse.o				\
@@ -69,6 +71,7 @@ GBA_OBJS =				$(OUT_DIR)/gba/fbmp.o				\
 						$(OUT_DIR)/gba/sound.o				\
 						$(OUT_DIR)/gba/keyboard.o			\
 						$(OUT_DIR)/gba/image.o				\
+						$(OUT_DIR)/gba/object.o				\
 						
 C16_OBJS =				$(OUT_DIR)/c16/fbmp.o				\
 						$(OUT_DIR)/c16/mouse.o				\
@@ -79,6 +82,7 @@ C16_OBJS =				$(OUT_DIR)/c16/fbmp.o				\
 						$(OUT_DIR)/c16/sound.o				\
 						$(OUT_DIR)/c16/keyboard.o			\
 						$(OUT_DIR)/c16/image.o				\
+						$(OUT_DIR)/c16/object.o				\
 						
 C64_OBJS =				$(OUT_DIR)/c64/fbmp.o				\
 						$(OUT_DIR)/c64/mouse.o				\
@@ -89,6 +93,7 @@ C64_OBJS =				$(OUT_DIR)/c64/fbmp.o				\
 						$(OUT_DIR)/c64/sound.o				\
 						$(OUT_DIR)/c64/keyboard.o			\
 						$(OUT_DIR)/c64/image.o				\
+						$(OUT_DIR)/c64/object.o				\
 						
 C128_OBJS =				$(OUT_DIR)/c128/fbmp.o				\
 						$(OUT_DIR)/c128/mouse.o				\
@@ -99,6 +104,7 @@ C128_OBJS =				$(OUT_DIR)/c128/fbmp.o				\
 						$(OUT_DIR)/c128/sound.o				\
 						$(OUT_DIR)/c128/keyboard.o			\
 						$(OUT_DIR)/c128/image.o				\
+						$(OUT_DIR)/c128/object.o				\
 						
 PET_OBJS =				$(OUT_DIR)/pet/fbmp.o				\
 						$(OUT_DIR)/pet/mouse.o				\
@@ -109,6 +115,7 @@ PET_OBJS =				$(OUT_DIR)/pet/fbmp.o				\
 						$(OUT_DIR)/pet/sound.o				\
 						$(OUT_DIR)/pet/keyboard.o			\
 						$(OUT_DIR)/pet/image.o				\
+						$(OUT_DIR)/pet/object.o				\
 
 VIC20_OBJS =			$(OUT_DIR)/vic20/fbmp.o				\
 						$(OUT_DIR)/vic20/mouse.o			\
@@ -119,6 +126,7 @@ VIC20_OBJS =			$(OUT_DIR)/vic20/fbmp.o				\
 						$(OUT_DIR)/vic20/sound.o			\
 						$(OUT_DIR)/vic20/keyboard.o			\
 						$(OUT_DIR)/vic20/image.o			\
+						$(OUT_DIR)/vic20/object.o			\
 						
 APPLE2_OBJS =			$(OUT_DIR)/apple2/fbmp.o			\
 						$(OUT_DIR)/apple2/mouse.o			\
@@ -129,6 +137,7 @@ APPLE2_OBJS =			$(OUT_DIR)/apple2/fbmp.o			\
 						$(OUT_DIR)/apple2/sound.o			\
 						$(OUT_DIR)/apple2/keyboard.o		\
 						$(OUT_DIR)/apple2/image.o			\
+						$(OUT_DIR)/apple2/object.o			\
 			
 # I/O Stuff is deliberately removed NES dosent supports
 # filesystems since its a ROM system.
@@ -161,12 +170,16 @@ apple2: $(OUT_DIR)/apple2 $(OUT_DIR)/apple2/libleaf.a
 gba: $(OUT_DIR)/gba $(OUT_DIR)/gba/libleaf.a
 
 install-linux-shared: linux-shared
+	mkdir -p /usr/include/leaf
 	cp $(OUT_DIR)/linux/shared/libleaf.so /usr/lib
-	cp $(INC_DIR)/leaf.h /usr/include
+	cp $(INC_DIR)/*.h /usr/include/leaf
+	cp $(SRC_DIR)/*.h /usr/include/leaf
 
 install-linux-static: linux-static
+	mkdir -p /usr/include/leaf
 	cp $(OUT_DIR)/linux/static/libleaf.a /usr/lib
-	cp $(INC_DIR)/leaf.h /usr/include
+	cp $(INC_DIR)/*.h /usr/include/leaf
+	cp $(SRC_DIR)/*.h /usr/include/leaf
 
 clean:
 	rm -f out/linux/shared/*.*

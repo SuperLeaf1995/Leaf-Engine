@@ -31,8 +31,8 @@ typedef struct pcxHeader
 	unsigned short verticalScreenSize;
 	unsigned char * reserved2;
 	
-	paletteEntry * egaPalette;
-	paletteEntry * vgaPalette;
+	Leaf_PaletteEntry * egaPalette;
+	Leaf_PaletteEntry * vgaPalette;
 }pcxHeader;
 
 /*
@@ -40,7 +40,7 @@ PCX read functions
 */
 signed int Leaf_readImagePcxHeader(FILE * stream, pcxHeader * p);
 unsigned char * Leaf_readImagePcxData(FILE * stream, pcxHeader * p);
-paletteEntry * Leaf_readImagePcxVgaPalette(FILE * stream);
+Leaf_PaletteEntry * Leaf_readImagePcxVgaPalette(FILE * stream);
 
 #ifdef __cplusplus
 }

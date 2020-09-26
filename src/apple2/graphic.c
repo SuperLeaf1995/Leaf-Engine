@@ -21,7 +21,7 @@
 
 #include "graphic.h"
 
-signed char Leaf_setVideo(unsigned char v)
+signed char Leaf_SetVideo(unsigned char v)
 {
 	POKE(0xC050,0); /*Enter graphics mode*/
 	POKE(0xC052,0); /*Enter fullscreen*/

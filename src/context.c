@@ -21,7 +21,7 @@
 
 #include "context.h"
 
-leafContext * leafCurrentCtx;
+Leaf_Context * Leaf_CurrentContext;
 
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 #include "dos\context.c"

@@ -21,7 +21,7 @@
 
 #include "image.h"
 
-void Leaf_destroyImage(Leaf_Image * img) {
+void Leaf_DestroyImage(Leaf_Image * img) {
 	if(img->palette != NULL) {
 		free(img->palette);
 	}

@@ -36,16 +36,17 @@ extern "C" {
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
 #include <X11/X.h>
-#include <AL/al.h>
-#include <AL/alc.h>
 #endif
 
 #include "context.h"
 
-extern leafContext * leafCurrentCtx;
+extern Leaf_Context * Leaf_CurrentContext;
 
-int Leaf_kbhit(void);
-int Leaf_getch(void);
+#if defined(__linux) || defined(linux)
+void * Leaf_EventGet(void * v);
+#endif
+int Leaf_Kbhit(void);
+int Leaf_Getch(void);
 
 #ifdef __cplusplus
 }

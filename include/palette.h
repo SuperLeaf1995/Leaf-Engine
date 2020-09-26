@@ -5,13 +5,13 @@
 PaletteEntry is used for storing palette information of pictures, works
 in coordinance with setPalette.
 */
-typedef struct paletteEntry {
+typedef struct Leaf_PaletteEntry {
 	/** Red component of the palette */
 	unsigned char r;
 	/** Green component of the palette */
 	unsigned char g;
 	/** Blue component of the palette */
 	unsigned char b;
-}paletteEntry;
+}Leaf_PaletteEntry;
 
 #endif

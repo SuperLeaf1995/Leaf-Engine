@@ -1,22 +1,22 @@
 /*
  * Leaf-Engine GRAPHIC Header
  * Copyright (C) 2020 Jesus A. Diaz <jesusantonio30122016@gmail.com>
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
- * 
+ *
  */
 
 #ifndef __LEAF_GRAPHIC_H__
@@ -32,6 +32,9 @@ extern "C" {
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xos.h>
+#include <X11/Xatom.h>
 #include <X11/X.h>
 #endif
 #include "palette.h"
@@ -80,18 +83,18 @@ unsigned char * video = (unsigned char * )0x2000;
 unsigned short * video = (unsigned short *)0x6000000;
 #endif
 
-extern leafContext * leafCurrentCtx;
+extern Leaf_Context * Leaf_CurrentContext;
 
 /*
 General graphics manipulation functions.
 Comaptible with almost all displays (VGA,EGA,CGA,etc).
 */
-signed char Leaf_setVideo(unsigned char v);
-void Leaf_plotPixel(register unsigned short x, register unsigned short y, register unsigned char c);
-void Leaf_plotLinearPixel(register unsigned short pos,register unsigned char color);
-unsigned char Leaf_fetchPixel(register unsigned short x,register unsigned short y);
-unsigned char Leaf_fetchLinearPixel(register unsigned short p);
-void Leaf_setPalette(paletteEntry * p, register unsigned short n);
+signed char Leaf_SetVideo(unsigned char v);
+void Leaf_DrawPixel( unsigned short x,  unsigned short y,  unsigned char c);
+void Leaf_DrawLinearPixel( unsigned short pos, unsigned char color);
+unsigned char Leaf_GetPixel( unsigned short x, unsigned short y);
+unsigned char Leaf_GetLinearPixel( unsigned short p);
+void Leaf_SetPalette(Leaf_PaletteEntry * p,  unsigned short n);
 #if defined(__MSDOS__) || defined(__DOS__) || defined(_MSDOS) || defined(MSDOS) || defined(FREEDOS)
 static void waitRetrace(void);
 #endif
@@ -101,13 +104,15 @@ Graphics manipulation routines
 This routines does not directly modify video, but they rely on the
 principal graphics functions
 */
-void Leaf_plotLine(register signed short sx, register signed short sy, register signed short ex, register signed short ey, register unsigned char c);
-void Leaf_plotWireSquare(register signed short x1, register signed short y1, register signed short x2, register signed short y2, register unsigned char c);
-void Leaf_plotWirePolygon(signed short * d, register unsigned short n, register unsigned char c);
-void Leaf_updateEvent(void);
-void Leaf_updateScreen(void);
-void Leaf_drawImage(Leaf_Image * img, unsigned short x, unsigned short y);
-void Leaf_drawTiled(Leaf_Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy);
+void Leaf_DrawLine( signed short sx,  signed short sy,  signed short ex,  signed short ey,  unsigned char c);
+void Leaf_DrawWireSquare( signed short x1,  signed short y1,  signed short x2,  signed short y2,  unsigned char c);
+void Leaf_DrawWirePolygon(signed short * d,  unsigned short n,  unsigned char c);
+void Leaf_UpdateEvent(void);
+void Leaf_UpdateScreen(void);
+void Leaf_DrawImage(Leaf_Image * img, unsigned short x, unsigned short y);
+void Leaf_DrawTiled(Leaf_Image * img, unsigned short x, unsigned short y, unsigned short ix, unsigned short iy);
+
+void Leaf_ClearScreen(void);
 
 #if defined(__GBA__)
 #define rgb16(r,g,b) ((r)+(g<<5)+(b<<10))

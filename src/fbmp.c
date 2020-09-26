@@ -21,7 +21,7 @@
 
 #include "fbmp.h"
 
-signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
+signed int Leaf_ImageBitmap(const char * filename, Leaf_Image * img)
 {
 	unsigned short sHold;
 	DDBheader db_DDBheader;
@@ -35,6 +35,8 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 	signed long isl; signed long isl2;
 	unsigned short paletteEntries;
 	
+	signed int retval = 0;
+	
 	unsigned char hold;
 	
 	unsigned long compression = 0;
@@ -44,35 +46,33 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 	
 	fp = fopen(filename,"rb");
 	if(!fp) {
-		return -1;
+		retval = -1; goto end;
 	}
 	
 	/*Read the bitmap header*/
 
 	/*Get signature*/
 	if(fread(&sHold,sizeof(unsigned short),1,fp) != 1) {
-		fclose(fp);
-		return -2;
+		retval = -2; goto end;
 	}
 	
 	/*Read bitmap header*/
 	/*DDB File*/
 	if(sHold == 0) {
 		if(fread(&db_DDBheader,sizeof(DDBheader),1,fp) != 1) {
-			fclose(fp);
-			return -3;
+			retval = -3; goto end;
 		}
 	}
 	/*Windows Bitmap File*/
 	else if(sHold == 0x4D42) {
 		/*File Info Header*/
-		if(fread(&db_WinBmpFileHeader,sizeof(WinBmpFileHeader),1,fp) != 1) {
-			return -4;
+		if(fread(&db_WinBmpFileHeader,sizeof(BmpFileHeader),1,fp) != 1) {
+			retval = -4; goto end;
 		}
 		/*Windows 2.x uses short for sizes*/
 		if(db_WinBmpFileHeader.headerSize == 12) {
 			if(fread(&db_WinOldBmpFileHeader,sizeof(WinOldBmpFileHeader),1,fp) != 1) {
-				return -5;
+				retval = -5; goto end;
 			}
 			bitsPerPixel = db_WinOldBmpFileHeader.bitsPerPixel;
 			wide = (signed long)db_WinOldBmpFileHeader.wide;
@@ -81,21 +81,21 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 		/*Windows 3.x+ uses signed long for sizes*/
 		else if(db_WinBmpFileHeader.headerSize >= 40) {
 			if(fread(&db_WinNewBmpFileHeader,sizeof(WinNewBmpFileHeader),1,fp) != 1) {
-				return -6;
+				retval = -6; goto end;
 			}
 			bitsPerPixel = db_WinNewBmpFileHeader.bitsPerPixel;
 			wide = db_WinNewBmpFileHeader.wide;
 			tall = db_WinNewBmpFileHeader.tall;
 		}
 		else {
-			return -16;
+			retval = -7; goto end;
 		}
 		
 		/*Bitmap Info Header*/
 		if(db_WinBmpFileHeader.headerSize >= 40) {
 			/*Windows 3.x/NT Bitmap*/
 			if(fread(&db_WinBmpHeader,sizeof(WinBmpHeader),1,fp) != 1) {
-				return -8;
+				retval = -8; goto end;
 			}
 			compression = db_WinBmpHeader.compression;
 			
@@ -103,21 +103,20 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 			if(db_WinBmpFileHeader.headerSize == 40) {
 				if(compression == 3) {
 					if(fread(&db_WinNTBmpMasks,sizeof(WinNTBmpMasks),1,fp) != 1) {
-						return -9;
+						retval = -9; goto end;
 					}
 				}
 			}
 			/*Windows 95/98 Bitmap Extended Windows 3.x Header*/
 			else if(db_WinBmpFileHeader.headerSize == 108) {
 				if(fread(&db_Win95BmpHeaderExtension,sizeof(Win95BmpHeaderExtension),1,fp) != 1) {
-					return -10;
+					retval = -10; goto end;
 				}
 			}
 		}
 	}
 	else {
-		fclose(fp);
-		return -11;
+		retval = -11; goto end;
 	}
 	
 	/*Check that information is correct*/
@@ -127,24 +126,26 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 		case 4:
 		case 8:
 		case 16:
+		case 24:
 		case 32:
 			break;
 		default:
-			fclose(fp);
-			return -17;
+			retval = -12; goto end;
 	}
 	
 	/*Read the palette*/
 	/*Only use palette for 8-bit images*/
 	if(bitsPerPixel <= 8) {
 		if(db_WinBmpFileHeader.headerSize == 12) {
-			paletteEntries = (db_WinBmpFileHeader.offset-sizeof(BmpFileHeader)-sizeof(WinOldBmpFileHeader))/4;
+			paletteEntries = (db_WinBmpFileHeader.offset-sizeof(BmpFileHeader)-sizeof(WinOldBmpFileHeader))>>2;
 		} else {
-			paletteEntries = (1<<(bitsPerPixel));
+			/*Magic number*/
+			/*(1<<(bps-2)) = Magik (wtf???)*/
+			paletteEntries = (1<<(bitsPerPixel-2));
 		}
-		img->palette = malloc(sizeof(paletteEntry)*paletteEntries);
+		img->palette = malloc(sizeof(Leaf_PaletteEntry)*paletteEntries);
 		if(img->palette == NULL) {
-			return -12;
+			retval = -13; goto end;
 		}
 		
 		/*Read the palette*/
@@ -167,14 +168,12 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 		if(img->palette != NULL) {
 			free(img->palette);
 		}
-		fclose(fp);
-		return -13;
+		retval = -14; goto end;
 	}
 	
 	switch(compression) {
 		case 0:
 			switch(bitsPerPixel) {
-				/*Reverse read wide, but not tall*/
 				case 8: /*256 colors*/
 					for(isl = 0; isl < tall; isl++) {
 						for(isl2 = 0; isl2 < wide; isl2++) {
@@ -183,7 +182,7 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 						}
 						/*Skip padding (dword)*/
 						if(wide&3) {
-							fseek(fp,SEEK_CUR,(int)(wide&3));
+							fseek(fp,SEEK_CUR,wide&3);
 						}
 					}
 					break;
@@ -196,7 +195,7 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 							img->data[((tall-i)*wide)+i2] = (hold&0x0F);
 						}
 						if((((wide<<2)+7)>>3)&3) {
-							fseek(fp,SEEK_CUR,(int)(3-((((wide<<2)+7)>>3)&3)));
+							fseek(fp,SEEK_CUR,3-((((wide<<2)+7)>>3)&3));
 						}
 					}
 					break;
@@ -210,7 +209,7 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 							hold = (hold<<2);
 						}
 						if((((wide<<1)+7)>>3)&3) {
-							fseek(fp,SEEK_CUR,(int)(3-((((wide<<1)+7)>>3)&3)));
+							fseek(fp,SEEK_CUR,3-((((wide<<1)+7)>>3)&3));
 						}
 					}
 					break;
@@ -224,35 +223,32 @@ signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img)
 							hold = (hold<<1);
 						}
 						if(((wide+7)>>3)&3) {
-							fseek(fp,SEEK_CUR,(int)(3-((((wide)+7)>>3)&3)));
+							fseek(fp,SEEK_CUR,3-((((wide)+7)>>3)&3));
 						}
 					}
 					break;
 				default:
-					if(img->data != NULL) {
-						free(img->data);
-					}
-					if(img->palette == NULL) {
-						free(img->palette);
-					}
-					fclose(fp);
-					return -14;
+					retval = -15; goto end;
 			}
 			break;
 		default:
-			if(img->data != NULL) {
-				free(img->data);
-			}
-			if(img->palette == NULL) {
-				free(img->palette);
-			}
-			fclose(fp);
-			return -15;
+			retval = -16; goto end;
 	}
 	
+	goto end_noerr;
+end:
+	if(img->data != NULL) {
+		free(img->data);
+	}
+	if(img->palette == NULL) {
+		free(img->palette);
+	}
+end_noerr:
+	if(fp) {
+		fclose(fp);
+	}
+
 	img->wide = wide;
 	img->tall = tall;
-	
-	fclose(fp);
-	return 0;
+	return (retval);
 }

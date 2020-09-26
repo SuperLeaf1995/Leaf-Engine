@@ -3,7 +3,7 @@
 /**
 @brief Initializes everything needed for sound-support
 */
-signed char Leaf_initSound(void)
+signed char Leaf_InitSound(void)
 {
 	return 0;
 }
@@ -13,10 +13,10 @@ signed char Leaf_initSound(void)
 
 @param freq Is the frequency for the sound
 */
-void Leaf_playSound(unsigned long freq)
+void Leaf_PlaySound(unsigned long freq)
 {
-	register unsigned long cot; /*countdown value*/
-	register unsigned char tmp; /*temporal value stuff*/
+	 unsigned long cot; /*countdown value*/
+	 unsigned char tmp; /*temporal value stuff*/
 	cot = (unsigned long)(1193180/freq);
 	outp(0x43,0xb6); /*say to the speaker we are going to send data*/
 	outp(0x42,(unsigned char)cot); /*output low byte of countdown*/
@@ -31,9 +31,9 @@ void Leaf_playSound(unsigned long freq)
 /**
 @brief Stops all playing sounds
 */
-void Leaf_stopSound(void)
+void Leaf_StopSound(void)
 {
-	register unsigned char tmp = inp(0x61)&0xfc; /*shutdown speaker command*/
+	 unsigned char tmp = inp(0x61)&0xfc; /*shutdown speaker command*/
 	outp(0x61,tmp);
 	return;
 }

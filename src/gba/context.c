@@ -19,7 +19,7 @@
  * 
  */
 
-signed int Leaf_ContextCreate(leafContext * g)
+signed int Leaf_ContextCreate(Leaf_Context * g)
 {
 	g->vwide = 240; g->vtall = 160;
 	g->videoBuffer = (unsigned char *)malloc(g->vwide*g->vtall);
@@ -27,7 +27,7 @@ signed int Leaf_ContextCreate(leafContext * g)
 	{
 		return -1;
 	}
-	g->rgbPalette = (paletteEntry *)malloc(sizeof(paletteEntry)*256);
+	g->rgbPalette = (Leaf_PaletteEntry *)malloc(sizeof(Leaf_PaletteEntry)*256);
 	if(g->rgbPalette == NULL)
 	{
 		return -2;
@@ -35,11 +35,11 @@ signed int Leaf_ContextCreate(leafContext * g)
 #if defined(OPENAL)
 	alGetError(); /*Do dummy call to reset error stack*/
 #endif /* OPENAL */
-	leafCurrentCtx = g;
+	Leaf_CurrentContext = g;
 	return 0;
 }
 
-signed int Leaf_ContextDestroy(leafContext * g)
+signed int Leaf_ContextDestroy(Leaf_Context * g)
 {
 	if(g->videoBuffer != NULL)
 	{

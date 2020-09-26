@@ -26,8 +26,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
-/* Mouse handler structure */
-typedef struct _Mouse
+/* Leaf_Mouse handler structure */
+typedef struct _Leaf_Mouse
 {
 	unsigned char buttonLeft;
 	unsigned char buttonRight;
@@ -35,18 +35,18 @@ typedef struct _Mouse
 	unsigned char buttons;
 	signed short x; signed short y;
 	signed short mx; signed short my;
-}Mouse;
+}Leaf_Mouse;
 
 /*
 Functions for manipulating the cursor and retrieving data from it.
 Using the mouse structure to create a mouse handler.
 */
-char Leaf_initMouse(Mouse * m);
-void Leaf_setMousePosition(unsigned short x, unsigned short y);
-void Leaf_showMouse(void);
-void Leaf_hideMouse(void);
-void Leaf_getMouseStatus(Mouse * m);
-void Leaf_getMouseMovement(Mouse * m);
+char Leaf_InitMouse(Leaf_Mouse * m);
+void Leaf_SetMousePosition(unsigned short x, unsigned short y);
+void Leaf_ShowMouse(void);
+void Leaf_hideLeaf_Mouse(void);
+void Leaf_GetMouseStatus(Leaf_Mouse * m);
+void Leaf_GetMouseMovement(Leaf_Mouse * m);
 
 #ifdef __cplusplus
 }

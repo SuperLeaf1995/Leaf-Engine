@@ -27,9 +27,9 @@ static union REGS in,out;
 /**
 @brief Initializes mouse driver/cursor
 
-@param m Mouse structure
+@param m Leaf_Mouse structure
 */
-char Leaf_initMouse(Mouse * m)
+char Leaf_InitMouse(Leaf_Mouse * m)
 {
 	in.x.ax = 0x00;
 	in.x.bx = 0x00;
@@ -60,7 +60,7 @@ char Leaf_initMouse(Mouse * m)
 @param x X Coordinates
 @param y Y Coordinates
 */
-void Leaf_setMousePosition(register unsigned short x, register unsigned short y)
+void Leaf_SetMousePosition( unsigned short x,  unsigned short y)
 {
 	in.x.ax = 0x04;
 	in.x.cx = x;
@@ -72,7 +72,7 @@ void Leaf_setMousePosition(register unsigned short x, register unsigned short y)
 /**
 @brief Shows mouse
 */
-void Leaf_showMouse(void)
+void Leaf_ShowMouse(void)
 {
 	in.x.ax = 0x01;
 	int86(0x33,&in,&out);
@@ -82,7 +82,7 @@ void Leaf_showMouse(void)
 /**
 @brief Hides mouse
 */
-void Leaf_hideMouse(void)
+void Leaf_hideLeaf_Mouse(void)
 {
 	in.x.ax = 0x02;
 	int86(0x33,&in,&out);
@@ -92,9 +92,9 @@ void Leaf_hideMouse(void)
 /**
 @brief Gets status of buttons and current position
 
-@param m Mouse structure
+@param m Leaf_Mouse structure
 */
-void Leaf_getMouseStatus(Mouse * m)
+void Leaf_GetMouseStatus(Leaf_Mouse * m)
 {
 	in.x.ax = 0x03;
 	int86(0x33,&in,&out);
@@ -111,9 +111,9 @@ void Leaf_getMouseStatus(Mouse * m)
 /**
 @brief Gets mouse movement
 
-@param m Mouse structure
+@param m Leaf_Mouse structure
 */
-void Leaf_getMouseMovement(Mouse * m)
+void Leaf_GetMouseMovement(Leaf_Mouse * m)
 {
 	in.x.ax = 0x0B;
 	int86(0x33,&in,&out);

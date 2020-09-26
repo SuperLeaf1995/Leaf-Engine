@@ -29,6 +29,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "palette.h"
 #include "image.h"
 
@@ -107,7 +108,7 @@ typedef struct _Win95BmpHeaderExtension {
 	unsigned long gBlue;
 }Win95BmpHeaderExtension;
 
-signed int Leaf_imageBitmap(const char * filename, Leaf_Image * img);
+signed int Leaf_ImageBitmap(const char * filename, Leaf_Image * img);
 
 #ifdef __cplusplus
 }

@@ -43,14 +43,14 @@ extern "C" {
 /*
 The main game context we are working on
 */
-extern leafContext * leafCurrentCtx;
+extern Leaf_Context * Leaf_CurrentContext;
 
 /*
 Sound functions
 */
-signed char Leaf_initSound(void);
-void Leaf_playSound(unsigned long freq);
-void Leaf_stopSound(void);
+signed char Leaf_InitSound(void);
+void Leaf_PlaySound(unsigned long freq);
+void Leaf_StopSound(void);
 
 #ifdef __cplusplus
 }

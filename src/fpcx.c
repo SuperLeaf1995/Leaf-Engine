@@ -102,8 +102,8 @@ signed int Leaf_readImagePcxHeader(FILE * stream, pcxHeader * p)
 @param p Used for getting correct data
 */
 unsigned char * Leaf_readImagePcxData(FILE * stream, pcxHeader * p) {
-	register unsigned char rLen,tmp,val;
-	register unsigned long index,dataSize,total;
+	 unsigned char rLen,tmp,val;
+	 unsigned long index,dataSize,total;
 	static unsigned char * data;
 	dataSize = (p->xEnd+1)*(p->yEnd+1);
 	index = 0; total = 0;
@@ -141,17 +141,17 @@ unsigned char * Leaf_readImagePcxData(FILE * stream, pcxHeader * p) {
 
 @param stream File stream of the PCX file
 */
-paletteEntry * Leaf_readImagePcxVgaPalette(FILE * stream)
+Leaf_PaletteEntry * Leaf_readImagePcxVgaPalette(FILE * stream)
 {
-	register signed short vgaPaletteChecker;
-	register unsigned short i;
-	paletteEntry * pal;
+	 signed short vgaPaletteChecker;
+	 unsigned short i;
+	Leaf_PaletteEntry * pal;
 	vgaPaletteChecker = fgetc(stream); /*Is last byte 0x0C or EOF?*/
 	if(vgaPaletteChecker != 0x0C || vgaPaletteChecker == EOF)
 	{
 		return NULL;
 	}
-	pal = (paletteEntry *)malloc(256*sizeof(paletteEntry));
+	pal = (Leaf_PaletteEntry *)malloc(256*sizeof(Leaf_PaletteEntry));
 	if(pal == NULL)
 	{
 		return NULL;
@@ -164,5 +164,5 @@ paletteEntry * Leaf_readImagePcxVgaPalette(FILE * stream)
 		pal[i].g = fgetc(stream);
 		pal[i].b = fgetc(stream);
 	}
-	return (paletteEntry *)pal;
+	return (Leaf_PaletteEntry *)pal;
 }
