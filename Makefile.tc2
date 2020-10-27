@@ -1,4 +1,0 @@
-# Bug-workaround makefile
-
-all:
-	@echo "Reset"

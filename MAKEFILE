@@ -1,0 +1,38 @@
+# default compiler
+CC=tcc
+CFLAGS=-g5 -j5 -mh
+
+# default linker
+LD=tlink
+LDFLAGS=/d
+
+# default assembler
+AS=nasm
+
+# build the main library
+build: out\leaf.lib
+	echo Done
+
+clean:
+	del ..\lib\leaf.lib
+	del out\*.*
+
+# build the leaf library
+out\leaf.lib: out\leaf.o out\video.o out\sound.o out\mouse.o out\image.o
+	tlib $< /C +out\leaf.o +out\video.o +out\sound.o +out\mouse.o +out\image.o
+	copy out\leaf.lib ..\lib\leaf.lib
+
+out\leaf.o: leaf.c leaf.h
+	$(CC) $(CFLAGS) -c -o$< leaf.c
+
+out\video.o: video.c video.h
+	$(CC) $(CFLAGS) -c -o$< video.c
+
+out\sound.o: sound.c sound.h
+	$(CC) $(CFLAGS) -c -o$< sound.c
+
+out\mouse.o: mouse.c mouse.h
+	$(CC) $(CFLAGS) -c -o$< mouse.c
+
+out\image.o: image.c image.h
+	$(CC) $(CFLAGS) -c -o$< image.c

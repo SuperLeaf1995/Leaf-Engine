@@ -1,0 +1,17 @@
+# default compiler
+CC=tcc
+CFLAGS=-g5 -j5 -mh
+
+# default linker
+LD=tlink
+LDFLAGS=/d
+
+# default assembler
+AS=nasm
+
+# build the main program
+build: mspop.exe
+	echo Done
+
+mspop.exe: mspop.c ..\out\leaf.lib
+	$(CC) $(CFLAGS) -I.. -e$< ..\out\leaf.lib mspop.c
