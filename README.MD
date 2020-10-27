@@ -1,6 +1,8 @@
 # Leaf-Engine
 A powerful game engine for retro platforms.
 
+![mspop example](https://github.com/superleaf1995/leaf-engine/blob/master/mspop.png?raw=true)
+
 # Build
 Download DOSBox and TurboC, then execute MAKE in the root directory, to 
 build the samples, chdir to SAMPLES folder, then execute MAKE, it will 
